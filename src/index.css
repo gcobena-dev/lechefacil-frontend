@@ -2,57 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Finca Lechera Design System - Colores naturales y funcionales */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors */
+    --background: 135 20% 98%;
+    --foreground: 160 15% 15%;
 
+    /* Card system */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 160 15% 15%;
 
+    /* Interactive elements */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 160 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Verde natural de campo */
+    --primary: 145 60% 42%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 145 60% 36%;
+    --primary-light: 145 45% 88%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Azul cielo */
+    --secondary: 200 45% 92%;
+    --secondary-foreground: 160 15% 15%;
+    --secondary-hover: 200 45% 86%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted tones */
+    --muted: 135 15% 95%;
+    --muted-foreground: 160 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Verde claro para destacados */
+    --accent: 145 45% 88%;
+    --accent-foreground: 145 60% 25%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Status colors */
+    --success: 145 60% 42%;
+    --success-foreground: 0 0% 98%;
+    --warning: 45 90% 55%;
+    --warning-foreground: 45 15% 15%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders and inputs */
+    --border: 135 25% 88%;
+    --input: 135 25% 92%;
+    --ring: 145 60% 42%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(145 50% 35%));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(200 35% 85%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(135 15% 97%));
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(145 30% 20% / 0.1);
+    --shadow-medium: 0 4px 16px -4px hsl(145 30% 20% / 0.15);
+    --shadow-strong: 0 8px 32px -8px hsl(145 30% 20% / 0.2);
 
-    --sidebar-primary: 240 5.9% 10%;
-
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 160 15% 15%;
+    --sidebar-primary: 145 60% 42%;
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 145 45% 95%;
+    --sidebar-accent-foreground: 145 60% 25%;
+    --sidebar-border: 135 25% 88%;
+    --sidebar-ring: 145 60% 42%;
   }
 
   .dark {
