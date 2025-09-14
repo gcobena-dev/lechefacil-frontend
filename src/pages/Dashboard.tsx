@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { 
   Milk, 
   DollarSign, 
@@ -8,11 +10,17 @@ import {
   TrendingDown,
   Calendar,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from "lucide-react";
 import { mockMilkCollections, mockAnimals, formatCurrency } from "@/lib/mock-data";
+import { RoleBasedSections } from "@/components/dashboard/RoleBasedSections";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
+  // Mock user role - in real app this would come from auth context
+  const [userRole] = useState<'ADMIN' | 'WORKER' | 'VET'>('ADMIN');
+  
   // Calculate today's KPIs
   const today = new Date().toISOString().split('T')[0];
   const todayCollections = mockMilkCollections.filter(c => c.date === today);
@@ -39,17 +47,30 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Resumen de actividad del {new Date().toLocaleDateString('es-EC', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Resumen de actividad del {new Date().toLocaleDateString('es-EC', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
+        </div>
+        {/* Quick Action Button - Always visible */}
+        <Button asChild className="shadow-lg">
+          <Link to="/milk/collect">
+            <Plus className="w-4 h-4 mr-2" />
+            Registrar Ordeño
+          </Link>
+        </Button>
       </div>
+
+      {/* Role-based sections */}
+      <div className="grid gap-6 lg:grid-cols-4">
+        <div className="lg:col-span-3">
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -115,72 +136,79 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Top 5 Animals */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top 5 Productoras Hoy</CardTitle>
-            <CardDescription>Animales con mayor producción</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topAnimals.map((animal, index) => (
-                <div key={animal.tag} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                      {index + 1}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Top 5 Animals */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top 5 Productoras Hoy</CardTitle>
+                <CardDescription>Animales con mayor producción</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {topAnimals.map((animal, index) => (
+                    <div key={animal.tag} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{animal.name}</p>
+                          <p className="text-sm text-muted-foreground">{animal.tag}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{animal.liters}L</span>
+                        {animal.trend === 'up' ? (
+                          <TrendingUp className="h-4 w-4 text-success" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-warning" />
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{animal.name}</p>
-                      <p className="text-sm text-muted-foreground">{animal.tag}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{animal.liters}L</span>
-                    {animal.trend === 'up' ? (
-                      <TrendingUp className="h-4 w-4 text-success" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-warning" />
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Alerts and Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Alertas y Notificaciones</CardTitle>
-            <CardDescription>Información importante para revisar</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {alerts.map((alert, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
-                  <AlertTriangle className={`h-4 w-4 mt-0.5 ${
-                    alert.priority === 'high' ? 'text-destructive' :
-                    alert.priority === 'medium' ? 'text-warning' : 'text-muted-foreground'
-                  }`} />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">{alert.message}</p>
-                    <Badge 
-                      variant={
-                        alert.priority === 'high' ? 'destructive' : 
-                        alert.priority === 'medium' ? 'secondary' : 'outline'
-                      }
-                      className="text-xs"
-                    >
-                      {alert.type === 'health' ? 'Salud' : 
-                       alert.type === 'production' ? 'Producción' : 'Precio'}
-                    </Badge>
-                  </div>
+            {/* Alerts and Notifications */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Alertas y Notificaciones</CardTitle>
+                <CardDescription>Información importante para revisar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {alerts.map((alert, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
+                      <AlertTriangle className={`h-4 w-4 mt-0.5 ${
+                        alert.priority === 'high' ? 'text-destructive' :
+                        alert.priority === 'medium' ? 'text-warning' : 'text-muted-foreground'
+                      }`} />
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium">{alert.message}</p>
+                        <Badge 
+                          variant={
+                            alert.priority === 'high' ? 'destructive' : 
+                            alert.priority === 'medium' ? 'secondary' : 'outline'
+                          }
+                          className="text-xs"
+                        >
+                          {alert.type === 'health' ? 'Salud' : 
+                           alert.type === 'production' ? 'Producción' : 'Precio'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Role-based sidebar */}
+        <div>
+          <RoleBasedSections userRole={userRole} />
+        </div>
       </div>
 
       {/* Production Progress */}

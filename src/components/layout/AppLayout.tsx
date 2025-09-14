@@ -3,6 +3,8 @@ import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Header } from "./Header";
+import { FloatingActionButton } from "@/components/ui/floating-action-button";
+import { Milk } from "lucide-react";
 
 export function AppLayout() {
   const location = useLocation();
@@ -22,6 +24,10 @@ export function AppLayout() {
             <Outlet />
           </main>
         </div>
+        {/* Floating Action Button for Mobile */}
+        <FloatingActionButton to="/milk/collect">
+          <Milk className="h-6 w-6" />
+        </FloatingActionButton>
       </div>
     </SidebarProvider>
   );

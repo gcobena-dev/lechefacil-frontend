@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Milk, Calculator, AlertTriangle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Milk, Calculator, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { mockAnimals, mockBuyers, convertToLiters, formatCurrency } from "@/lib/mock-data";
 
 export default function MilkCollect() {
@@ -17,8 +18,15 @@ export default function MilkCollect() {
     inputUnit: 'L',
     density: '1.03',
     buyerId: '',
-    customPrice: ''
+    customPrice: '',
+    notes: ''
   });
+
+  const [recentEntries, setRecentEntries] = useState([
+    { animal: 'Esperanza (A001)', amount: '18.5L', time: '06:30' },
+    { animal: 'Bonita (A002)', amount: '16.2L', time: '06:32' },
+    { animal: 'Paloma (B001)', amount: '15.8L', time: '06:35' }
+  ]);
 
   const calculatedLiters = formData.inputValue ? 
     convertToLiters(parseFloat(formData.inputValue), formData.inputUnit as any, parseFloat(formData.density)) : 0;
@@ -27,18 +35,31 @@ export default function MilkCollect() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Add to recent entries
+    const selectedAnimal = mockAnimals.find(a => a.id === formData.animalId);
+    if (selectedAnimal) {
+      const newEntry = {
+        animal: `${selectedAnimal.name} (${selectedAnimal.tag})`,
+        amount: `${calculatedLiters.toFixed(1)}L`,
+        time: new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })
+      };
+      setRecentEntries([newEntry, ...recentEntries.slice(0, 4)]);
+    }
+    
     // Mock submission
     alert('Registro de ordeño guardado exitosamente');
     setFormData({
       ...formData,
       animalId: '',
       inputValue: '',
-      customPrice: ''
+      customPrice: '',
+      notes: ''
     });
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center">
         <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
           <Milk className="w-8 h-8 text-primary-foreground" />
@@ -46,6 +67,10 @@ export default function MilkCollect() {
         <h1 className="text-3xl font-bold text-foreground">Registrar Ordeño</h1>
         <p className="text-muted-foreground">Capture los datos de producción diaria</p>
       </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Form Section */}
+        <div className="lg:col-span-2">
 
       <Card>
         <CardHeader>
@@ -191,12 +216,81 @@ export default function MilkCollect() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notas (Opcional)</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                placeholder="Observaciones sobre el ordeño..."
+                rows={2}
+              />
+            </div>
+
             <Button type="submit" className="w-full" size="lg">
+              <CheckCircle className="w-4 h-4 mr-2" />
               Registrar Ordeño
             </Button>
           </form>
         </CardContent>
       </Card>
+        </div>
+
+        {/* Recent Entries Sidebar */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Últimos Registros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentEntries.map((entry, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-accent/20">
+                    <div>
+                      <p className="font-medium text-sm">{entry.animal}</p>
+                      <p className="text-xs text-muted-foreground">{entry.time}</p>
+                    </div>
+                    <Badge variant="secondary">{entry.amount}</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumen del Turno</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Animales ordeñados</span>
+                  <span className="font-medium">{recentEntries.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Total litros</span>
+                  <span className="font-medium">
+                    {recentEntries.reduce((sum, entry) => 
+                      sum + parseFloat(entry.amount.replace('L', '')), 0
+                    ).toFixed(1)}L
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Promedio/animal</span>
+                  <span className="font-medium">
+                    {(recentEntries.reduce((sum, entry) => 
+                      sum + parseFloat(entry.amount.replace('L', '')), 0
+                    ) / recentEntries.length).toFixed(1)}L
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
