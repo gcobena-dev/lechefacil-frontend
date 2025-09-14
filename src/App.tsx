@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Animals from "./pages/Animals";
 import AnimalDetail from "./pages/AnimalDetail";
+import MilkCollect from "./pages/MilkCollect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="animals" element={<Animals />} />
             <Route path="animals/:id" element={<AnimalDetail />} />
+            <Route path="milk/collect" element={<MilkCollect />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<NotFound />} />
