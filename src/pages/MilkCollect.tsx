@@ -6,10 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 import { Milk, Calculator, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { mockAnimals, mockBuyers, convertToLiters, formatCurrency } from "@/lib/mock-data";
 
 export default function MilkCollect() {
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     shift: 'AM',
@@ -22,6 +26,11 @@ export default function MilkCollect() {
     notes: ''
   });
 
+  // Bulk mode state
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [bulkQuantity, setBulkQuantity] = useState('');
+  const [selectedAnimals, setSelectedAnimals] = useState<string[]>([]);
+
   const [recentEntries, setRecentEntries] = useState([
     { animal: 'Esperanza (A001)', amount: '18.5L', time: '06:30' },
     { animal: 'Bonita (A002)', amount: '16.2L', time: '06:32' },
@@ -30,13 +39,32 @@ export default function MilkCollect() {
 
   const calculatedLiters = formData.inputValue ? 
     convertToLiters(parseFloat(formData.inputValue), formData.inputUnit as any, parseFloat(formData.density)) : 0;
+  
+  const bulkCalculatedLiters = bulkQuantity ? 
+    convertToLiters(parseFloat(bulkQuantity), formData.inputUnit as any, parseFloat(formData.density)) : 0;
 
   const densityWarning = parseFloat(formData.density) < 1.02 || parseFloat(formData.density) > 1.04;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Add to recent entries
+    if (isBulkMode) {
+      handleBulkSubmit();
+    } else {
+      handleSingleSubmit();
+    }
+  };
+
+  const handleSingleSubmit = () => {
+    if (!formData.animalId || !formData.inputValue) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos requeridos",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const selectedAnimal = mockAnimals.find(a => a.id === formData.animalId);
     if (selectedAnimal) {
       const newEntry = {
@@ -47,8 +75,11 @@ export default function MilkCollect() {
       setRecentEntries([newEntry, ...recentEntries.slice(0, 4)]);
     }
     
-    // Mock submission
-    alert('Registro de ordeño guardado exitosamente');
+    toast({
+      title: "Registro exitoso",
+      description: `${calculatedLiters.toFixed(1)}L registrados para ${selectedAnimal?.name}`,
+    });
+    
     setFormData({
       ...formData,
       animalId: '',
@@ -56,6 +87,51 @@ export default function MilkCollect() {
       customPrice: '',
       notes: ''
     });
+  };
+
+  const handleBulkSubmit = () => {
+    if (selectedAnimals.length === 0 || !bulkQuantity) {
+      toast({
+        title: "Error",
+        description: "Selecciona animales y especifica la cantidad total",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const litersPerAnimal = bulkCalculatedLiters / selectedAnimals.length;
+    
+    const newEntries = selectedAnimals.map(animalId => {
+      const animal = mockAnimals.find(a => a.id === animalId);
+      return {
+        animal: `${animal?.name} (${animal?.tag})`,
+        amount: `${litersPerAnimal.toFixed(1)}L`,
+        time: new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })
+      };
+    });
+    
+    setRecentEntries([...newEntries, ...recentEntries.slice(0, 5 - newEntries.length)]);
+    
+    toast({
+      title: "Registro bulk exitoso",
+      description: `${bulkCalculatedLiters.toFixed(1)}L distribuidos entre ${selectedAnimals.length} animales`,
+    });
+    
+    setSelectedAnimals([]);
+    setBulkQuantity('');
+    setFormData({
+      ...formData,
+      customPrice: '',
+      notes: ''
+    });
+  };
+
+  const toggleAnimalSelection = (animalId: string) => {
+    setSelectedAnimals(prev => 
+      prev.includes(animalId)
+        ? prev.filter(id => id !== animalId)
+        : [...prev, animalId]
+    );
   };
 
   return (
@@ -77,62 +153,102 @@ export default function MilkCollect() {
           <CardTitle>Datos del Ordeño</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="date">Fecha</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  required
+          <div className="space-y-6">
+            {/* Mode Toggle */}
+            <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+              <Label htmlFor="bulkMode">Modo de registro:</Label>
+              <div className="flex items-center gap-2">
+                <span className={!isBulkMode ? "font-medium" : ""}>Individual</span>
+                <Switch
+                  id="bulkMode"
+                  checked={isBulkMode}
+                  onCheckedChange={setIsBulkMode}
                 />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="shift">Turno</Label>
-                <Select value={formData.shift} onValueChange={(value) => setFormData({...formData, shift: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AM">Matutino (AM)</SelectItem>
-                    <SelectItem value="PM">Vespertino (PM)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <span className={isBulkMode ? "font-medium" : ""}>Bulk</span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="animal">Animal</Label>
-              <Select value={formData.animalId} onValueChange={(value) => setFormData({...formData, animalId: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar animal o lote" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockAnimals.filter(a => a.status === 'active').map(animal => (
-                    <SelectItem key={animal.id} value={animal.id}>
-                      {animal.tag} - {animal.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="inputValue">Cantidad</Label>
-                <Input
-                  id="inputValue"
-                  type="number"
-                  step="0.1"
-                  value={formData.inputValue}
-                  onChange={(e) => setFormData({...formData, inputValue: e.target.value})}
-                  placeholder="15.5"
-                  required
-                />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Fecha</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="shift">Turno</Label>
+                  <Select value={formData.shift} onValueChange={(value) => setFormData({...formData, shift: value})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">Matutino (AM)</SelectItem>
+                      <SelectItem value="PM">Vespertino (PM)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {!isBulkMode ? (
+                /* Individual Mode */
+                <div className="space-y-2">
+                  <Label htmlFor="animal">Animal</Label>
+                  <Select value={formData.animalId} onValueChange={(value) => setFormData({...formData, animalId: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar animal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockAnimals.filter(a => a.status === 'active').map(animal => (
+                        <SelectItem key={animal.id} value={animal.id}>
+                          {animal.tag} - {animal.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                /* Bulk Mode */
+                <div className="space-y-2">
+                  <Label>Seleccionar Animales ({selectedAnimals.length} seleccionados)</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
+                    {mockAnimals.filter(a => a.status === 'active').map((animal) => (
+                      <div
+                        key={animal.id}
+                        className={`p-2 border rounded cursor-pointer text-sm ${
+                          selectedAnimals.includes(animal.id)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-muted'
+                        }`}
+                        onClick={() => toggleAnimalSelection(animal.id)}
+                      >
+                        {animal.tag} - {animal.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="inputValue">
+                    {isBulkMode ? "Cantidad Total" : "Cantidad"}
+                  </Label>
+                  <Input
+                    id="inputValue"
+                    type="number"
+                    step="0.1"
+                    value={isBulkMode ? bulkQuantity : formData.inputValue}
+                    onChange={(e) => isBulkMode ? setBulkQuantity(e.target.value) : setFormData({...formData, inputValue: e.target.value})}
+                    placeholder="15.5"
+                    required
+                  />
+                </div>
               
               <div className="space-y-2">
                 <Label htmlFor="inputUnit">Unidad</Label>
@@ -169,21 +285,29 @@ export default function MilkCollect() {
               </div>
             </div>
 
-            {formData.inputValue && (
-              <Card className="bg-accent/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Calculator className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Conversión automática</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formData.inputValue} {formData.inputUnit} = <span className="font-medium text-primary">{calculatedLiters.toFixed(2)} Litros</span>
-                      </p>
+              {((!isBulkMode && formData.inputValue) || (isBulkMode && bulkQuantity)) && (
+                <Card className="bg-accent/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Calculator className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium">Conversión automática</p>
+                        <p className="text-sm text-muted-foreground">
+                          {isBulkMode ? bulkQuantity : formData.inputValue} {formData.inputUnit} = 
+                          <span className="font-medium text-primary ml-1">
+                            {(isBulkMode ? bulkCalculatedLiters : calculatedLiters).toFixed(2)} Litros
+                          </span>
+                          {isBulkMode && selectedAnimals.length > 0 && (
+                            <span className="block mt-1">
+                              ≈ {(bulkCalculatedLiters / selectedAnimals.length).toFixed(2)} L por animal
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              )}
 
             <div className="space-y-2">
               <Label htmlFor="buyer">Comprador (Opcional)</Label>
@@ -227,11 +351,12 @@ export default function MilkCollect() {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Registrar Ordeño
-            </Button>
-          </form>
+              <Button type="submit" className="w-full" size="lg">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                {isBulkMode ? `Registrar ${selectedAnimals.length} Animales` : "Registrar Ordeño"}
+              </Button>
+            </form>
+          </div>
         </CardContent>
       </Card>
         </div>

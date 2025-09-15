@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +20,11 @@ export default function Health() {
           <h1 className="text-3xl font-bold text-foreground">Salud Animal</h1>
           <p className="text-muted-foreground">Monitoreo y seguimiento veterinario</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Evento
+        <Button asChild>
+          <Link to="/health/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Evento
+          </Link>
         </Button>
       </div>
 

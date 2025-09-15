@@ -82,9 +82,11 @@ export default function Animals() {
             Gestión del ganado lechero
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nuevo Animal
+        <Button asChild className="flex items-center gap-2">
+          <Link to="/animals/new">
+            <Plus className="h-4 w-4" />
+            Nuevo Animal
+          </Link>
         </Button>
       </div>
 

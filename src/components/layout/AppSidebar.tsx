@@ -18,16 +18,19 @@ import {
   Heart, 
   DollarSign, 
   FileText,
-  Plus
+  Plus,
+  User,
+  Beef
 } from "lucide-react";
 
 const navigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Animales", url: "/animals", icon: Milk },
+  { title: "Animales", url: "/animals", icon: Beef },
   { title: "Registro Ordeño", url: "/milk/collect", icon: Plus },
   { title: "Precios Leche", url: "/milk/prices", icon: DollarSign },
   { title: "Salud", url: "/health", icon: Heart },
   { title: "Reportes", url: "/reports", icon: FileText },
+  { title: "Perfil", url: "/profile", icon: User },
 ];
 
 export function AppSidebar() {

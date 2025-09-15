@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +25,11 @@ export default function MilkPrices() {
           <h1 className="text-3xl font-bold text-foreground">Precios de Leche</h1>
           <p className="text-muted-foreground">Gestiona los precios y compradores</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Precio
+        <Button asChild>
+          <Link to="/milk/prices/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Precio
+          </Link>
         </Button>
       </div>
 

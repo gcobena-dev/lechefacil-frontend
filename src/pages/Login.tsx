@@ -140,6 +140,14 @@ export default function Login() {
             <div className="text-xs text-muted-foreground text-center space-y-1">
               <p><strong>Demo:</strong> cualquier email y contraseña</p>
               <p>Roles: ADMIN, VET, WORKER</p>
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => navigate("/signin")}
+                className="text-sm p-0 h-auto"
+              >
+                ¿No tienes cuenta? Crear una
+              </Button>
             </div>
           </div>
         </CardContent>
