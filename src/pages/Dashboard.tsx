@@ -47,10 +47,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Resumen de actividad del {new Date().toLocaleDateString('es-EC', { 
               weekday: 'long', 
               year: 'numeric', 
@@ -60,20 +60,21 @@ export default function Dashboard() {
           </p>
         </div>
         {/* Quick Action Button - Always visible */}
-        <Button asChild className="shadow-lg">
+        <Button asChild className="shadow-lg w-full sm:w-auto">
           <Link to="/milk/collect">
             <Plus className="w-4 h-4 mr-2" />
-            Registrar Ordeño
+            <span className="hidden sm:inline">Registrar Ordeño</span>
+            <span className="sm:hidden">Ordeño</span>
           </Link>
         </Button>
       </div>
 
       {/* Role-based sections */}
-      <div className="grid gap-6 lg:grid-cols-4">
-        <div className="lg:col-span-3">
+      <div className="grid gap-6 xl:grid-cols-4">
+        <div className="xl:col-span-3 space-y-6">
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Litros Hoy</CardTitle>
@@ -136,7 +137,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* Top 5 Animals */}
             <Card>
               <CardHeader>

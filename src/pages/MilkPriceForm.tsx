@@ -51,7 +51,7 @@ export default function MilkPriceForm() {
         <h1 className="text-2xl font-bold">Nuevo Precio de Leche</h1>
       </div>
 
-      <Card className="max-w-2xl">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Información del Precio</CardTitle>
         </CardHeader>
@@ -107,11 +107,11 @@ export default function MilkPriceForm() {
               />
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button type="submit" className="flex-1">
                 Guardar Precio
               </Button>
-              <Button type="button" variant="outline" onClick={() => navigate("/milk/prices")}>
+              <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/milk/prices")}>
                 Cancelar
               </Button>
             </div>

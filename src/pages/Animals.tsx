@@ -163,8 +163,8 @@ export default function Animals() {
         </CardContent>
       </Card>
 
-      {/* Animals Table */}
-      <Card>
+      {/* Animals Table - Desktop */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Lista de Animales</CardTitle>
           <CardDescription>
@@ -172,58 +172,106 @@ export default function Animals() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tag</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Raza</TableHead>
-                <TableHead>Edad</TableHead>
-                <TableHead>Lote</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAnimals.map((animal) => (
-                <TableRow key={animal.id}>
-                  <TableCell className="font-medium">{animal.tag}</TableCell>
-                  <TableCell>{animal.name}</TableCell>
-                  <TableCell>{animal.breed}</TableCell>
-                  <TableCell>{calculateAge(animal.birth_date)}</TableCell>
-                  <TableCell>{animal.lot}</TableCell>
-                  <TableCell>{getStatusBadge(animal.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/animals/${animal.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tag</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Raza</TableHead>
+                  <TableHead>Edad</TableHead>
+                  <TableHead>Lote</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {filteredAnimals.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No se encontraron animales con los filtros aplicados</p>
-            </div>
-          )}
+              </TableHeader>
+              <TableBody>
+                {filteredAnimals.map((animal) => (
+                  <TableRow key={animal.id}>
+                    <TableCell className="font-medium">{animal.tag}</TableCell>
+                    <TableCell>{animal.name}</TableCell>
+                    <TableCell>{animal.breed}</TableCell>
+                    <TableCell>{calculateAge(animal.birth_date)}</TableCell>
+                    <TableCell>{animal.lot}</TableCell>
+                    <TableCell>{getStatusBadge(animal.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/animals/${animal.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/animals/edit/${animal.id}`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Animals Cards - Mobile */}
+      <div className="md:hidden space-y-4">
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            {filteredAnimals.length} animales encontrados
+          </p>
+        </div>
+        {filteredAnimals.map((animal) => (
+          <Card key={animal.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">{animal.tag}</span>
+                    {getStatusBadge(animal.status)}
+                  </div>
+                  <h3 className="font-medium">{animal.name}</h3>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to={`/animals/${animal.id}`}>
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to={`/animals/edit/${animal.id}`}>
+                      <Edit className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <div>Raza: {animal.breed}</div>
+                <div>Lote: {animal.lot}</div>
+                <div className="col-span-2">Edad: {calculateAge(animal.birth_date)}</div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {filteredAnimals.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No se encontraron animales con los filtros aplicados</p>
+          </div>
+        )}
+      </div>
+
       {/* Mobile FAB */}
       <Button 
+        asChild
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden"
         size="icon"
       >
-        <Plus className="h-6 w-6" />
+        <Link to="/animals/new">
+          <Plus className="h-6 w-6" />
+        </Link>
       </Button>
     </div>
   );

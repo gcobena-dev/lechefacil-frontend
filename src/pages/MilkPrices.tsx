@@ -74,73 +74,131 @@ export default function MilkPrices() {
         </Card>
       </div>
 
-      {/* Price History */}
-      <Card>
+      {/* Price History - Desktop */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Historial de Precios</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Comprador</TableHead>
-                <TableHead>Precio/Litro</TableHead>
-                <TableHead>Bonificación</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {prices.map((price, index) => (
-                <TableRow key={index}>
-                  <TableCell>{formatDate(price.date)}</TableCell>
-                  <TableCell>{buyers.find(b => b.id === price.buyer_id)?.name || "N/A"}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(price.price_per_liter)}</TableCell>
-                  <TableCell>{formatCurrency(0)}</TableCell>
-                  <TableCell>
-                    <Badge variant={index === 0 ? "default" : "secondary"}>
-                      {index === 0 ? "Actual" : "Histórico"}
-                    </Badge>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Comprador</TableHead>
+                  <TableHead>Precio/Litro</TableHead>
+                  <TableHead>Bonificación</TableHead>
+                  <TableHead>Estado</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {prices.map((price, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{formatDate(price.date)}</TableCell>
+                    <TableCell>{buyers.find(b => b.id === price.buyer_id)?.name || "N/A"}</TableCell>
+                    <TableCell className="font-medium">{formatCurrency(price.price_per_liter)}</TableCell>
+                    <TableCell>{formatCurrency(0)}</TableCell>
+                    <TableCell>
+                      <Badge variant={index === 0 ? "default" : "secondary"}>
+                        {index === 0 ? "Actual" : "Histórico"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Buyers List */}
-      <Card>
+      {/* Price History - Mobile */}
+      <div className="md:hidden space-y-4">
+        <h2 className="text-lg font-semibold">Historial de Precios</h2>
+        {prices.map((price, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="font-medium">{formatDate(price.date)}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {buyers.find(b => b.id === price.buyer_id)?.name || "N/A"}
+                  </div>
+                </div>
+                <Badge variant={index === 0 ? "default" : "secondary"}>
+                  {index === 0 ? "Actual" : "Histórico"}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Precio: </span>
+                  <span className="font-medium">{formatCurrency(price.price_per_liter)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Bonif: </span>
+                  <span>{formatCurrency(0)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Buyers List - Desktop */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Compradores</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {buyers.map((buyer) => (
-                <TableRow key={buyer.id}>
-                  <TableCell className="font-medium">{buyer.name}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>
-                    <Badge variant="default">
-                      Activo
-                    </Badge>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Teléfono</TableHead>
+                  <TableHead>Estado</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {buyers.map((buyer) => (
+                  <TableRow key={buyer.id}>
+                    <TableCell className="font-medium">{buyer.name}</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>
+                      <Badge variant="default">
+                        Activo
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Buyers List - Mobile */}
+      <div className="md:hidden space-y-4">
+        <h2 className="text-lg font-semibold">Compradores</h2>
+        {buyers.map((buyer) => (
+          <Card key={buyer.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-medium">{buyer.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Sin información de contacto
+                  </div>
+                </div>
+                <Badge variant="default">
+                  Activo
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

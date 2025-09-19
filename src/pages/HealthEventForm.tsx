@@ -68,7 +68,7 @@ export default function HealthEventForm() {
         <h1 className="text-2xl font-bold">Nuevo Evento de Salud</h1>
       </div>
 
-      <Card className="max-w-2xl">
+      <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle>Información del Evento</CardTitle>
         </CardHeader>
@@ -165,11 +165,11 @@ export default function HealthEventForm() {
               />
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button type="submit" className="flex-1">
                 Registrar Evento
               </Button>
-              <Button type="button" variant="outline" onClick={() => navigate("/health")}>
+              <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/health")}>
                 Cancelar
               </Button>
             </div>

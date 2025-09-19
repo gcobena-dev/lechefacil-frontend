@@ -72,44 +72,70 @@ export default function Health() {
         </Card>
       </div>
 
-      {/* Recent Health Events */}
-      <Card>
+      {/* Recent Health Events - Desktop */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Eventos Recientes</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Animal</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentEvents.map((event) => (
-                <TableRow key={event.id}>
-                  <TableCell className="font-medium">{event.animal_id}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{event.type}</Badge>
-                  </TableCell>
-                  <TableCell>{event.diagnosis}</TableCell>
-                  <TableCell>{formatDate(event.date)}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={event.withdrawal_until && new Date(event.withdrawal_until) > new Date() ? "destructive" : "default"}
-                    >
-                      {event.withdrawal_until && new Date(event.withdrawal_until) > new Date() ? "Activo" : "Completado"}
-                    </Badge>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Animal</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {recentEvents.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell className="font-medium">{event.animal_id}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{event.type}</Badge>
+                    </TableCell>
+                    <TableCell>{event.diagnosis}</TableCell>
+                    <TableCell>{formatDate(event.date)}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={event.withdrawal_until && new Date(event.withdrawal_until) > new Date() ? "destructive" : "default"}
+                      >
+                        {event.withdrawal_until && new Date(event.withdrawal_until) > new Date() ? "Activo" : "Completado"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Recent Health Events - Mobile */}
+      <div className="md:hidden space-y-4">
+        <h2 className="text-lg font-semibold">Eventos Recientes</h2>
+        {recentEvents.map((event) => (
+          <Card key={event.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="font-medium">{event.animal_id}</div>
+                  <Badge variant="outline" className="text-xs">{event.type}</Badge>
+                </div>
+                <Badge 
+                  variant={event.withdrawal_until && new Date(event.withdrawal_until) > new Date() ? "destructive" : "default"}
+                >
+                  {event.withdrawal_until && new Date(event.withdrawal_until) > new Date() ? "Activo" : "Completado"}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">{event.diagnosis}</p>
+              <p className="text-xs text-muted-foreground">{formatDate(event.date)}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

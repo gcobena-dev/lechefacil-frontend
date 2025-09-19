@@ -135,18 +135,18 @@ export default function MilkCollect() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 px-4">
       <div className="text-center">
-        <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
-          <Milk className="w-8 h-8 text-primary-foreground" />
+        <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-full flex items-center justify-center mb-4">
+          <Milk className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground">Registrar Ordeño</h1>
-        <p className="text-muted-foreground">Capture los datos de producción diaria</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Registrar Ordeño</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Capture los datos de producción diaria</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 xl:grid-cols-3">
         {/* Form Section */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-2">
 
       <Card>
         <CardHeader>
@@ -214,10 +214,10 @@ export default function MilkCollect() {
                 </div>
               ) : (
                 /* Bulk Mode */
-                <div className="space-y-2">
-                  <Label>Seleccionar Animales ({selectedAnimals.length} seleccionados)</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
-                    {mockAnimals.filter(a => a.status === 'active').map((animal) => (
+                 <div className="space-y-2">
+                   <Label>Seleccionar Animales ({selectedAnimals.length} seleccionados)</Label>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
+                     {mockAnimals.filter(a => a.status === 'active').map((animal) => (
                       <div
                         key={animal.id}
                         className={`p-2 border rounded cursor-pointer text-sm ${
