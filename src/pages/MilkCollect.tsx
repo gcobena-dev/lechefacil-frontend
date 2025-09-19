@@ -28,8 +28,8 @@ export default function MilkCollect() {
 
   // Bulk mode state
   const [isBulkMode, setIsBulkMode] = useState(false);
-  const [bulkQuantity, setBulkQuantity] = useState('');
   const [selectedAnimals, setSelectedAnimals] = useState<string[]>([]);
+  const [animalQuantities, setAnimalQuantities] = useState<Record<string, string>>({});
 
   const [recentEntries, setRecentEntries] = useState([
     { animal: 'Esperanza (A001)', amount: '18.5L', time: '06:30' },
@@ -40,8 +40,9 @@ export default function MilkCollect() {
   const calculatedLiters = formData.inputValue ? 
     convertToLiters(parseFloat(formData.inputValue), formData.inputUnit as any, parseFloat(formData.density)) : 0;
   
-  const bulkCalculatedLiters = bulkQuantity ? 
-    convertToLiters(parseFloat(bulkQuantity), formData.inputUnit as any, parseFloat(formData.density)) : 0;
+  const bulkCalculatedTotal = Object.values(animalQuantities).reduce((sum, quantity) => {
+    return sum + (quantity ? convertToLiters(parseFloat(quantity), formData.inputUnit as any, parseFloat(formData.density)) : 0);
+  }, 0);
 
   const densityWarning = parseFloat(formData.density) < 1.02 || parseFloat(formData.density) > 1.04;
 
@@ -90,22 +91,25 @@ export default function MilkCollect() {
   };
 
   const handleBulkSubmit = () => {
-    if (selectedAnimals.length === 0 || !bulkQuantity) {
+    const animalsWithQuantities = selectedAnimals.filter(animalId => animalQuantities[animalId]);
+    
+    if (animalsWithQuantities.length === 0) {
       toast({
         title: "Error",
-        description: "Selecciona animales y especifica la cantidad total",
+        description: "Ingresa la cantidad para al menos un animal seleccionado",
         variant: "destructive"
       });
       return;
     }
 
-    const litersPerAnimal = bulkCalculatedLiters / selectedAnimals.length;
-    
-    const newEntries = selectedAnimals.map(animalId => {
+    const newEntries = animalsWithQuantities.map(animalId => {
       const animal = mockAnimals.find(a => a.id === animalId);
+      const quantity = animalQuantities[animalId];
+      const liters = convertToLiters(parseFloat(quantity), formData.inputUnit as any, parseFloat(formData.density));
+      
       return {
         animal: `${animal?.name} (${animal?.tag})`,
-        amount: `${litersPerAnimal.toFixed(1)}L`,
+        amount: `${liters.toFixed(1)}L`,
         time: new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })
       };
     });
@@ -114,11 +118,11 @@ export default function MilkCollect() {
     
     toast({
       title: "Registro bulk exitoso",
-      description: `${bulkCalculatedLiters.toFixed(1)}L distribuidos entre ${selectedAnimals.length} animales`,
+      description: `${bulkCalculatedTotal.toFixed(1)}L registrados para ${animalsWithQuantities.length} animales`,
     });
     
     setSelectedAnimals([]);
-    setBulkQuantity('');
+    setAnimalQuantities({});
     setFormData({
       ...formData,
       customPrice: '',
@@ -127,11 +131,29 @@ export default function MilkCollect() {
   };
 
   const toggleAnimalSelection = (animalId: string) => {
-    setSelectedAnimals(prev => 
-      prev.includes(animalId)
+    setSelectedAnimals(prev => {
+      const newSelection = prev.includes(animalId)
         ? prev.filter(id => id !== animalId)
-        : [...prev, animalId]
-    );
+        : [...prev, animalId];
+      
+      // Remove quantity if animal is deselected
+      if (prev.includes(animalId)) {
+        setAnimalQuantities(prevQuantities => {
+          const newQuantities = { ...prevQuantities };
+          delete newQuantities[animalId];
+          return newQuantities;
+        });
+      }
+      
+      return newSelection;
+    });
+  };
+
+  const updateAnimalQuantity = (animalId: string, quantity: string) => {
+    setAnimalQuantities(prev => ({
+      ...prev,
+      [animalId]: quantity
+    }));
   };
 
   return (
@@ -214,41 +236,87 @@ export default function MilkCollect() {
                 </div>
               ) : (
                 /* Bulk Mode */
-                 <div className="space-y-2">
-                   <Label>Seleccionar Animales ({selectedAnimals.length} seleccionados)</Label>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded">
+                 <div className="space-y-4">
+                   <Label>Seleccionar Animales y Cantidades</Label>
+                   <div className="space-y-3 max-h-96 overflow-y-auto p-4 border rounded">
                      {mockAnimals.filter(a => a.status === 'active').map((animal) => (
                       <div
                         key={animal.id}
-                        className={`p-2 border rounded cursor-pointer text-sm ${
+                        className={`p-3 border rounded ${
                           selectedAnimals.includes(animal.id)
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-primary/10 border-primary'
                             : 'hover:bg-muted'
                         }`}
-                        onClick={() => toggleAnimalSelection(animal.id)}
                       >
-                        {animal.tag} - {animal.name}
+                        <div className="flex items-center justify-between mb-2">
+                          <div 
+                            className="flex items-center gap-2 cursor-pointer flex-1"
+                            onClick={() => toggleAnimalSelection(animal.id)}
+                          >
+                            <div className={`w-4 h-4 border-2 rounded ${
+                              selectedAnimals.includes(animal.id)
+                                ? 'bg-primary border-primary'
+                                : 'border-muted-foreground'
+                            }`}>
+                              {selectedAnimals.includes(animal.id) && (
+                                <CheckCircle className="w-4 h-4 text-primary-foreground -m-0.5" />
+                              )}
+                            </div>
+                            <span className="font-medium">{animal.tag} - {animal.name}</span>
+                          </div>
+                        </div>
+                        
+                        {selectedAnimals.includes(animal.id) && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              placeholder="Cantidad"
+                              value={animalQuantities[animal.id] || ''}
+                              onChange={(e) => updateAnimalQuantity(animal.id, e.target.value)}
+                              className="flex-1"
+                            />
+                            <span className="text-sm text-muted-foreground min-w-[60px]">
+                              {animalQuantities[animal.id] ? (
+                                <>
+                                  {convertToLiters(
+                                    parseFloat(animalQuantities[animal.id]), 
+                                    formData.inputUnit as any, 
+                                    parseFloat(formData.density)
+                                  ).toFixed(1)}L
+                                </>
+                              ) : (
+                                '0L'
+                              )}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ))}
-                  </div>
-                </div>
+                   </div>
+                   <p className="text-sm text-muted-foreground">
+                     {selectedAnimals.length} animales seleccionados
+                   </p>
+                 </div>
               )}
 
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="inputValue">
-                    {isBulkMode ? "Cantidad Total" : "Cantidad"}
-                  </Label>
-                  <Input
-                    id="inputValue"
-                    type="number"
-                    step="0.1"
-                    value={isBulkMode ? bulkQuantity : formData.inputValue}
-                    onChange={(e) => isBulkMode ? setBulkQuantity(e.target.value) : setFormData({...formData, inputValue: e.target.value})}
-                    placeholder="15.5"
-                    required
-                  />
-                </div>
+                {!isBulkMode && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="inputValue">Cantidad</Label>
+                      <Input
+                        id="inputValue"
+                        type="number"
+                        step="0.1"
+                        value={formData.inputValue}
+                        onChange={(e) => setFormData({...formData, inputValue: e.target.value})}
+                        placeholder="15.5"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
               
               <div className="space-y-2">
                 <Label htmlFor="inputUnit">Unidad</Label>
@@ -285,24 +353,32 @@ export default function MilkCollect() {
               </div>
             </div>
 
-              {((!isBulkMode && formData.inputValue) || (isBulkMode && bulkQuantity)) && (
+              {((!isBulkMode && formData.inputValue) || (isBulkMode && bulkCalculatedTotal > 0)) && (
                 <Card className="bg-accent/20">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <Calculator className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium">Conversión automática</p>
-                        <p className="text-sm text-muted-foreground">
-                          {isBulkMode ? bulkQuantity : formData.inputValue} {formData.inputUnit} = 
-                          <span className="font-medium text-primary ml-1">
-                            {(isBulkMode ? bulkCalculatedLiters : calculatedLiters).toFixed(2)} Litros
-                          </span>
-                          {isBulkMode && selectedAnimals.length > 0 && (
-                            <span className="block mt-1">
-                              ≈ {(bulkCalculatedLiters / selectedAnimals.length).toFixed(2)} L por animal
+                        {!isBulkMode ? (
+                          <p className="text-sm text-muted-foreground">
+                            {formData.inputValue} {formData.inputUnit} = 
+                            <span className="font-medium text-primary ml-1">
+                              {calculatedLiters.toFixed(2)} Litros
                             </span>
-                          )}
-                        </p>
+                          </p>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            <p>
+                              <span className="font-medium text-primary">
+                                Total: {bulkCalculatedTotal.toFixed(2)} Litros
+                              </span>
+                            </p>
+                            <p className="text-xs mt-1">
+                              {Object.entries(animalQuantities).filter(([_, quantity]) => quantity).length} animales con producción registrada
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -353,7 +429,7 @@ export default function MilkCollect() {
 
               <Button type="submit" className="w-full" size="lg">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                {isBulkMode ? `Registrar ${selectedAnimals.length} Animales` : "Registrar Ordeño"}
+                {isBulkMode ? `Registrar Producción Individual` : "Registrar Ordeño"}
               </Button>
             </form>
           </div>
