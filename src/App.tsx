@@ -17,6 +17,7 @@ import Health from "./pages/Health";
 import HealthEventForm from "./pages/HealthEventForm";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
+import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/request-access" element={<RequestAccess />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
