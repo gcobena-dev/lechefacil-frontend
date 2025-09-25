@@ -70,7 +70,7 @@ export default function MilkCollect() {
     if (activeAnimals.length > 0 && selectedAnimals.length === 0) {
       setSelectedAnimals(activeAnimals.map(a => a.id));
     }
-  }, [activeAnimals.length, selectedAnimals.length, setSelectedAnimals]);
+  }, [activeAnimals, selectedAnimals, setSelectedAnimals]);
 
   // Handle form data changes
   const handleFormDataChange = (data: Partial<typeof formData>) => {
@@ -150,7 +150,7 @@ export default function MilkCollect() {
               <MilkDeliveryForm
                 deliveryFormData={deliveryFormData}
                 buyers={buyers}
-                defaultPricePerL={billing?.default_price_per_l}
+                defaultPricePerL={billing?.default_price_per_l ? Number(billing.default_price_per_l) : undefined}
                 creatingDelivery={creatingDelivery}
                 onFormDataChange={handleDeliveryFormDataChange}
                 onSubmit={handleDeliverySubmit}

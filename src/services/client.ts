@@ -56,7 +56,9 @@ export async function apiFetch<T>(
     let details: unknown = undefined;
     try {
       details = await res.json();
-    } catch {}
+    } catch (_e) {
+      // ignore JSON parse errors when extracting error details
+    }
     // Attempt refresh once on 401 for authenticated requests
     if (res.status === 401 && options.withAuth) {
       try {
@@ -83,7 +85,11 @@ export async function apiFetch<T>(
         if (!res.ok) {
           const err: ApiError = new Error(`HTTP ${res.status}`);
           err.status = res.status;
-          try { err.details = await res.json(); } catch {}
+          try {
+            err.details = await res.json();
+          } catch (_e) {
+            // ignore JSON parse errors when extracting retry error details
+          }
           throw err;
         }
       } catch (e) {

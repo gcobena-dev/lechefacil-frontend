@@ -52,7 +52,7 @@ export default function Profile() {
 
   const { data: meData } = useQuery({ queryKey: ["me"], queryFn: apiMe });
   const emailValue = meData?.email ?? profileData.email;
-  const displayName = useMemo(() => (emailValue ? emailValue.split("@")[0] : profileData.name), [emailValue]);
+  const displayName = useMemo(() => (emailValue ? emailValue.split("@")[0] : profileData.name), [emailValue, profileData.name]);
   const roleLabel = useMemo(() => {
     const r = (meData as any)?.active_role ?? profileData.role;
     const map: Record<string, string> = {

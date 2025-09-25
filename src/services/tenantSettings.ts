@@ -9,7 +9,7 @@ export interface TenantSettings {
   default_price_per_l: number;
 }
 
-export interface UpdateTenantSettingsPayload extends TenantSettings {}
+export type UpdateTenantSettingsPayload = TenantSettings;
 
 export async function getTenantSettings(): Promise<TenantSettings> {
   return apiFetch<TenantSettings>("/api/v1/settings/billing", {
