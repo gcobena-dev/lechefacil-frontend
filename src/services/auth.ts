@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { requireApiUrl } from "./config";
 import { LoginResponse, MeResponse, Membership } from "./types";
 
 export async function login(payload: {
@@ -41,7 +42,7 @@ export async function signin(payload: { email: string; password: string }) {
 
 export async function refreshAccess(): Promise<LoginResponse> {
   // include credentials so cookie is sent
-  const base = import.meta.env.VITE_API_URL as string;
+  const base = requireApiUrl();
   const res = await fetch(new URL("/api/v1/auth/refresh", base).toString(), {
     method: "POST",
     credentials: "include",
@@ -51,7 +52,7 @@ export async function refreshAccess(): Promise<LoginResponse> {
 }
 
 export async function logoutServer(): Promise<void> {
-  const base = import.meta.env.VITE_API_URL as string;
+  const base = requireApiUrl();
   await fetch(new URL("/api/v1/auth/logout", base).toString(), {
     method: "POST",
     credentials: "include",
