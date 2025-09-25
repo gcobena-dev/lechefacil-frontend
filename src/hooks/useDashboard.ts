@@ -18,12 +18,21 @@ import {
 } from '@/services/dashboard';
 
 export function useDailyKPIs(date: string) {
-  return useQuery<DailyKPIs>({
+  const result = useQuery<DailyKPIs>({
     queryKey: ['dashboard', 'daily-kpis', date],
-    queryFn: () => getDailyKPIs(date),
+    queryFn: () => {
+      console.log('🔧 DEBUG: Calling getDailyKPIs with date:', date);
+      return getDailyKPIs(date);
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes
   });
+
+  if (result.error) {
+    console.error('🔧 DEBUG: getDailyKPIs error:', result.error);
+  }
+
+  return result;
 }
 
 export function useTopProducers(date: string, limit: number = 5) {

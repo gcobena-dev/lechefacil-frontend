@@ -43,8 +43,24 @@ const clamp = (n: number, min = 0, max = 100) => Math.min(max, Math.max(min, n))
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const userRole = useUserRole() || 'ADMIN'; // Default to ADMIN if not loaded yet
+  const userRoleRaw = useUserRole();
+  const userRole: 'ADMIN' | 'WORKER' | 'VET' =
+    userRoleRaw === 'MANAGER' ? 'ADMIN'
+    : userRoleRaw === 'VETERINARIAN' ? 'VET'
+    : (userRoleRaw as 'ADMIN' | 'WORKER' | 'VET') || 'ADMIN';
   const userId = useUserId();
+
+  // 🔧 DEBUG: Agregar información de debug para producción
+  if (typeof window !== 'undefined') {
+    console.log('=== DASHBOARD DEBUG INFO ===');
+    console.log('API_URL:', import.meta.env.VITE_API_URL);
+    console.log('RUNTIME API_URL:', window.__APP_CONFIG__?.VITE_API_URL);
+    console.log('Token exists:', !!localStorage.getItem('lf_token'));
+    console.log('Tenant ID:', localStorage.getItem('lf_tenant_id'));
+    console.log('User Role:', userRole);
+    console.log('User ID:', userId);
+    console.log('============================');
+  }
 
   // Get dashboard data based on user role
   const {
