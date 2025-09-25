@@ -1,0 +1,62 @@
+name: FE Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build_image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build image
+        id: build
+        env:
+          IMAGE_SHA: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          IMAGE_LATEST: ghcr.io/${{ github.repository }}:latest
+        run: |
+          IMAGE=$(echo "$IMAGE_SHA" | tr '[:upper:]' '[:lower:]')
+          LATEST=$(echo "$IMAGE_LATEST" | tr '[:upper:]' '[:lower:]')
+          docker build -t "$IMAGE" -t "$LATEST" .
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+
+      - name: Push image tags
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+          IMAGE_LATEST: ${{ steps.build.outputs.latest }}
+        run: |
+          docker push "$IMAGE"
+          docker push "$IMAGE_LATEST"
+
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+      latest: ${{ steps.build.outputs.latest }}
+
+  deploy:
+    needs: build_image
+    runs-on: ubuntu-latest
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+      RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+      IMAGE: ${{ needs.build_image.outputs.image }}
+      IMAGE_LATEST: ${{ needs.build_image.outputs.latest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Railway (Frontend)
+        run: railway up --service "$RAILWAY_SERVICE_ID"

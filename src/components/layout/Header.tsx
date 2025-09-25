@@ -9,19 +9,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { performLogout } from "@/services/auth";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function Header() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   return (
-    <header className="border-b bg-card/50 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b bg-card/50 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div className="hidden md:block">
             <h1 className="text-lg font-semibold text-foreground">
-              Finca San Pedro
+              Finca Dos Hermanos
             </h1>
             <p className="text-sm text-muted-foreground">
-              Sistema de Gestión Lechera
+              {t("common.milkManagementSystem")}
             </p>
           </div>
         </div>
@@ -41,14 +46,23 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("common.myAccount")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => navigate("/settings")}
+              >
                 <Settings className="mr-2 h-4 w-4" />
-                Configuración
+                {t("common.settings")}
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                Cerrar Sesión
+              <DropdownMenuItem
+                className="text-destructive cursor-pointer"
+                onClick={async () => {
+                  await performLogout();
+                  navigate("/login", { replace: true });
+                }}
+              >
+                {t("common.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

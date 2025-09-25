@@ -1,0 +1,187 @@
+import { title } from "process";
+
+export default {
+  // Recolección de leche
+  milkCollectionTitle: "Recolección de Leche",
+  collectMilk: "Registrar Recolección",
+  bulkCollection: "Recolección Masiva",
+  dailyCollection: "Recolección Diaria",
+
+  // Entrega de leche
+  delivery: "Entrega",
+  production: "Producción",
+  milkDelivery: "Entrega de Leche",
+  deliverMilk: "Registrar Entrega",
+  volumeL: "Volumen (L)",
+  deliveryDateTime: "Fecha y Hora de Entrega",
+  deliveryNotes: "Observaciones de Entrega",
+  recentDeliveries: "Entregas Recientes",
+
+  // Campos del formulario
+  animal: "Animal",
+  date: "Fecha",
+  session: "Sesión",
+  quantity: "Cantidad",
+  quality: "Calidad",
+  temperature: "Temperatura",
+  fat: "Grasa",
+  protein: "Proteína",
+  somatic: "Células Somáticas",
+  notes: "Observaciones",
+
+  // Calidades
+  excellent: "Excelente",
+  good: "Buena",
+  regular: "Regular",
+  poor: "Mala",
+
+  // Unidades
+  liters: "litros",
+  celsius: "°C",
+  percentage: "%",
+  cellsPerMl: "células/ml",
+
+  // Placeholders
+  quantityPlaceholder: "Ej: 25.5",
+  temperaturePlaceholder: "Ej: 4.0",
+  fatPlaceholder: "Ej: 3.8",
+  proteinPlaceholder: "Ej: 3.2",
+  somaticPlaceholder: "Ej: 200000",
+
+  // Precios de leche
+  milkPricesTitle: "Precios de Leche",
+  priceHistory: "Historial de Precios",
+  addPrice: "Agregar Precio",
+  editPrice: "Editar Precio",
+  currentPrice: "Precio Actual",
+  pricePerLiter: "Precio por Litro",
+  effectiveDate: "Fecha Efectiva",
+  buyer: "Comprador",
+  priceType: "Tipo de Precio",
+
+  // Tipos de precio
+  base: "Base",
+  premium: "Premium",
+  organic: "Orgánico",
+  qualityBased: "Por Calidad",
+
+  // Compradores
+  addBuyer: "Agregar Comprador",
+  buyerName: "Nombre del Comprador",
+  buyerContact: "Contacto",
+  buyerAddress: "Dirección",
+
+  // Mensajes
+  milkRecorded: "Recolección registrada correctamente",
+  priceAdded: "Precio agregado correctamente",
+  buyerAdded: "Comprador agregado correctamente",
+  selectAnimal: "Selecciona un animal",
+  selectBuyer: "Selecciona un comprador",
+
+  // Reportes
+  totalProduction: "Producción Total",
+  averagePerAnimal: "Promedio por Animal",
+  bestProducer: "Mejor Productora",
+  productionTrend: "Tendencia de Producción",
+  qualityMetrics: "Métricas de Calidad",
+
+  // Filtros
+  filterByAnimal: "Filtrar por animal",
+  filterByDate: "Filtrar por fecha",
+  filterBySession: "Filtrar por sesión",
+  last7Days: "Últimos 7 días",
+  last30Days: "Últimos 30 días",
+  thisMonth: "Este mes",
+
+  // MilkCollect específico
+  milkingData: "Datos del Ordeño",
+  registrationMode: "Modo de registro:",
+  individual: "Individual",
+  bulk: "Bulk",
+  shift: "Turno",
+  morning: "Matutino (AM)",
+  evening: "Vespertino (PM)",
+  selectAnimalsAndQuantities: "Seleccionar Animales y Cantidades",
+  animalsSelected: "animales seleccionados",
+  automaticConversion: "Conversión automática",
+  total: "Total",
+  animalsWithProduction: "animales con producción registrada",
+  configuration: "Configuración",
+  configurationInfo: "Para cambiar unidad, densidad o comprador: Mi Perfil - Configuración del Tenant\nPara cambiar precios:",
+  optionalNotes: "Notas (Opcional)",
+  registerBulkProduction: "Registrar Producción Bulk",
+  saving: "Guardando...",
+  registerMilking: "Registrar Ordeño",
+  lastRecords: "Últimos Registros",
+  shiftSummary: "Resumen del Turno",
+  dailySummary: "Resumen del Día",
+  dailyTotal: "Total del Día",
+  totalAnimals: "Total de animales",
+  milkedAnimals: "Animales ordeñados",
+  totalLiters: "Total litros",
+  averageAnimal: "Promedio/animal",
+  unit: "Unidad",
+  litersL: "Litros (L)",
+  kilogramsKG: "Kilogramos (KG)",
+  poundsLB: "Libras (LB)",
+  density: "Densidad",
+  buyerText: "Comprador",
+  notConfigured: "No configurado",
+  notFound: "No encontrado",
+  recordedFor: "registrados para",
+  animals: "animales",
+
+  // MilkPrices específico
+  pricesTitle: "Precios de Leche",
+  managePricesAndBuyers: "Gestiona los precios y compradores",
+  newPrice: "Nuevo Precio",
+  newBuyer: "Nuevo Comprador",
+  currentPriceLabel: "Precio Actual",
+  currentBuyerLabel: "Comprador Actual",
+  activeBuyers: "Compradores Activos",
+  from: "Desde",
+  of: "de",
+  totalLabel: "total",
+  priceHistoryLabel: "Historial de Precios",
+  dateLabel: "Fecha",
+  buyerLabel: "Comprador",
+  pricePerLiterLabel: "Precio/Litro",
+  bonusLabel: "Bonificación",
+  statusLabel: "Estado",
+  current: "Actual",
+  historical: "Histórico",
+  buyersLabel: "Compradores",
+  nameLabel: "Nombre",
+  contactLabel: "Contacto",
+  phoneLabel: "Teléfono",
+  active: "Activo",
+  noContactInfo: "Sin información de contacto",
+
+  // MilkPriceForm específico
+  newMilkPrice: "Nuevo Precio de Leche",
+  priceInformation: "Información del Precio",
+  buyerOptional: "Comprador (opcional)",
+  pricePerLiterRequired: "Precio por litro *",
+  dateRequired: "Fecha *",
+  savePriceLabel: "Guardar Precio",
+  cancelLabel: "Cancelar",
+  priceRegistered: "Precio registrado",
+  priceSavedCorrectly: "Se guardó el precio correctamente",
+  couldNotRegisterPrice: "No se pudo registrar el precio",
+
+  // BuyerForm específico
+  newBuyerLabel: "Nuevo Comprador",
+  buyerInformation: "Información del Comprador",
+  nameRequired: "Nombre *",
+  code: "Código",
+  nameRequiredError: "Nombre requerido",
+  enterBuyerName: "Ingresa el nombre del comprador",
+  buyerCreated: "Comprador creado",
+  buyerSavedCorrectly: "Se guardó el comprador correctamente",
+  couldNotCreateBuyer: "No se pudo crear el comprador",
+  saveBuyerLabel: "Guardar Comprador",
+
+  // Additional
+  unknownBuyer: "Comprador desconocido",
+  title: "Registro de Ordeño",
+};

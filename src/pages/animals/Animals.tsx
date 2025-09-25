@@ -1,0 +1,290 @@
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { 
+  Plus, 
+  Search, 
+  Filter,
+  Eye,
+  Edit,
+  Milk
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { listAnimals } from "@/services/animals";
+import { useTranslation } from "@/hooks/useTranslation";
+
+export default function Animals() {
+  const { t } = useTranslation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const { data } = useQuery({
+    queryKey: ["animals", { q: searchTerm }],
+    queryFn: () => listAnimals({ q: searchTerm || undefined }),
+  });
+
+  const items = data?.items ?? [];
+  const filteredAnimals = useMemo(() => {
+    return items.filter((animal) => {
+      const name = (animal.name ?? "").toLowerCase();
+      const tag = (animal.tag ?? "").toLowerCase();
+      const breed = (animal.breed ?? "").toLowerCase();
+      const matchesSearch = name.includes(searchTerm.toLowerCase()) ||
+        tag.includes(searchTerm.toLowerCase()) ||
+        breed.includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || animal.status.toLowerCase() === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [items, searchTerm, statusFilter]);
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      active: 'default',
+      sold: 'secondary',
+      dead: 'destructive',
+      culled: 'outline'
+    } as const;
+
+    const labels = {
+      active: t('animals.active'),
+      sold: t('animals.sold'),
+      dead: t('animals.dead'),
+      culled: t('animals.culled')
+    };
+
+    return (
+      <Badge variant={variants[status as keyof typeof variants] ?? 'outline'}>
+        {labels[status as keyof typeof labels] ?? status}
+      </Badge>
+    );
+  };
+
+  const calculateAge = (birthDate: string) => {
+    const birth = new Date(birthDate);
+    const now = new Date();
+    const ageInMonths = (now.getFullYear() - birth.getFullYear()) * 12 + 
+                       (now.getMonth() - birth.getMonth());
+    
+    if (ageInMonths < 12) {
+      return `${ageInMonths} ${t('animals.months')}`;
+    } else {
+      const years = Math.floor(ageInMonths / 12);
+      const remainingMonths = ageInMonths % 12;
+      return `${years}a ${remainingMonths}m`;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{t('animals.title')}</h1>
+          <p className="text-muted-foreground">
+            {t('animals.subtitle')}
+          </p>
+        </div>
+        <Button asChild className="flex items-center gap-2">
+          <Link to="/animals/new">
+            <Plus className="h-4 w-4" />
+            {t('animals.newAnimal')}
+          </Link>
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Milk className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-2xl font-bold">{items.filter(a => a.status.toLowerCase() === 'active').length}</p>
+                <p className="text-sm text-muted-foreground">{t('animals.inProductionStats')}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-2xl font-bold">{items.filter(a => a.status.toLowerCase() === 'sold').length}</p>
+              <p className="text-sm text-muted-foreground">{t('animals.soldStats')}</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-2xl font-bold">{items.filter(a => a.status.toLowerCase() === 'culled').length}</p>
+              <p className="text-sm text-muted-foreground">{t('animals.culledStats')}</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-2xl font-bold">{items.length}</p>
+              <p className="text-sm text-muted-foreground">{t('animals.totalStats')}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('animals.filters')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('animals.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+            >
+              <option value="all">{t('animals.allStatuses')}</option>
+              <option value="active">{t('animals.activeFilter')}</option>
+              <option value="sold">{t('animals.soldFilter')}</option>
+              <option value="culled">{t('animals.culledFilter')}</option>
+              <option value="dead">{t('animals.deadFilter')}</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Animals Table - Desktop */}
+      <Card className="hidden md:block">
+        <CardHeader>
+          <CardTitle>{t('animals.animalsList')}</CardTitle>
+          <CardDescription>
+            {filteredAnimals.length} {t('animals.animalsFound')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tag</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('animals.breed')}</TableHead>
+                  <TableHead>{t('animals.age')}</TableHead>
+                  <TableHead>{t('animals.lot')}</TableHead>
+                  <TableHead>{t('animals.status')}</TableHead>
+                  <TableHead>{t('common.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAnimals.map((animal) => (
+                  <TableRow key={animal.id}>
+                    <TableCell className="font-medium">{animal.tag}</TableCell>
+                    <TableCell>{animal.name}</TableCell>
+                    <TableCell>{animal.breed}</TableCell>
+                    <TableCell>{calculateAge(animal.birth_date)}</TableCell>
+                    <TableCell>{animal.lot}</TableCell>
+                    <TableCell>{getStatusBadge(animal.status?.toLowerCase?.() ?? "")}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/animals/${animal.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/animals/${animal.id}/edit`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Animals Cards - Mobile */}
+      <div className="md:hidden space-y-4">
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            {filteredAnimals.length} {t('animals.animalsFound')}
+          </p>
+        </div>
+        {filteredAnimals.map((animal) => (
+          <Card key={animal.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">{animal.tag}</span>
+                    {getStatusBadge(animal.status?.toLowerCase?.() ?? "")}
+                  </div>
+                  <h3 className="font-medium">{animal.name}</h3>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to={`/animals/${animal.id}`}>
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to={`/animals/${animal.id}/edit`}>
+                      <Edit className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <div>{t('animals.breed')}: {animal.breed}</div>
+                <div>{t('animals.lot')}: {animal.lot}</div>
+                <div className="col-span-2">{t('animals.age')}: {calculateAge(animal.birth_date)}</div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {filteredAnimals.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">{t('animals.noAnimalsFound')}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile FAB */}
+      <Button 
+        asChild
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden"
+        size="icon"
+      >
+        <Link to="/animals/new">
+          <Plus className="h-6 w-6" />
+        </Link>
+      </Button>
+    </div>
+  );
+}

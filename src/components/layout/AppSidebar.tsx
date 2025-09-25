@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Sidebar,
   SidebarContent,
@@ -9,66 +9,61 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { 
-  LayoutDashboard, 
-  Milk, 
-  Heart, 
-  DollarSign, 
+import {
+  LayoutDashboard,
+  DollarSign,
   FileText,
   Plus,
   User,
   Beef
 } from "lucide-react";
 
-const navigationItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Animales", url: "/animals", icon: Beef },
-  { title: "Registro Ordeño", url: "/milk/collect", icon: Plus },
-  { title: "Precios Leche", url: "/milk/prices", icon: DollarSign },
-  { title: "Salud", url: "/health", icon: Heart },
-  { title: "Reportes", url: "/reports", icon: FileText },
-  { title: "Perfil", url: "/profile", icon: User },
-];
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const { t } = useTranslation();
+
+  const navigationItems = [
+    { titleKey: "common.dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { titleKey: "animals.title", url: "/animals", icon: Beef },
+    { titleKey: "milk.title", url: "/milk/collect", icon: Plus },
+    { titleKey: "milk.milkPricesTitle", url: "/milk/prices", icon: DollarSign },
+    { titleKey: "dashboard.reports", url: "/reports", icon: FileText },
+    { titleKey: "common.profile", url: "/profile", icon: User },
+  ];
   const collapsed = state === "collapsed";
 
-  const isActive = (path: string) => currentPath === path;
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent>
         <div className="p-4">
           <h2 className={`font-bold text-primary ${collapsed ? 'text-xs text-center' : 'text-lg'}`}>
-            {collapsed ? 'FL' : 'Finca Lechera'}
+{collapsed ? 'FL' : t("auth.loginTitle")}
           </h2>
         </div>
         
         <SidebarGroup>
-          <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("common.dashboard")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => 
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
                         `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                          isActive 
-                            ? 'bg-primary text-primary-foreground' 
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
                             : 'hover:bg-accent hover:text-accent-foreground'
                         }`
                       }
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span>{t(item.titleKey)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
