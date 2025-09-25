@@ -26,7 +26,7 @@ function getValidTenantHeader(): string {
   const validHeaderRegex = /^[a-zA-Z0-9\-_]+$/;
 
   if (!validHeaderRegex.test(sanitized)) {
-    console.warn(`🔧 WARNING: Invalid TENANT_HEADER "${sanitized}", using default "X-Tenant-ID"`);
+    console.warn(`Invalid TENANT_HEADER "${sanitized}", using default "X-Tenant-ID"`);
     return "X-Tenant-ID";
   }
 

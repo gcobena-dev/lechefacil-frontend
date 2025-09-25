@@ -43,14 +43,8 @@ export async function apiFetch<T>(
 
   if (options.withTenant) {
     const tenantId = getTenantId();
-    if (tenantId) {
-      console.log('🔧 DEBUG: Adding tenant header:', TENANT_HEADER, '=', tenantId);
-      headers[TENANT_HEADER] = tenantId;
-    }
+    if (tenantId) headers[TENANT_HEADER] = tenantId;
   }
-
-  console.log('🔧 DEBUG: Final headers:', headers);
-  console.log('🔧 DEBUG: URL:', url.toString());
 
   let res = await fetch(url.toString(), {
     method: options.method ?? "GET",

@@ -50,19 +50,6 @@ export default function Dashboard() {
     : (userRoleRaw as 'ADMIN' | 'WORKER' | 'VET') || 'ADMIN';
   const userId = useUserId();
 
-  // 🔧 DEBUG: Agregar información de debug para producción
-  if (typeof window !== 'undefined') {
-    console.log('=== DASHBOARD DEBUG INFO ===');
-    console.log('API_URL:', import.meta.env.VITE_API_URL);
-    console.log('RUNTIME API_URL:', window.__APP_CONFIG__?.VITE_API_URL);
-    console.log('TENANT_HEADER env:', import.meta.env.VITE_TENANT_HEADER);
-    console.log('RUNTIME TENANT_HEADER:', window.__APP_CONFIG__?.VITE_TENANT_HEADER);
-    console.log('Token exists:', !!localStorage.getItem('lf_token'));
-    console.log('Tenant ID:', localStorage.getItem('lf_tenant_id'));
-    console.log('User Role:', userRole);
-    console.log('User ID:', userId);
-    console.log('============================');
-  }
 
   // Get dashboard data based on user role
   const {
