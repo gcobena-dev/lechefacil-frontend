@@ -9,7 +9,31 @@ const RUNTIME_API_URL = (typeof window !== 'undefined' && window.__APP_CONFIG__?
 const RUNTIME_TENANT_HEADER = (typeof window !== 'undefined' && window.__APP_CONFIG__?.VITE_TENANT_HEADER) as string | undefined;
 
 export const API_URL = RUNTIME_API_URL ?? (import.meta.env.VITE_API_URL as string | undefined);
-export const TENANT_HEADER = (RUNTIME_TENANT_HEADER ?? (import.meta.env.VITE_TENANT_HEADER as string | undefined)) ?? "X-Tenant-ID";
+// Función para validar y sanitizar el nombre del header
+function getValidTenantHeader(): string {
+  const envHeader = RUNTIME_TENANT_HEADER ?? (import.meta.env.VITE_TENANT_HEADER as string | undefined);
+
+  // Si no hay header configurado, usar el default
+  if (!envHeader) {
+    return "X-Tenant-ID";
+  }
+
+  // Sanitizar: remover espacios y caracteres inválidos
+  const sanitized = envHeader.trim();
+
+  // Validar que el header tenga un formato válido
+  // Los headers HTTP solo pueden contener letras, números, guiones y algunos símbolos
+  const validHeaderRegex = /^[a-zA-Z0-9\-_]+$/;
+
+  if (!validHeaderRegex.test(sanitized)) {
+    console.warn(`🔧 WARNING: Invalid TENANT_HEADER "${sanitized}", using default "X-Tenant-ID"`);
+    return "X-Tenant-ID";
+  }
+
+  return sanitized;
+}
+
+export const TENANT_HEADER = getValidTenantHeader();
 
 const TOKEN_KEY = "lf_token";
 const TENANT_ID_KEY = "lf_tenant_id";
