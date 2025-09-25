@@ -52,30 +52,32 @@ export function useAlerts(priority: string = 'all') {
   });
 }
 
-export function useWorkerProgress(userId: string, date: string) {
+export function useWorkerProgress(userId: string, date: string, enabled: boolean = true) {
   return useQuery<WorkerProgress>({
     queryKey: ['dashboard', 'worker-progress', userId, date],
     queryFn: () => getWorkerProgress(userId, date),
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 2 * 60 * 1000, // Auto-refresh every 2 minutes
-    enabled: !!userId, // Only fetch if userId is provided
+    enabled: enabled && !!userId, // Only fetch if enabled and userId is provided
   });
 }
 
-export function useVetAlerts(date: string) {
+export function useVetAlerts(date: string, enabled: boolean = true) {
   return useQuery<VetAlerts>({
     queryKey: ['dashboard', 'vet-alerts', date],
     queryFn: () => getVetAlerts(date),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes
+    enabled: enabled,
   });
 }
 
-export function useAdminOverview(date: string) {
+export function useAdminOverview(date: string, enabled: boolean = true) {
   return useQuery<AdminOverview>({
     queryKey: ['dashboard', 'admin-overview', date],
     queryFn: () => getAdminOverview(date),
     staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: enabled,
   });
 }
 
@@ -89,10 +91,10 @@ export function useDashboardData(userRole: 'ADMIN' | 'WORKER' | 'VET', userId?: 
   const dailyProgress = useDailyProgress(today);
   const alerts = useAlerts();
 
-  // Role-specific data
-  const workerProgress = useWorkerProgress(userId || '', today);
-  const vetAlerts = useVetAlerts(today);
-  const adminOverview = useAdminOverview(today);
+  // Role-specific data - ALWAYS call hooks, but conditionally enable them
+  const workerProgress = useWorkerProgress(userId || '', today, userRole === 'WORKER');
+  const vetAlerts = useVetAlerts(today, userRole === 'VET');
+  const adminOverview = useAdminOverview(today, userRole === 'ADMIN');
 
   return {
     // Common data
@@ -101,10 +103,10 @@ export function useDashboardData(userRole: 'ADMIN' | 'WORKER' | 'VET', userId?: 
     dailyProgress,
     alerts,
 
-    // Role-specific data
-    workerProgress: userRole === 'WORKER' ? workerProgress : undefined,
-    vetAlerts: userRole === 'VET' ? vetAlerts : undefined,
-    adminOverview: userRole === 'ADMIN' ? adminOverview : undefined,
+    // Role-specific data - now always include the hook result
+    workerProgress,
+    vetAlerts,
+    adminOverview,
 
     // Loading states
     isLoading: dailyKPIs.isLoading || topProducers.isLoading || dailyProgress.isLoading,
@@ -118,9 +120,9 @@ export function useDashboardData(userRole: 'ADMIN' | 'WORKER' | 'VET', userId?: 
       topProducers: topProducers.error,
       dailyProgress: dailyProgress.error,
       alerts: alerts.error,
-      workerProgress: workerProgress?.error,
-      vetAlerts: vetAlerts?.error,
-      adminOverview: adminOverview?.error,
+      workerProgress: workerProgress.error,
+      vetAlerts: vetAlerts.error,
+      adminOverview: adminOverview.error,
     }
   };
 }

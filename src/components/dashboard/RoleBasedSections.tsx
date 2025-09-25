@@ -7,7 +7,6 @@ import {
   Heart,
   TrendingUp,
   TrendingDown,
-  Calendar,
   AlertTriangle,
   FileText,
   DollarSign,
@@ -26,10 +25,10 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
   const { t } = useTranslation();
   const today = new Date().toISOString().split('T')[0];
 
-  // Fetch role-specific data
-  const workerProgress = useWorkerProgress(userId || '', today);
-  const vetAlerts = useVetAlerts(today);
-  const adminOverview = useAdminOverview(today);
+  // Fetch role-specific data - ALWAYS call hooks, but conditionally enable them
+  const workerProgress = useWorkerProgress(userId || '', today, userRole === 'WORKER');
+  const vetAlerts = useVetAlerts(today, userRole === 'VET');
+  const adminOverview = useAdminOverview(today, userRole === 'ADMIN');
   if (userRole === 'WORKER') {
     return (
       <div className="space-y-6">

@@ -148,7 +148,6 @@ export default {
   userRemovedDescription: "El usuario ha sido eliminado del tenant exitosamente",
   couldNotRemoveUser: "No se pudo eliminar el usuario",
   noUsersFound: "No se encontraron usuarios",
-  noResults: "Sin resultados",
   page: "Página",
   of: "de",
   itemsPerPage: "elementos por página",
@@ -164,7 +163,6 @@ export default {
   returnToHome: "Volver al Inicio",
 
   // Acciones comunes
-  actions: "Acciones",
 
   // Role-based access
   accessDenied: "Acceso Denegado",

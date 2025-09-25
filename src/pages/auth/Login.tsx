@@ -20,15 +20,17 @@ export default function Login() {
 
   // Simple check: token presence
   const isAuthenticated = Boolean(localStorage.getItem('lf_token'));
-  
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
+  // ✅ IMPORTANTE: Todos los hooks ANTES del return temprano
   const { mutateAsync: doLogin } = useMutation({
     mutationFn: (vars: { email: string; password: string }) =>
       apiLogin({ email: vars.email, password: vars.password }),
   });
+
+  // ✅ Return temprano DESPUÉS de todos los hooks
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
