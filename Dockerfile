@@ -10,7 +10,12 @@ COPY . .
 RUN npm run build
 
 FROM nginx:stable-alpine AS runner
+RUN apk add --no-cache gettext
 COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy runtime env template and entrypoint
+COPY public/env.template.js /usr/share/nginx/html/env.template.js
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 # Simple default nginx config suitable for single-page apps
 RUN printf '%s\n' \
     'server {' \
@@ -24,4 +29,4 @@ RUN printf '%s\n' \
     '}' \
     > /etc/nginx/conf.d/default.conf
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -29,12 +29,8 @@ jobs:
         run: |
           IMAGE=$(echo "$IMAGE_SHA" | tr '[:upper:]' '[:lower:]')
           LATEST=$(echo "$IMAGE_LATEST" | tr '[:upper:]' '[:lower:]')
-          if [ -z "${{ secrets.FE_VITE_API_URL }}" ]; then
-            echo "FE_VITE_API_URL secret is not set. Set it in GitHub repo secrets to configure API URL."
-          fi
-          docker build \
-            --build-arg VITE_API_URL='${{ secrets.FE_VITE_API_URL }}' \
-            -t "$IMAGE" -t "$LATEST" .
+          # Build without baking VITE_API_URL; container will read it at runtime from Railway env
+          docker build -t "$IMAGE" -t "$LATEST" .
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
           echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
 
