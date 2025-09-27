@@ -109,6 +109,8 @@ export default {
   animalUpdatedMsg: "Animal actualizado",
   savedSuccessfully: "guardado correctamente",
   couldNotSave: "No se pudo guardar el animal",
+  statusRequiredTitle: "Estado requerido",
+  statusRequiredDesc: "Debes seleccionar un estado para continuar.",
 
   // Detalle
   loading: "Cargando...",

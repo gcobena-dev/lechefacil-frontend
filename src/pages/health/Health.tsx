@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Heart, Plus, AlertTriangle, CheckCircle } from "lucide-react";
-import { mockHealthEvents, formatDate } from "@/lib/mock-data";
+import { mockHealthEvents } from "@/lib/mock-data";
+import { formatDate } from "@/utils/format";
 
 export default function Health() {
   const [healthEvents] = useState(mockHealthEvents);

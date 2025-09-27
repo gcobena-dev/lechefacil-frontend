@@ -102,7 +102,10 @@ export default function TenantSettings() {
   }
 
   const selectedBuyer = buyers.find(b => b.id === formData.default_buyer_id);
-  const currentPrice = milkPrices.length > 0 ? milkPrices[0]?.price_per_l : formData.default_price_per_l;
+  // Ensure we show the most recent price for the selected buyer; fallback to configured default
+  const sortedBuyerPrices = [...milkPrices].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const latestBuyerPrice = sortedBuyerPrices[0]?.price_per_l;
+  const currentPrice = latestBuyerPrice ?? formData.default_price_per_l;
 
   return (
     <Card>
@@ -176,7 +179,7 @@ export default function TenantSettings() {
                   {t("common.defaultPricePerLiter")}
                 </Label>
                 <p className="text-sm">
-                  {currentPrice} {formData.default_currency}
+                  {currentPrice !== undefined && currentPrice !== null ? Number(currentPrice).toFixed(2) : '-'} {formData.default_currency}
                 </p>
               </div>
             </div>
@@ -280,7 +283,7 @@ export default function TenantSettings() {
                       <SelectValue placeholder={t("common.selectOption")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {milkPrices.map(price => (
+                      {sortedBuyerPrices.map(price => (
                         <SelectItem key={price.id} value={parseFloat(price.price_per_l).toString()}>
                           {parseFloat(price.price_per_l).toFixed(2)} {formData.default_currency} - {new Date(price.date).toLocaleDateString()}
                         </SelectItem>

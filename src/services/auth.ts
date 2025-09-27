@@ -10,6 +10,8 @@ export async function login(payload: {
   return apiFetch<LoginResponse>("/api/v1/auth/login", {
     method: "POST",
     body: payload,
+    // Important: allow backend to set HttpOnly refresh cookie
+    withCredentials: true,
   });
 }
 

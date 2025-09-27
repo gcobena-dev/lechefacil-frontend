@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getTodayLocalDateString } from '@/utils/dateUtils';
+import { getTodayLocalDateString, getLocalDateTimeInputValue } from '@/utils/dateUtils';
 
 export interface MilkCollectionFormData {
   date: string;
@@ -32,7 +32,7 @@ export function useMilkCollectionForm(billing?: any) {
   });
 
   const [deliveryFormData, setDeliveryFormData] = useState<DeliveryFormData>({
-    dateTime: new Date().toISOString().slice(0, 16),
+    dateTime: getLocalDateTimeInputValue(),
     volumeL: '',
     buyerId: '',
     notes: ''
@@ -88,7 +88,7 @@ export function useMilkCollectionForm(billing?: any) {
 
   const resetDeliveryForm = () => {
     setDeliveryFormData({
-      dateTime: new Date().toISOString().slice(0, 16),
+      dateTime: getLocalDateTimeInputValue(),
       volumeL: '',
       buyerId: billing?.default_buyer_id ?? '',
       notes: ''

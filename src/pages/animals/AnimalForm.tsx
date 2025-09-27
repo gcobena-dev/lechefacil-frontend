@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createAnimal, getAnimal, updateAnimal } from "@/services/animals";
+import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses } from "@/services/animals";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface AnimalFormData {
@@ -18,7 +19,7 @@ interface AnimalFormData {
   breed: string;
   birthDate: string;
   lot: string;
-  status: 'active' | 'sold' | 'culled';
+  statusId: string;
   notes: string;
 }
 
@@ -35,7 +36,7 @@ export default function AnimalForm() {
     breed: "",
     birthDate: "",
     lot: "",
-    status: "active",
+    statusId: "",
     notes: ""
   });
 
@@ -43,6 +44,11 @@ export default function AnimalForm() {
     queryKey: ["animal", id],
     queryFn: () => getAnimal(id as string),
     enabled: isEditing,
+  });
+
+  const { data: animalStatuses = [] } = useQuery({
+    queryKey: ["animal-statuses"],
+    queryFn: () => getAnimalStatuses('es'),
   });
 
   useEffect(() => {
@@ -53,7 +59,7 @@ export default function AnimalForm() {
         breed: existing.breed ?? "",
         birthDate: existing.birth_date ? String(existing.birth_date).slice(0, 10) : "",
         lot: existing.lot ?? "",
-        status: (existing.status as any) ?? "active",
+        statusId: (existing as any).status_id ?? "",
         notes: "",
       });
     }
@@ -68,6 +74,11 @@ export default function AnimalForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Require status selection for both create and edit
+    if (!formData.statusId) {
+      toast({ title: t('animals.statusRequiredTitle'), description: t('animals.statusRequiredDesc'), variant: 'destructive', duration: 4000 });
+      return;
+    }
     try {
       if (isEditing && existing) {
         const body = {
@@ -76,7 +87,7 @@ export default function AnimalForm() {
           breed: formData.breed || null,
           birth_date: formData.birthDate || null,
           lot: formData.lot || null,
-          status: formData.status || null,
+          status_id: formData.statusId || null,
         };
         await doUpdate({ id: id as string, body });
       } else {
@@ -86,7 +97,7 @@ export default function AnimalForm() {
           breed: formData.breed || null,
           birth_date: formData.birthDate || null,
           lot: formData.lot || null,
-          status: formData.status || undefined,
+          status_id: formData.statusId || undefined,
         };
         await doCreate(body);
       }
@@ -180,15 +191,33 @@ export default function AnimalForm() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="status">{t('animals.status')}</Label>
-                <Select value={formData.status} onValueChange={(value: any) => handleInputChange("status", value)}>
+                <Label htmlFor="status">{t('animals.status')} *</Label>
+                <Select value={formData.statusId} onValueChange={(value: any) => handleInputChange("statusId", value)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder={t('animals.status')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">{t('animals.inProduction')}</SelectItem>
-                    <SelectItem value="sold">{t('animals.sold')}</SelectItem>
-                    <SelectItem value="culled">{t('animals.culled')}</SelectItem>
+                    {animalStatuses.map((status) => (
+                      <SelectPrimitive.Item
+                        key={status.id}
+                        value={status.id}
+                        className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                          <SelectPrimitive.ItemIndicator>
+                            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                          </SelectPrimitive.ItemIndicator>
+                        </span>
+                        <div className="flex flex-col">
+                          <SelectPrimitive.ItemText>{status.name}</SelectPrimitive.ItemText>
+                          {status.description && (
+                            <div className="text-xs text-muted-foreground max-w-[260px]">
+                              {status.description}
+                            </div>
+                          )}
+                        </div>
+                      </SelectPrimitive.Item>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

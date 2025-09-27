@@ -17,6 +17,19 @@ export function getTodayLocalDateString(): string {
 }
 
 /**
+ * Build a local datetime string suitable for <input type="datetime-local">
+ * Format: YYYY-MM-DDTHH:mm in the user's local timezone
+ */
+export function getLocalDateTimeInputValue(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d}T${hh}:${mm}`;
+}
+
+/**
  * Get date range for common periods in local timezone
  */
 export function getLocalDateRange(period: 'lastWeek' | 'lastMonth' | 'last3Months' | 'thisYear'): {

@@ -20,7 +20,8 @@ import {
   Calendar,
   MapPin
 } from "lucide-react";
-import { mockMilkCollections, mockHealthEvents, formatCurrency, formatDate } from "@/lib/mock-data";
+import { mockMilkCollections, mockHealthEvents, formatCurrency } from "@/lib/mock-data";
+import { formatDate } from "@/utils/format";
 import { useQuery } from "@tanstack/react-query";
 import { getAnimal } from "@/services/animals";
 import { useTranslation } from "@/hooks/useTranslation";

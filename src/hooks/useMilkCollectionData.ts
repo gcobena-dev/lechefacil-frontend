@@ -9,16 +9,13 @@ import { listMilkDeliveries } from "@/services/milkDeliveries";
 import { getTodayLocalDateString, getLocalDateString } from '@/utils/dateUtils';
 
 export function useMilkCollectionData(formData: { date: string; buyerId: string }) {
-  // Data queries
+  // Data queries - Only fetch lactating animals for milk collection
   const { data: animalsData } = useQuery({
-    queryKey: ["animals", { q: undefined }],
-    queryFn: () => listAnimals({})
+    queryKey: ["animals", { status_codes: "LACTATING" }],
+    queryFn: () => listAnimals({ status_codes: "LACTATING" })
   });
   const animals = animalsData?.items ?? [];
-  const activeAnimals = useMemo(() =>
-    animals.filter(a => (a.status ?? "").toLowerCase() === 'active'),
-    [animals]
-  );
+  const activeAnimals = animals; // All animals are already filtered to lactating
 
   const { data: buyers = [] } = useQuery({
     queryKey: ["buyers"],

@@ -42,7 +42,7 @@ export default {
   milkManagementSystem: "Sistema de Gestión Lechera",
 
   // Configuración de tenant
-  tenantSettings: "Configuración del Tenant",
+  tenantSettings: "Configuración de la Finca",
   tenantDefaults: "Valores por Defecto",
   defaultBuyer: "Comprador por Defecto",
   defaultDensity: "Densidad de Producción por Defecto (kg)",
@@ -94,6 +94,9 @@ export default {
   milkingNotes: "Observaciones sobre el ordeño",
   noRecordsForDate: "No hay registros para la fecha seleccionada",
   noDeliveriesForDate: "No hay entregas para la fecha seleccionada",
+  searchByNameOrTag: "Buscar por nombre o número...",
+  noAnimalsAvailable: "No hay animales disponibles",
+  showingResults: "Mostrando {{start}}-{{end}} de {{total}} resultados",
 
   // Configuración de perfil
   profileConfigTitle: "Configuración del Perfil",

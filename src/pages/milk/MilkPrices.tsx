@@ -11,7 +11,8 @@ import { DollarSign, Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listMilkPrices } from "@/services/milkPrices";
 import { listBuyers } from "@/services/buyers";
-import { formatCurrency, formatDate } from "@/lib/mock-data";
+import { formatCurrency } from "@/lib/mock-data";
+import { formatDateOnly as formatDate } from "@/utils/format";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function MilkPrices() {
@@ -26,10 +27,14 @@ export default function MilkPrices() {
   });
 
   const prices = pricesData ?? [];
+  // Order by date descending so index 0 is the most recent
+  const sortedPrices = useMemo(() => {
+    return [...prices].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [prices]);
   const buyers = buyersData ?? [];
 
-  const currentPrice = prices[0];
-  const prevPrice = prices[1];
+  const currentPrice = sortedPrices[0];
+  const prevPrice = sortedPrices[1];
   const priceChange = currentPrice && prevPrice
     ? parseFloat(currentPrice.price_per_l) - parseFloat(prevPrice.price_per_l)
     : 0;
@@ -118,7 +123,7 @@ export default function MilkPrices() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {prices.map((price, index) => (
+                {sortedPrices.map((price, index) => (
                   <TableRow key={index}>
                     <TableCell>{formatDate(price.date)}</TableCell>
                     <TableCell>{buyers.find(b => b.id === price.buyer_id)?.name || "N/A"}</TableCell>
@@ -140,7 +145,7 @@ export default function MilkPrices() {
       {/* Price History - Mobile */}
       <div className="md:hidden space-y-4">
         <h2 className="text-lg font-semibold">{t('milk.priceHistoryLabel')}</h2>
-        {prices.map((price, index) => (
+        {sortedPrices.map((price, index) => (
           <Card key={index}>
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-2">

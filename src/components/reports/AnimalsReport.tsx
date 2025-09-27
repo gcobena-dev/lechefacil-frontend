@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Download, Filter, Activity, CheckCircle, XCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { generateAnimalsReport, downloadPDFReport, type ReportRequest, type AnimalsReportData } from "@/services/reports";
+import { getAnimalStatuses } from "@/services/animals";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -23,6 +25,11 @@ export default function AnimalsReport() {
   const [activeTab, setActiveTab] = useState("summary");
   const [reportData, setReportData] = useState<AnimalsReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { data: animalStatuses = [] } = useQuery({
+    queryKey: ["animal-statuses"],
+    queryFn: () => getAnimalStatuses('es'),
+  });
 
   // Helper function to get local date in YYYY-MM-DD format
   const getLocalDateString = (date: Date): string => {
@@ -109,12 +116,35 @@ export default function AnimalsReport() {
     }));
   };
 
-  const getStatusBadge = (status: string) => {
-    const isActive = status.toLowerCase() === 'active' || status.toLowerCase() === 'activo';
+  const getStatusBadge = (statusLabelOrCode: string) => {
+    // Resolve incoming value (may be a code from backend in future, or a localized name from current report)
+    const resolved = animalStatuses.find(
+      s => s.code === statusLabelOrCode || s.name.toLowerCase() === statusLabelOrCode.toLowerCase()
+    );
+    const code = resolved?.code || statusLabelOrCode.toUpperCase();
+    const name = resolved?.name || statusLabelOrCode;
+    const description = resolved?.description;
+
+    // Visual style map per status code
+    const style: Record<string, { cls: string; active: boolean }> = {
+      CALF: { cls: "bg-sky-100 text-sky-800 border-sky-200", active: true },
+      HEIFER: { cls: "bg-indigo-100 text-indigo-800 border-indigo-200", active: true },
+      PREGNANT_HEIFER: { cls: "bg-purple-100 text-purple-800 border-purple-200", active: true },
+      LACTATING: { cls: "bg-green-100 text-green-800 border-green-200", active: true },
+      DRY: { cls: "bg-amber-100 text-amber-800 border-amber-200", active: true },
+      PREGNANT_DRY: { cls: "bg-orange-100 text-orange-800 border-orange-200", active: true },
+      BULL: { cls: "bg-slate-100 text-slate-800 border-slate-200", active: true },
+      SOLD: { cls: "bg-gray-100 text-gray-700 border-gray-200", active: false },
+      DEAD: { cls: "bg-red-100 text-red-800 border-red-200", active: false },
+      CULLED: { cls: "bg-rose-100 text-rose-800 border-rose-200", active: false },
+    };
+
+    const s = style[code] || { cls: "bg-zinc-100 text-zinc-800 border-zinc-200", active: false };
+
     return (
-      <Badge variant={isActive ? "default" : "secondary"} className="flex items-center gap-1">
-        {isActive ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-        {isActive ? t("common.active") : t("common.inactive")}
+      <Badge variant="outline" className={`flex items-center gap-1 border ${s.cls}`}>
+        {s.active ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+        <span title={description}>{name}</span>
       </Badge>
     );
   };

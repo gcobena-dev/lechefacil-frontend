@@ -11,8 +11,8 @@ export default function ConfigurationInfo() {
         <div>
           <p className="text-sm text-blue-800 font-medium mb-1">{t("milk.configuration")}</p>
           <div className="text-xs text-blue-700">
-            <p className="mb-1">Para cambiar unidad, densidad o comprador: <strong>Mi Perfil - Configuración del Tenant</strong></p>
-            <p>Para cambiar precios: <strong>{t("milk.milkPricesTitle")}</strong></p>
+            <p className="mb-1">{t("milk.configurationChangeUnit")} <strong>{t("milk.configurationMyProfile")}</strong></p>
+            <p>{t("milk.configurationChangePrices")} <strong>{t("milk.milkPricesTitle")}</strong></p>
           </div>
         </div>
       </div>

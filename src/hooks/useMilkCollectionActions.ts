@@ -49,9 +49,15 @@ export function useMilkCollectionActions(
     const calculatedLiters = convertToLiters(parseFloat(formData.inputValue), formData.inputUnit as any, parseFloat(formData.density));
 
     try {
+      // Build a local datetime for the selected date using current local time
+      const now = new Date();
+      const [y, m, d] = formData.date.split('-').map(Number);
+      const localDt = new Date(y, (m || 1) - 1, d || now.getDate(), now.getHours(), now.getMinutes());
+
       await doCreate({
         date: formData.date,
         shift: formData.shift as 'AM' | 'PM',
+        date_time: localDt.toISOString(),
         animal_id: formData.animalId,
         input_unit: unitMap[formData.inputUnit as keyof typeof unitMap] ?? 'l',
         input_quantity: parseFloat(formData.inputValue),
@@ -87,9 +93,14 @@ export function useMilkCollectionActions(
     }, 0);
 
     try {
+      const now = new Date();
+      const [y, m, d] = formData.date.split('-').map(Number);
+      const localDt = new Date(y, (m || 1) - 1, d || now.getDate(), now.getHours(), now.getMinutes());
+
       await doCreateBulk({
         date: formData.date,
         shift: formData.shift as 'AM' | 'PM',
+        date_time: localDt.toISOString(),
         input_unit: unitMap[formData.inputUnit as keyof typeof unitMap] ?? 'l',
         density: parseFloat(formData.density),
         buyer_id: formData.buyerId || null,

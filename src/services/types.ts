@@ -33,7 +33,10 @@ export interface AnimalResponse {
   breed: string | null;
   birth_date: string | null; // date
   lot: string | null;
-  status: string;
+  status_id?: UUID | null;
+  status_code?: string | null;
+  status?: string | null; // localized name
+  status_desc?: string | null; // localized description
   photo_url: string | null;
   created_at: string;
   updated_at: string;
@@ -45,6 +48,14 @@ export interface AnimalResponse {
 export interface AnimalsListResponse {
   items: AnimalResponse[];
   next_cursor?: string | null;
+}
+
+export interface AnimalStatusResponse {
+  id: UUID;
+  code: string;
+  name: string;
+  description: string;
+  is_system_default: boolean;
 }
 
 export interface BuyerResponse {
@@ -77,4 +88,3 @@ export interface MilkDeliveryResponse {
   created_at: string;
   updated_at: string;
 }
-

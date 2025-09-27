@@ -107,7 +107,9 @@ export default {
   total: "Total",
   animalsWithProduction: "animales con producción registrada",
   configuration: "Configuración",
-  configurationInfo: "Para cambiar unidad, densidad o comprador: Mi Perfil - Configuración del Tenant\nPara cambiar precios:",
+  configurationChangeUnit: "Para cambiar unidad, densidad o comprador:",
+  configurationMyProfile: "Mi Perfil - Configuración de la Finca",
+  configurationChangePrices: "Para cambiar precios:",
   optionalNotes: "Notas (Opcional)",
   registerBulkProduction: "Registrar Producción Bulk",
   saving: "Guardando...",
@@ -160,7 +162,7 @@ export default {
   // MilkPriceForm específico
   newMilkPrice: "Nuevo Precio de Leche",
   priceInformation: "Información del Precio",
-  buyerOptional: "Comprador (opcional)",
+  buyerRequired: "Comprador *",
   pricePerLiterRequired: "Precio por litro *",
   dateRequired: "Fecha *",
   savePriceLabel: "Guardar Precio",
@@ -168,6 +170,12 @@ export default {
   priceRegistered: "Precio registrado",
   priceSavedCorrectly: "Se guardó el precio correctamente",
   couldNotRegisterPrice: "No se pudo registrar el precio",
+  buyerRequiredTitle: "Comprador requerido",
+  buyerRequiredDescription: "Debes seleccionar un comprador para registrar un precio.",
+  noBuyersTitle: "No hay compradores",
+  noBuyersDescription: "Necesitas crear al menos un comprador para poder registrar precios.",
+  createBuyerCta: "Crear comprador",
+  noBuyersHelper: "No hay compradores disponibles. Crea uno para continuar.",
 
   // BuyerForm específico
   newBuyerLabel: "Nuevo Comprador",

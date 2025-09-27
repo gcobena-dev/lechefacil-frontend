@@ -35,6 +35,15 @@ export default function Animals() {
   });
 
   const items = data?.items ?? [];
+  const getStatusKeyFromCode = (code?: string) => {
+    const c = (code ?? '').toUpperCase();
+    if (["LACTATING", "DRY", "PREGNANT_DRY", "CALF", "HEIFER", "PREGNANT_HEIFER", "BULL"].includes(c)) return 'active';
+    if (c === 'SOLD') return 'sold';
+    if (c === 'CULLED') return 'culled';
+    if (c === 'DEAD') return 'dead';
+    return '';
+  };
+
   const filteredAnimals = useMemo(() => {
     return items.filter((animal) => {
       const name = (animal.name ?? "").toLowerCase();
@@ -43,12 +52,14 @@ export default function Animals() {
       const matchesSearch = name.includes(searchTerm.toLowerCase()) ||
         tag.includes(searchTerm.toLowerCase()) ||
         breed.includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || animal.status.toLowerCase() === statusFilter;
+      const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
+      const matchesStatus = statusFilter === "all" || statusKey === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [items, searchTerm, statusFilter]);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (statusOrCode: string, label?: string, desc?: string) => {
+    const statusKey = getStatusKeyFromCode(statusOrCode) || statusOrCode.toLowerCase();
     const variants = {
       active: 'default',
       sold: 'secondary',
@@ -63,15 +74,18 @@ export default function Animals() {
       culled: t('animals.culled')
     };
 
+    const text = label ?? labels[statusKey as keyof typeof labels] ?? statusKey;
     return (
-      <Badge variant={variants[status as keyof typeof variants] ?? 'outline'}>
-        {labels[status as keyof typeof labels] ?? status}
+      <Badge variant={variants[statusKey as keyof typeof variants] ?? 'outline'} title={desc ?? ''}>
+        {text}
       </Badge>
     );
   };
 
-  const calculateAge = (birthDate: string) => {
+  const calculateAge = (birthDate?: string | null) => {
+    if (!birthDate) return '-';
     const birth = new Date(birthDate);
+    if (isNaN(birth.getTime())) return '-';
     const now = new Date();
     const ageInMonths = (now.getFullYear() - birth.getFullYear()) * 12 + 
                        (now.getMonth() - birth.getMonth());
@@ -109,7 +123,7 @@ export default function Animals() {
             <div className="flex items-center gap-2">
               <Milk className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{items.filter(a => a.status.toLowerCase() === 'active').length}</p>
+                <p className="text-2xl font-bold">{items.filter(a => getStatusKeyFromCode((a as any).status_code ?? (a as any).status) === 'active').length}</p>
                 <p className="text-sm text-muted-foreground">{t('animals.inProductionStats')}</p>
               </div>
             </div>
@@ -119,7 +133,7 @@ export default function Animals() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{items.filter(a => a.status.toLowerCase() === 'sold').length}</p>
+              <p className="text-2xl font-bold">{items.filter(a => getStatusKeyFromCode((a as any).status_code ?? (a as any).status) === 'sold').length}</p>
               <p className="text-sm text-muted-foreground">{t('animals.soldStats')}</p>
             </div>
           </CardContent>
@@ -128,7 +142,7 @@ export default function Animals() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{items.filter(a => a.status.toLowerCase() === 'culled').length}</p>
+              <p className="text-2xl font-bold">{items.filter(a => getStatusKeyFromCode((a as any).status_code ?? (a as any).status) === 'culled').length}</p>
               <p className="text-sm text-muted-foreground">{t('animals.culledStats')}</p>
             </div>
           </CardContent>
@@ -203,9 +217,9 @@ export default function Animals() {
                     <TableCell className="font-medium">{animal.tag}</TableCell>
                     <TableCell>{animal.name}</TableCell>
                     <TableCell>{animal.breed}</TableCell>
-                    <TableCell>{calculateAge(animal.birth_date)}</TableCell>
+                    <TableCell>{calculateAge((animal as any).birth_date)}</TableCell>
                     <TableCell>{animal.lot}</TableCell>
-                    <TableCell>{getStatusBadge(animal.status?.toLowerCase?.() ?? "")}</TableCell>
+                    <TableCell>{getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" asChild>
@@ -242,7 +256,7 @@ export default function Animals() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold">{animal.tag}</span>
-                    {getStatusBadge(animal.status?.toLowerCase?.() ?? "")}
+                    {getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}
                   </div>
                   <h3 className="font-medium">{animal.name}</h3>
                 </div>

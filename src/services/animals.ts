@@ -1,7 +1,7 @@
 import { apiFetch } from "./client";
-import { AnimalResponse, AnimalsListResponse } from "./types";
+import { AnimalResponse, AnimalsListResponse, AnimalStatusResponse } from "./types";
 
-export async function listAnimals(params?: { cursor?: string; limit?: number; q?: string }) {
+export async function listAnimals(params?: { cursor?: string; limit?: number; q?: string; status_codes?: string }) {
   return apiFetch<AnimalsListResponse>("/api/v1/animals/", {
     withAuth: true,
     withTenant: true,
@@ -9,6 +9,7 @@ export async function listAnimals(params?: { cursor?: string; limit?: number; q?
       cursor: params?.cursor,
       limit: params?.limit,
       q: params?.q,
+      status_codes: params?.status_codes,
     },
   });
 }
@@ -26,7 +27,7 @@ export async function createAnimal(payload: {
   breed?: string | null;
   birth_date?: string | null; // YYYY-MM-DD
   lot?: string | null;
-  status?: string | null;
+  status_id?: string | null;
   photo_url?: string | null;
 }) {
   return apiFetch<AnimalResponse>("/api/v1/animals/", {
@@ -54,3 +55,12 @@ export async function deleteAnimal(id: string) {
   });
 }
 
+export async function getAnimalStatuses(lang: string = 'es') {
+  return apiFetch<AnimalStatusResponse[]>("/api/v1/animals/statuses/list", {
+    withAuth: true,
+    withTenant: true,
+    query: {
+      lang,
+    },
+  });
+}

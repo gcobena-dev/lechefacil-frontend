@@ -17,6 +17,7 @@ export async function apiFetch<T>(
     query?: Record<string, string | number | boolean | undefined | null>;
     withAuth?: boolean;
     withTenant?: boolean;
+    withCredentials?: boolean;
   } = {}
 ): Promise<T> {
   const baseUrl = requireApiUrl();
@@ -50,6 +51,7 @@ export async function apiFetch<T>(
     method: options.method ?? "GET",
     headers,
     body: options.body ? JSON.stringify(options.body) : undefined,
+    credentials: options.withCredentials ? "include" : undefined,
   });
 
   if (!res.ok) {
@@ -81,6 +83,7 @@ export async function apiFetch<T>(
           method: options.method ?? "GET",
           headers: retryHeaders,
           body: options.body ? JSON.stringify(options.body) : undefined,
+          credentials: options.withCredentials ? "include" : undefined,
         });
         if (!res.ok) {
           const err: ApiError = new Error(`HTTP ${res.status}`);

@@ -13,7 +13,7 @@ export async function listMilkPrices(params?: { date_from?: string; date_to?: st
   });
 }
 
-export async function createMilkPrice(payload: { date: string; price_per_l: string | number; currency?: string; buyer_id?: string | null }) {
+export async function createMilkPrice(payload: { date: string; price_per_l: string | number; currency?: string; buyer_id: string }) {
   return apiFetch<MilkPriceResponse>("/api/v1/milk-prices/", {
     method: "POST",
     withAuth: true,
@@ -38,4 +38,3 @@ export async function deleteMilkPrice(id: string) {
     withTenant: true,
   });
 }
-

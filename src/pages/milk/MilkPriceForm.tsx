@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { listBuyers } from "@/services/buyers";
 import { createMilkPrice } from "@/services/milkPrices";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface MilkPriceFormData {
   buyerId: string;
@@ -30,16 +31,28 @@ export default function MilkPriceForm() {
   });
 
   const { data: buyers = [] } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyers() });
+  const [showNoBuyersDialog, setShowNoBuyersDialog] = useState(false);
+
+  useEffect(() => {
+    if (buyers.length === 0) {
+      setShowNoBuyersDialog(true);
+    }
+  }, [buyers.length]);
   const { mutateAsync: doCreate, isPending } = useMutation({
     mutationFn: (vars: MilkPriceFormData) => createMilkPrice({
       date: vars.date,
       price_per_l: vars.pricePerL,
-      buyer_id: vars.buyerId || undefined,
+      buyer_id: vars.buyerId,
     }),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Frontend validation: require buyer selection
+    if (!formData.buyerId) {
+      toast({ title: t('milk.buyerRequiredTitle'), description: t('milk.buyerRequiredDescription'), variant: "destructive" });
+      return;
+    }
     try {
       await doCreate(formData);
       toast({ title: t('milk.priceRegistered'), description: t('milk.priceSavedCorrectly') });
@@ -55,6 +68,7 @@ export default function MilkPriceForm() {
   };
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/milk/prices")}>
@@ -70,8 +84,8 @@ export default function MilkPriceForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="buyer">{t('milk.buyerOptional')}</Label>
-              <Select value={formData.buyerId} onValueChange={(value: string) => handleInputChange("buyerId", value)}>
+              <Label htmlFor="buyer">{t('milk.buyerRequired')}</Label>
+              <Select value={formData.buyerId} onValueChange={(value: string) => handleInputChange("buyerId", value)} disabled={buyers.length === 0}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('milk.selectBuyer')} />
                 </SelectTrigger>
@@ -81,6 +95,9 @@ export default function MilkPriceForm() {
                   ))}
                 </SelectContent>
               </Select>
+              {buyers.length === 0 && (
+                <p className="text-sm text-muted-foreground">{t('milk.noBuyersHelper')}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -127,5 +144,20 @@ export default function MilkPriceForm() {
         </CardContent>
       </Card>
     </div>
+
+    {/* No buyers dialog */}
+    <Dialog open={showNoBuyersDialog} onOpenChange={setShowNoBuyersDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('milk.noBuyersTitle')}</DialogTitle>
+          <DialogDescription>{t('milk.noBuyersDescription')}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={() => navigate('/buyers/new')}>{t('milk.createBuyerCta')}</Button>
+          <Button variant="outline" onClick={() => navigate('/milk/prices')}>{t('milk.cancelLabel')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

@@ -9,6 +9,7 @@ import { Calculator, CheckCircle } from "lucide-react";
 import { convertToLiters } from "@/lib/mock-data";
 import { useTranslation } from "@/hooks/useTranslation";
 import BulkAnimalSelection from "./BulkAnimalSelection";
+import SearchableAnimalSelect from "./SearchableAnimalSelect";
 import ConfigurationInfo from "./ConfigurationInfo";
 import type { MilkCollectionFormData } from "@/hooks/useMilkCollectionForm";
 
@@ -123,18 +124,12 @@ export default function MilkProductionForm({
               /* Individual Mode */
               <div className="space-y-2">
                 <Label htmlFor="animal">{t("milk.animal")}</Label>
-                <Select value={formData.animalId} onValueChange={(value) => onFormDataChange({ animalId: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("common.selectAnimal")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeAnimals.map(animal => (
-                      <SelectItem key={animal.id} value={animal.id}>
-                        {animal.tag} - {animal.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableAnimalSelect
+                  animals={activeAnimals}
+                  value={formData.animalId}
+                  onValueChange={(value) => onFormDataChange({ animalId: value })}
+                  placeholder={t("common.selectAnimal")}
+                />
               </div>
             ) : (
               /* Bulk Mode */
