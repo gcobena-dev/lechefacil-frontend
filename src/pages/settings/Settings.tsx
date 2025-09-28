@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Settings as SettingsIcon, Users, KeyRound, Building2 } from "lucide-react";
+import { Settings as SettingsIcon, Users, KeyRound, Building2, Layers3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsUsers from "./SettingsUsers";
 import ChangePasswordForm from "@/components/settings/ChangePasswordForm";
 import TenantSettings from "@/components/settings/TenantSettings";
+import Catalogs from "@/components/settings/Catalogs";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Settings() {
@@ -21,21 +22,26 @@ export default function Settings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
             <Users className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("common.usersTitle")}</span>
-            <span className="sm:hidden text-xs">Users</span>
+            <span className="sm:hidden text-xs">{t("animals.usersShort")}</span>
           </TabsTrigger>
           <TabsTrigger value="password" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
             <KeyRound className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("auth.changePasswordTitle")}</span>
-            <span className="sm:hidden text-xs">Password</span>
+            <span className="sm:hidden text-xs">{t("animals.passwordShort")}</span>
           </TabsTrigger>
           <TabsTrigger value="tenant" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
             <Building2 className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("common.tenantSettings")}</span>
-            <span className="sm:hidden text-xs">Config</span>
+            <span className="sm:hidden text-xs">{t("animals.configShort")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="catalogs" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+            <Layers3 className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">{t("animals.catalogs")}</span>
+            <span className="sm:hidden text-xs">{t("animals.catalogsShort")}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -50,8 +56,10 @@ export default function Settings() {
         <TabsContent value="tenant" className="mt-6">
           <TenantSettings />
         </TabsContent>
+        <TabsContent value="catalogs" className="mt-6">
+          <Catalogs />
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
-

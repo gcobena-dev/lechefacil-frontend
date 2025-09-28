@@ -25,8 +25,11 @@ export async function createAnimal(payload: {
   tag: string;
   name?: string | null;
   breed?: string | null;
+  breed_variant?: string | null;
+  breed_id?: string | null;
   birth_date?: string | null; // YYYY-MM-DD
   lot?: string | null;
+  lot_id?: string | null;
   status_id?: string | null;
   photo_url?: string | null;
 }) {

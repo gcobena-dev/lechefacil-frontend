@@ -22,12 +22,14 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
+import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Animals() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [lotFilter, setLotFilter] = useState<string>("");
 
   const { data } = useQuery({
     queryKey: ["animals", { q: searchTerm }],
@@ -35,6 +37,10 @@ export default function Animals() {
   });
 
   const items = data?.items ?? [];
+  const { data: lots = [] } = useQuery({
+    queryKey: ["lots", { active: true }],
+    queryFn: () => getLots({ active: true }),
+  });
   const getStatusKeyFromCode = (code?: string) => {
     const c = (code ?? '').toUpperCase();
     if (["LACTATING", "DRY", "PREGNANT_DRY", "CALF", "HEIFER", "PREGNANT_HEIFER", "BULL"].includes(c)) return 'active';
@@ -54,9 +60,11 @@ export default function Animals() {
         breed.includes(searchTerm.toLowerCase());
       const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
       const matchesStatus = statusFilter === "all" || statusKey === statusFilter;
-      return matchesSearch && matchesStatus;
+      const selectedLotName = (lots as any[]).find(l => l.id === lotFilter)?.name;
+      const matchesLot = !lotFilter || (animal.lot ?? "") === (selectedLotName ?? "");
+      return matchesSearch && matchesStatus && matchesLot;
     });
-  }, [items, searchTerm, statusFilter]);
+  }, [items, searchTerm, statusFilter, lotFilter, lots]);
 
   const getStatusBadge = (statusOrCode: string, label?: string, desc?: string) => {
     const statusKey = getStatusKeyFromCode(statusOrCode) || statusOrCode.toLowerCase();
@@ -184,6 +192,16 @@ export default function Animals() {
               <option value="sold">{t('animals.soldFilter')}</option>
               <option value="culled">{t('animals.culledFilter')}</option>
               <option value="dead">{t('animals.deadFilter')}</option>
+            </select>
+            <select
+              value={lotFilter}
+              onChange={(e) => setLotFilter(e.target.value)}
+              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+            >
+              <option value="">{t('animals.allLots') ?? 'Todos los lotes'}</option>
+              {(lots as any[]).map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
             </select>
           </div>
         </CardContent>

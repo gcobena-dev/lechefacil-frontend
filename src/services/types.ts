@@ -31,8 +31,11 @@ export interface AnimalResponse {
   tag: string;
   name: string | null;
   breed: string | null;
+  breed_variant?: string | null;
+  breed_id?: UUID | null;
   birth_date: string | null; // date
   lot: string | null;
+  lot_id?: UUID | null;
   status_id?: UUID | null;
   status_code?: string | null;
   status?: string | null; // localized name

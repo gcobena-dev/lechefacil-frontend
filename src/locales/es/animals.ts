@@ -78,6 +78,7 @@ export default {
   filters: "Filtros",
   searchPlaceholder: "Buscar por nombre, tag o raza...",
   allStatuses: "Todos los estados",
+  allLots: "Todos los lotes",
   activeFilter: "Activos",
   soldFilter: "Vendidos",
   culledFilter: "Descartados",
@@ -148,4 +149,48 @@ export default {
   // Movimientos
   farmEntry: "Ingreso a la finca",
   dateToBeSet: "Fecha por determinar",
+
+  // Opciones sin selección
+  noBreed: "Sin raza",
+  noLot: "Sin lote",
+  noVariant: "Sin variante",
+
+  // Variantes de raza
+  breedVariant: "Variante (Girolando)",
+  selectVariant: "Selecciona variante (F1, 3/4, 5/8)",
+
+  // Catálogos
+  catalogs: "Catálogos",
+  breeds: "Razas",
+  lots: "Lotes",
+  newBreed: "Nueva raza (p.ej. Holstein)",
+  addBreed: "Agregar",
+  breedName: "Nombre",
+  breedCode: "Código",
+  systemDefault: "Del sistema",
+  systemDefaultYes: "Sí",
+  systemDefaultNo: "No",
+  activeYes: "Sí",
+  activeNo: "No",
+  rename: "Renombrar",
+  activate: "Activar",
+  deactivate: "Desactivar",
+  noBreeds: "Sin razas",
+
+  lotName: "Nombre",
+  lotNotes: "Notas",
+  newLot: "Nuevo lote (p.ej. Ordeño)",
+  addLot: "Agregar",
+  optional: "Opcional",
+  noLots: "Sin lotes",
+  renameLot: "Renombrar lote",
+  renameBreed: "Renombrar raza",
+  newName: "Nuevo nombre",
+  save: "Guardar",
+
+  // Texto mobile
+  usersShort: "Users",
+  passwordShort: "Password",
+  configShort: "Config",
+  catalogsShort: "Catalogs",
 };
