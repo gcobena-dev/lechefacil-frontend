@@ -192,7 +192,7 @@ export default function ProductionReport() {
     const startDate = new Date();
 
     switch (range) {
-      case 'today':
+      case 'today': {
         // Set both dates to today - create fresh date instance
         const currentDate = new Date();
         const todayString = getLocalDateString(currentDate);
@@ -202,6 +202,7 @@ export default function ProductionReport() {
           date_to: todayString
         }));
         return;
+      }
       case 'lastWeek':
         startDate.setDate(today.getDate() - 7);
         break;

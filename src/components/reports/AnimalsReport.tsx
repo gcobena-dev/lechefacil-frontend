@@ -93,7 +93,7 @@ export default function AnimalsReport() {
     const startDate = new Date();
 
     switch (range) {
-      case 'today':
+      case 'today': {
         // Set both dates to today - create fresh date instance
         const currentDate = new Date();
         setFilters(prev => ({
@@ -102,6 +102,7 @@ export default function AnimalsReport() {
           date_to: getLocalDateString(currentDate)
         }));
         return;
+      }
       case 'lastWeek':
         startDate.setDate(today.getDate() - 7);
         break;
