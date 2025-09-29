@@ -185,12 +185,16 @@ export default function MilkCollect() {
 
       {/* Bulk conflicts dialog */}
       <Dialog open={conflictsOpen} onOpenChange={setConflictsOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{conflictsHeader}</DialogTitle>
+            <DialogTitle className="text-destructive">{conflictsHeader}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-1 text-sm whitespace-pre-line">
-            {conflictsLines.join("\n")}
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {conflictsLines.map((line, index) => (
+              <div key={index} className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-foreground">{line}</p>
+              </div>
+            ))}
           </div>
           <DialogFooter>
             <Button onClick={() => setConflictsOpen(false)}>{t('common.close')}</Button>

@@ -5,6 +5,7 @@ export interface MilkProductionItem {
   animal_id?: string | null;
   buyer_id?: string | null;
   date_time: string;
+  shift: string;
   input_unit: string;
   input_quantity: string; // decimal
   density: string; // decimal

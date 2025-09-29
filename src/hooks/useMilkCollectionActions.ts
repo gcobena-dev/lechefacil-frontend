@@ -123,31 +123,51 @@ export function useMilkCollectionActions(
       // Clear quantities but keep selection for next shift
       resetProductionForm();
     } catch (err: any) {
-      console.error(err);
-      const conflicts = err?.details?.conflicts as Array<{ animal_id: string; date: string; shift: string; input_quantity: string; existing_date_time?: string }> | undefined;
-      if (conflicts && conflicts.length > 0) {
+      console.error("Bulk submission error:", err);
+
+      // Check if this is a validation error with conflicts
+      // The error structure from API client is: err.details.code and err.details.details.conflicts
+      if (err?.details?.code === "validation_error" && err?.details?.details?.conflicts) {
+        const conflicts = err.details.details.conflicts as Array<{
+          animal_id: string;
+          date: string;
+          shift: string;
+          input_quantity: string;
+          existing_date_time?: string;
+          existing_volume_l?: string;
+        }>;
+
         const nameOf = (id: string) => {
           const a = animals.find(x => x.id === id);
           return a ? `${a.name ?? ''} (${a.tag ?? ''})`.trim() : id;
         };
+
         const lines = conflicts.map(c => {
-          const when = c.existing_date_time
+          const animalName = nameOf(c.animal_id);
+          const existingTime = c.existing_date_time
             ? `${formatLocalDateShort(c.existing_date_time)} ${formatLocalTime(c.existing_date_time)}`
-            : `${c.shift} ${formData.date}`;
-          return `• ${nameOf(c.animal_id)} — ${c.input_quantity} (${c.shift} ${when})`;
+            : `${c.shift} ${c.date}`;
+          const existingVolume = c.existing_volume_l ? `${parseFloat(c.existing_volume_l).toFixed(1)}L` : '';
+
+          return `${animalName}: Intentando registrar ${c.input_quantity} pero ya existe ${existingVolume} del ${existingTime}`;
         });
+
+        // Always use popup for validation conflicts if callback is available
         if (onBulkConflicts) {
-          onBulkConflicts({ header: t("milk.bulkConflictsHeader"), lines });
-        } else {
-          toast({
-            title: t("common.error"),
-            description: [t("milk.bulkConflictsHeader"), ...lines].join("\n"),
-            variant: "destructive",
+          onBulkConflicts({
+            header: err.details.message || t("milk.bulkConflictsHeader"),
+            lines
           });
+          return; // Don't show toast
         }
-      } else {
-        toast({ title: t("common.error"), description: err?.details?.message || (t("common.recordError") + " el bulk"), variant: "destructive" });
       }
+
+      // For any other errors or if no callback available, use toast
+      toast({
+        title: t("common.error"),
+        description: err?.message || err?.details?.message || (t("common.recordError") + " el bulk"),
+        variant: "destructive"
+      });
     }
   };
 

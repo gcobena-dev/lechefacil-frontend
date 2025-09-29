@@ -17,6 +17,7 @@ interface RecentDelivery {
 
 interface Production {
   date_time: string;
+  shift: string;
   volume_l: string;
 }
 
@@ -46,11 +47,11 @@ export default function MilkCollectionSidebar({
   );
 
   const amProductions = dailyProductions.filter((p) =>
-    new Date(p.date_time).getHours() < 12
+    p.shift === 'AM'
   );
 
   const pmProductions = dailyProductions.filter((p) =>
-    new Date(p.date_time).getHours() >= 12
+    p.shift === 'PM'
   );
 
   const dailyStats = {
