@@ -193,4 +193,36 @@ export default {
   passwordShort: "Password",
   configShort: "Config",
   catalogsShort: "Catalogs",
+
+  // Tema
+  toggleTheme: "Cambiar tema",
+  lightTheme: "Claro",
+  darkTheme: "Oscuro",
+  systemTheme: "Sistema",
+
+  // Estadísticas adicionales
+  last30Days: "Últimos 30 días",
+  last30DaysProduction: "Producción últimos 30 días",
+  recordsIn90Days: "Registros en 90 días",
+  productionTrend: "Tendencia de producción",
+  highPerformer: "Alto rendimiento",
+  averagePerformer: "Rendimiento promedio",
+  lowPerformer: "Bajo rendimiento",
+
+  // Headers de tabla
+  dateHeader: "Fecha",
+  shiftHeader: "Turno",
+  originalValueHeader: "Valor Original",
+  litersHeader: "Litros",
+  pricePerLiterHeader: "Precio/L",
+  amountHeader: "Monto",
+
+  // Tooltip de tendencia
+  productionTrendTooltip: "Compara el promedio de los últimos 30 días vs. los últimos 90 días. \nVerde: mejorando\nRojo: <80% del promedio\nGris: estable.",
+
+  // Ingresos
+  earnings: "Ingresos",
+
+  // Funcionalidades futuras
+  featureComingSoon: "Esta funcionalidad estará disponible próximamente",
 };

@@ -29,6 +29,27 @@ export function getLocalDateTimeInputValue(date: Date = new Date()): string {
   return `${y}-${m}-${d}T${hh}:${mm}`;
 }
 
+// Default locale/timezone for display
+export const DEFAULT_LOCALE = 'es-EC';
+export const DEFAULT_TIMEZONE = 'America/Guayaquil';
+
+/** Coerce string | Date to Date */
+export function toDate(value: string | Date): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+/** Format time as HH:mm in local timezone */
+export function formatLocalTime(value: string | Date, locale: string = DEFAULT_LOCALE, timeZone: string = DEFAULT_TIMEZONE): string {
+  const dt = toDate(value);
+  return new Intl.DateTimeFormat(locale, { timeZone, hour: '2-digit', minute: '2-digit' }).format(dt);
+}
+
+/** Format date as short month + day (e.g., "27 sept") */
+export function formatLocalDateShort(value: string | Date, locale: string = DEFAULT_LOCALE, timeZone: string = DEFAULT_TIMEZONE): string {
+  const dt = toDate(value);
+  return new Intl.DateTimeFormat(locale, { timeZone, month: 'short', day: 'numeric' }).format(dt);
+}
+
 /**
  * Get date range for common periods in local timezone
  */
@@ -59,4 +80,16 @@ export function getLocalDateRange(period: 'lastWeek' | 'lastMonth' | 'last3Month
     dateFrom: getLocalDateString(startDate),
     dateTo: getLocalDateString(today)
   };
+}
+
+/** Add days to a Date and return a new Date */
+export function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+/** Get local date string for today plus N days */
+export function getTodayPlusDaysLocalDateString(days: number): string {
+  return getLocalDateString(addDays(new Date(), days));
 }

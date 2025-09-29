@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Download, BarChart3, Filter, TrendingUp, DollarSign } from "lucide-react";
+import { Calendar, Download, BarChart3, Filter, TrendingUp, DollarSign, CalendarIcon } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { generateProductionReport, downloadPDFReport, type ReportRequest, type ProductionReportData } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
@@ -34,14 +34,12 @@ export default function ProductionReport() {
     return `${year}-${month}-${day}`;
   };
 
-  // Default filters - last month
+  // Default filters - today
   const [filters, setFilters] = useState<ProductionFilters>(() => {
     const today = new Date();
-    const lastMonth = new Date();
-    lastMonth.setMonth(today.getMonth() - 1);
 
     return {
-      date_from: getLocalDateString(lastMonth),
+      date_from: getLocalDateString(today),
       date_to: getLocalDateString(today),
       period: 'daily',
       include_inactive: false
@@ -82,9 +80,8 @@ export default function ProductionReport() {
           new Date(reportData.summary.period_from).getFullYear() :
           new Date().getFullYear();
 
-        // Create date with format YYYY-MM-DD
-        const fullDateString = `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        date = new Date(fullDateString);
+        // Create date avoiding timezone issues by using the Date constructor with separate parameters
+        date = new Date(currentYear, parseInt(month) - 1, parseInt(day));
       } else {
         date = new Date(dateString);
       }
@@ -129,6 +126,7 @@ export default function ProductionReport() {
       ...Object.keys(reportData.period_delivery_data || {})
     ]);
 
+
     return Array.from(allDates)
       .map((date) => {
         const { formatted: formattedDate, dayName } = formatDate(date);
@@ -153,12 +151,24 @@ export default function ProductionReport() {
             const currentYear = reportData?.summary?.period_from ?
               new Date(reportData.summary.period_from).getFullYear() :
               new Date().getFullYear();
+            // Use Date constructor with separate parameters to avoid timezone issues
             return new Date(currentYear, parseInt(month) - 1, parseInt(day));
           }
           return new Date(dateStr);
         };
         return parseDate(a.originalDate).getTime() - parseDate(b.originalDate).getTime();
       });
+  };
+
+  // Calculate totals for the table
+  const calculateTableTotals = () => {
+    const data = prepareChartData();
+    return {
+      totalProduced: data.reduce((sum, row) => sum + row.producidos, 0),
+      totalDelivered: data.reduce((sum, row) => sum + row.entregados, 0),
+      totalRevenue: data.reduce((sum, row) => sum + row.ingresos, 0),
+      recordCount: data.length
+    };
   };
 
   const downloadPDF = async () => {
@@ -177,11 +187,21 @@ export default function ProductionReport() {
     }
   };
 
-  const setQuickDateRange = (range: 'lastWeek' | 'lastMonth' | 'last3Months' | 'thisYear') => {
+  const setQuickDateRange = (range: 'today' | 'lastWeek' | 'lastMonth' | 'last3Months' | 'thisYear') => {
     const today = new Date();
     const startDate = new Date();
 
     switch (range) {
+      case 'today':
+        // Set both dates to today - create fresh date instance
+        const currentDate = new Date();
+        const todayString = getLocalDateString(currentDate);
+        setFilters(prev => ({
+          ...prev,
+          date_from: todayString,
+          date_to: todayString
+        }));
+        return;
       case 'lastWeek':
         startDate.setDate(today.getDate() - 7);
         break;
@@ -223,7 +243,15 @@ export default function ProductionReport() {
           {/* Quick date range buttons */}
           <div className="space-y-2">
             <Label>{t("reports.selectPeriod")}</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setQuickDateRange('today')}
+                type="button"
+              >
+                {t("reports.today")}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -262,19 +290,27 @@ export default function ProductionReport() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>{t("reports.dateFrom")}</Label>
-              <Input
-                type="date"
-                value={filters.date_from}
-                onChange={(e) => setFilters(prev => ({ ...prev, date_from: e.target.value }))}
-              />
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={filters.date_from}
+                  onChange={(e) => setFilters(prev => ({ ...prev, date_from: e.target.value }))}
+                  className="cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 pr-10"
+                />
+                <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-muted-foreground pointer-events-none" />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{t("reports.dateTo")}</Label>
-              <Input
-                type="date"
-                value={filters.date_to}
-                onChange={(e) => setFilters(prev => ({ ...prev, date_to: e.target.value }))}
-              />
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={filters.date_to}
+                  onChange={(e) => setFilters(prev => ({ ...prev, date_to: e.target.value }))}
+                  className="cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 pr-10"
+                />
+                <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground dark:text-muted-foreground pointer-events-none" />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{t("reports.period")}</Label>
@@ -303,7 +339,7 @@ export default function ProductionReport() {
                 id="include_inactive"
                 checked={filters.include_inactive}
                 onChange={(e) => setFilters(prev => ({ ...prev, include_inactive: e.target.checked }))}
-                className="rounded border-gray-300"
+                className="rounded border-input"
               />
               <Label htmlFor="include_inactive">{t("reports.includeInactiveAnimals")}</Label>
             </div>
@@ -537,14 +573,14 @@ export default function ProductionReport() {
                 {/* Desktop Table */}
                 <div className="hidden md:block">
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-200">
+                    <table className="w-full border-collapse border border-border">
                       <thead>
-                        <tr className="bg-gray-50">
-                          <th className="border border-gray-200 p-2 text-left">{t("reports.dateLabel")}</th>
-                          <th className="border border-gray-200 p-2 text-left">{t("reports.dayOfWeek")}</th>
-                          <th className="border border-gray-200 p-2 text-right">{t("reports.produced")} (L)</th>
-                          <th className="border border-gray-200 p-2 text-right">{t("reports.delivered")} (L)</th>
-                          <th className="border border-gray-200 p-2 text-right">Total ({tenantSettings?.default_currency || 'USD'})</th>
+                        <tr className="bg-muted/50">
+                          <th className="border border-border p-2 text-left">{t("reports.dateLabel")}</th>
+                          <th className="border border-border p-2 text-left">{t("reports.dayOfWeek")}</th>
+                          <th className="border border-border p-2 text-right">{t("reports.produced")} (L)</th>
+                          <th className="border border-border p-2 text-right">{t("reports.delivered")} (L)</th>
+                          <th className="border border-border p-2 text-right">Total ({tenantSettings?.default_currency || 'USD'})</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -564,21 +600,38 @@ export default function ProductionReport() {
                             return parseDate(b.originalDate).getTime() - parseDate(a.originalDate).getTime();
                           })
                           .map((row) => (
-                            <tr key={row.originalDate} className="hover:bg-gray-50">
-                              <td className="border border-gray-200 p-2">{row.date}</td>
-                              <td className="border border-gray-200 p-2 text-muted-foreground capitalize">{row.dayName}</td>
-                              <td className="border border-gray-200 p-2 text-right font-medium text-blue-600">
+                            <tr key={row.originalDate} className="hover:bg-muted/30">
+                              <td className="border border-border p-2">{row.date}</td>
+                              <td className="border border-border p-2 text-muted-foreground capitalize">{row.dayName}</td>
+                              <td className="border border-border p-2 text-right font-medium text-blue-600">
                                 {row.producidos > 0 ? `${row.producidos.toLocaleString()}L` : '-'}
                               </td>
-                              <td className="border border-gray-200 p-2 text-right font-medium text-green-600">
+                              <td className="border border-border p-2 text-right font-medium text-green-600">
                                 {row.entregados > 0 ? `${row.entregados.toLocaleString()}L` : '-'}
                               </td>
-                              <td className="border border-gray-200 p-2 text-right font-medium text-green-700">
+                              <td className="border border-border p-2 text-right font-medium text-green-700">
                                 {row.entregados > 0 ? formatCurrency(row.ingresos) : '-'}
                               </td>
                             </tr>
                           ))}
                       </tbody>
+                      <tfoot>
+                        <tr className="bg-muted/70 border-t-2 border-primary font-semibold">
+                          <td className="border border-border p-2 font-bold">{t("reports.total")}</td>
+                          <td className="border border-border p-2 text-muted-foreground">
+                            {calculateTableTotals().recordCount} {t("reports.records")}
+                          </td>
+                          <td className="border border-border p-2 text-right font-bold text-blue-600">
+                            {calculateTableTotals().totalProduced > 0 ? `${calculateTableTotals().totalProduced.toLocaleString()}L` : '-'}
+                          </td>
+                          <td className="border border-border p-2 text-right font-bold text-green-600">
+                            {calculateTableTotals().totalDelivered > 0 ? `${calculateTableTotals().totalDelivered.toLocaleString()}L` : '-'}
+                          </td>
+                          <td className="border border-border p-2 text-right font-bold text-green-700">
+                            {calculateTableTotals().totalRevenue > 0 ? formatCurrency(calculateTableTotals().totalRevenue) : '-'}
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
@@ -600,7 +653,7 @@ export default function ProductionReport() {
                       return parseDate(b.originalDate).getTime() - parseDate(a.originalDate).getTime();
                     })
                     .map((row) => (
-                      <div key={row.originalDate} className="border border-gray-200 rounded-lg p-3 bg-white">
+                      <div key={row.originalDate} className="border border-border rounded-lg p-3 bg-card">
                         <div className="flex justify-between items-start mb-3">
                           <div>
                             <div className="font-medium">{row.date}</div>
@@ -631,6 +684,38 @@ export default function ProductionReport() {
                         </div>
                       </div>
                     ))}
+
+                  {/* Mobile Totals Card */}
+                  <div className="border-2 border-primary rounded-lg p-4 bg-muted/50">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="font-bold text-lg">{t("reports.total")}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {calculateTableTotals().recordCount} {t("reports.records")}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
+                          <span className="font-bold text-blue-600">
+                            {calculateTableTotals().totalProduced > 0 ? `${calculateTableTotals().totalProduced.toLocaleString()}L` : '-'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
+                          <span className="font-bold text-green-600">
+                            {calculateTableTotals().totalDelivered > 0 ? `${calculateTableTotals().totalDelivered.toLocaleString()}L` : '-'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">Total</div>
+                        <div className="font-bold text-lg text-green-700">
+                          {calculateTableTotals().totalRevenue > 0 ? formatCurrency(calculateTableTotals().totalRevenue) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

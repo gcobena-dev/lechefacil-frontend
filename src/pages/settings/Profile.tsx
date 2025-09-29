@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { User, Settings, Bell } from "lucide-react";
+import { User, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { me as apiMe } from "@/services/auth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -19,7 +19,6 @@ interface ProfileData {
   phone: string;
   address: string;
   notifications: boolean;
-  darkMode: boolean;
 }
 
 export default function Profile() {
@@ -34,7 +33,6 @@ export default function Profile() {
     phone: "+1 234 567 8900",
     address: "",
     notifications: true,
-    darkMode: false
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -140,31 +138,8 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Settings */}
+        {/* Notifications */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                {t("common.settings")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>{t("common.darkMode")}</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t("common.changeTheme")}
-                  </p>
-                </div>
-                <Switch
-                  checked={profileData.darkMode}
-                  onCheckedChange={(checked) => handleInputChange("darkMode", checked)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

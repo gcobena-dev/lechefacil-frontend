@@ -9,6 +9,8 @@ import MilkProductionForm from "@/components/milk/MilkProductionForm";
 import MilkDeliveryForm from "@/components/milk/MilkDeliveryForm";
 import MilkCollectionSidebar from "@/components/milk/MilkCollectionSidebar";
 import { getTodayLocalDateString } from "@/utils/dateUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function MilkCollect() {
   const { t } = useTranslation();
@@ -48,6 +50,16 @@ export default function MilkCollect() {
     deliveryDateFrom
   } = useMilkCollectionData(formData);
 
+  // Dialog for bulk conflicts
+  const [conflictsOpen, setConflictsOpen] = useState(false);
+  const [conflictsHeader, setConflictsHeader] = useState("");
+  const [conflictsLines, setConflictsLines] = useState<string[]>([]);
+  const openConflictsDialog = (payload: { header: string; lines: string[] }) => {
+    setConflictsHeader(payload.header);
+    setConflictsLines(payload.lines);
+    setConflictsOpen(true);
+  };
+
   const {
     handleSingleSubmit,
     handleBulkSubmit,
@@ -61,8 +73,10 @@ export default function MilkCollect() {
     selectedAnimals,
     animalQuantities,
     deliveryDateFrom,
+    animals,
     resetProductionForm,
-    resetDeliveryForm
+    resetDeliveryForm,
+    openConflictsDialog
   );
 
   // Auto-select all active animals when list loads for bulk mode
@@ -168,6 +182,21 @@ export default function MilkCollect() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Bulk conflicts dialog */}
+      <Dialog open={conflictsOpen} onOpenChange={setConflictsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{conflictsHeader}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1 text-sm whitespace-pre-line">
+            {conflictsLines.join("\n")}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setConflictsOpen(false)}>{t('common.close')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

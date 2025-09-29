@@ -24,6 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getStatusKeyFromCode } from "@/utils/animals";
 
 export default function Animals() {
   const { t } = useTranslation();
@@ -41,14 +42,7 @@ export default function Animals() {
     queryKey: ["lots", { active: true }],
     queryFn: () => getLots({ active: true }),
   });
-  const getStatusKeyFromCode = (code?: string) => {
-    const c = (code ?? '').toUpperCase();
-    if (["LACTATING", "DRY", "PREGNANT_DRY", "CALF", "HEIFER", "PREGNANT_HEIFER", "BULL"].includes(c)) return 'active';
-    if (c === 'SOLD') return 'sold';
-    if (c === 'CULLED') return 'culled';
-    if (c === 'DEAD') return 'dead';
-    return '';
-  };
+  
 
   const filteredAnimals = useMemo(() => {
     return items.filter((animal) => {

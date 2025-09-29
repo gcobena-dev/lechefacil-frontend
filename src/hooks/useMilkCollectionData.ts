@@ -6,7 +6,7 @@ import { getBillingSettings } from "@/services/settings";
 import { listMilkProductions } from "@/services/milkProductions";
 import { listMilkPrices } from "@/services/milkPrices";
 import { listMilkDeliveries } from "@/services/milkDeliveries";
-import { getTodayLocalDateString, getLocalDateString } from '@/utils/dateUtils';
+import { getTodayLocalDateString, getLocalDateString, getLocalDateString as toLocalDate, formatLocalTime, formatLocalDateShort, getTodayPlusDaysLocalDateString } from '@/utils/dateUtils';
 
 export function useMilkCollectionData(formData: { date: string; buyerId: string }) {
   // Data queries - Only fetch lactating animals for milk collection
@@ -40,11 +40,13 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
     return getLocalDateString(date);
   }, []);
 
+  const deliveryDateTo = getTodayPlusDaysLocalDateString(1); // include UTC spillover into next day
+
   const { data: deliveries = [] } = useQuery({
-    queryKey: ["milk-deliveries", deliveryDateFrom],
+    queryKey: ["milk-deliveries", deliveryDateFrom, deliveryDateTo],
     queryFn: () => listMilkDeliveries({
       date_from: deliveryDateFrom,
-      date_to: getTodayLocalDateString()
+      date_to: deliveryDateTo,
     }),
   });
 
@@ -71,12 +73,12 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
   // Calculate recent entries
   const recentEntries = useMemo(() => {
     const items = productions
-      .filter((p) => new Date(p.date_time).toISOString().startsWith(formData.date))
+      .filter((p) => toLocalDate(new Date(p.date_time)) === formData.date)
       .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
       .slice(0, 5)
       .map((p) => {
         const animal = animals.find(a => a.id === p.animal_id);
-        const time = new Date(p.date_time).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+        const time = formatLocalTime(p.date_time);
         return {
           animal: `${animal?.name ?? ''} (${animal?.tag ?? ''})`,
           amount: `${parseFloat(p.volume_l).toFixed(1)}L`,
@@ -93,9 +95,8 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
       .slice(0, 5)
       .map((d) => {
         const buyer = buyers.find(b => b.id === d.buyer_id);
-        const date = new Date(d.date_time);
-        const time = date.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
-        const dateStr = date.toLocaleDateString('es-EC', { month: 'short', day: 'numeric' });
+        const time = formatLocalTime(d.date_time);
+        const dateStr = formatLocalDateShort(d.date_time);
         return {
           buyer: buyer?.name ?? 'Comprador desconocido',
           amount: `${parseFloat(String(d.volume_l)).toFixed(1)}L`,

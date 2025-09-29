@@ -171,4 +171,7 @@ export default {
   accessDenied: "Acceso Denegado",
   adminRequired: "Se requieren privilegios de administrador para acceder a esta sección.",
   insufficientPermissions: "No tienes los permisos necesarios para acceder a esta sección.",
+
+  // Placeholders
+  deleteUserReasonPlaceholder: "Razón para eliminar al usuario...",
 };

@@ -132,6 +132,7 @@ export default {
   notFound: "No encontrado",
   recordedFor: "registrados para",
   animals: "animales",
+  bulkConflictsHeader: "Algunos animales ya tienen registro para ese día/turno:",
 
   // MilkPrices específico
   pricesTitle: "Precios de Leche",

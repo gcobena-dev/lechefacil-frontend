@@ -3,43 +3,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
+import {
   ArrowLeft,
-  Edit, 
-  Milk, 
-  Heart, 
+  Edit,
+  Milk,
+  Heart,
   TrendingUp,
   Calendar,
-  MapPin
+  MapPin,
+  BarChart3,
+  Clock,
+  Info
 } from "lucide-react";
-import { mockMilkCollections, mockHealthEvents, formatCurrency } from "@/lib/mock-data";
 import { formatDate } from "@/utils/format";
-import { useQuery } from "@tanstack/react-query";
-import { getAnimal } from "@/services/animals";
+import { useAnimalDetail } from "@/hooks/useAnimalDetail";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useTenantSettings } from "@/hooks/useTenantSettings";
 
 export default function AnimalDetail() {
   const { id } = useParams();
   const { t } = useTranslation();
-  const { data: animal, isLoading, error } = useQuery({
-    queryKey: ["animal", id],
-    queryFn: () => getAnimal(id as string),
-    enabled: Boolean(id),
-  });
+  const { data: tenantSettings } = useTenantSettings();
+  const { data: animalData, isLoading, error } = useAnimalDetail(id as string);
 
   if (isLoading) {
     return <div className="text-center py-8">{t('animals.loading')}</div>;
   }
 
-  if (error || !animal) {
+  if (error || !animalData) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">{t('animals.animalNotFound')}</p>
@@ -47,24 +52,15 @@ export default function AnimalDetail() {
     );
   }
 
-  // Get last 90 days of data
-  const ninetyDaysAgo = new Date();
-  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-  
-  const animalMilkData = mockMilkCollections
-    .filter(c => c.animal_id === (animal as any).id)
-    .filter(c => new Date(c.date) >= ninetyDaysAgo)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const { animal, productionData, productionSummary } = animalData;
 
-  const animalHealthData = mockHealthEvents
-    .filter(h => h.animal_id === (animal as any).id)
-    .filter(h => new Date(h.date) >= ninetyDaysAgo)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  // Calculate stats
-  const totalLiters = animalMilkData.reduce((sum, c) => sum + c.liters, 0);
-  const totalEarnings = animalMilkData.reduce((sum, c) => sum + c.amount, 0);
-  const avgDaily = animalMilkData.length > 0 ? totalLiters / animalMilkData.length : 0;
+  const formatCurrency = (amount: number): string => {
+    const currency = tenantSettings?.default_currency || 'USD';
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  };
 
   const calculateAge = (birthDate?: string | null) => {
     if (!birthDate) return "-";
@@ -158,49 +154,125 @@ export default function AnimalDetail() {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-light rounded-lg">
+              <div className="p-2 bg-primary/10 rounded-lg">
                 <Milk className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalLiters.toFixed(1)}L</p>
+                <p className="text-2xl font-bold">{productionSummary.totalLiters.toFixed(1)}L</p>
                 <p className="text-sm text-muted-foreground">{t('animals.total90Days')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-success" />
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{avgDaily.toFixed(1)}L</p>
+                <p className="text-2xl font-bold">{productionSummary.avgDaily.toFixed(1)}L</p>
                 <p className="text-sm text-muted-foreground">{t('animals.dailyAverage')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-warning/10 rounded-lg">
-                <Heart className="h-5 w-5 text-warning" />
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <Heart className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{formatCurrency(totalEarnings)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(productionSummary.totalEarnings)}</p>
                 <p className="text-sm text-muted-foreground">{t('animals.earnings90Days')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/10 rounded-lg">
+                <BarChart3 className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{productionSummary.recordsCount}</p>
+                <p className="text-sm text-muted-foreground">{t('animals.recordsIn90Days')}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Last 30 Days Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            {t('animals.last30DaysProduction')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">{t('animals.last30Days')}</p>
+              <p className="text-3xl font-bold">{productionSummary.last30DaysLiters.toFixed(1)}L</p>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  {t('animals.dailyAverage')}: {productionSummary.last30DaysAvg.toFixed(1)}L
+                </p>
+                <p className="text-sm font-medium text-green-600">
+                  {t('animals.earnings')}: {formatCurrency(productionSummary.last30DaysEarnings)}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-muted-foreground">{t('animals.productionTrend')}</p>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="max-w-xs text-sm">
+                        <p className="mb-1">Compara el promedio de los últimos 30 días vs. los últimos 90 días.</p>
+                        <p className="text-green-600">Verde: mejorando</p>
+                        <p className="text-red-600">Rojo: &lt;80% del promedio</p>
+                        <p className="text-gray-600">Gris: estable</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="flex items-center gap-2">
+                {productionSummary.last30DaysAvg > productionSummary.avgDaily ? (
+                  <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    {t('animals.highPerformer')}
+                  </Badge>
+                ) : productionSummary.last30DaysAvg < productionSummary.avgDaily * 0.8 ? (
+                  <Badge variant="destructive">
+                    {t('animals.lowPerformer')}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">
+                    {t('animals.averagePerformer')}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Card>
@@ -217,35 +289,90 @@ export default function AnimalDetail() {
             <TabsContent value="production" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-4">{t('animals.milkingRecords')}</h3>
-                {animalMilkData.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>Turno</TableHead>
-                        <TableHead>Valor Original</TableHead>
-                        <TableHead>Litros</TableHead>
-                        <TableHead>Precio/L</TableHead>
-                        <TableHead>Monto</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {animalMilkData.map((record) => (
-                        <TableRow key={record.id}>
-                          <TableCell>{formatDate(record.date)}</TableCell>
-                          <TableCell>
-                            <Badge variant={record.shift === 'AM' ? 'default' : 'secondary'}>
-                              {record.shift}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{record.input_value} {record.input_unit}</TableCell>
-                          <TableCell className="font-medium">{record.liters.toFixed(1)}L</TableCell>
-                          <TableCell>{formatCurrency(record.price_per_liter)}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(record.amount)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                {productionData.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Desktop Table */}
+                    <div className="hidden md:block">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>{t('animals.dateHeader')}</TableHead>
+                              <TableHead>{t('animals.shiftHeader')}</TableHead>
+                              <TableHead>{t('animals.originalValueHeader')}</TableHead>
+                              <TableHead>{t('animals.litersHeader')}</TableHead>
+                              <TableHead>{t('animals.pricePerLiterHeader')}</TableHead>
+                              <TableHead>{t('animals.amountHeader')}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {productionData
+                              .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
+                              .map((record) => {
+                                const date = new Date(record.date_time);
+                                const shift = date.getHours() < 12 ? 'AM' : 'PM';
+                                const price = record.price_snapshot ? parseFloat(record.price_snapshot) : (tenantSettings?.default_price_per_l || 0);
+                                const amount = parseFloat(record.volume_l) * price;
+
+                                return (
+                                  <TableRow key={record.id}>
+                                    <TableCell>{formatDate(record.date_time)}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={shift === 'AM' ? 'default' : 'secondary'}>
+                                        {shift}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>{record.input_quantity} {record.input_unit.toUpperCase()}</TableCell>
+                                    <TableCell className="font-medium">{parseFloat(record.volume_l).toFixed(1)}L</TableCell>
+                                    <TableCell>{formatCurrency(price)}</TableCell>
+                                    <TableCell className="font-medium">{formatCurrency(amount)}</TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                      {productionData
+                        .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
+                        .map((record) => {
+                          const date = new Date(record.date_time);
+                          const shift = date.getHours() < 12 ? 'AM' : 'PM';
+                          const price = record.price_snapshot ? parseFloat(record.price_snapshot) : (tenantSettings?.default_price_per_l || 0);
+                          const amount = parseFloat(record.volume_l) * price;
+
+                          return (
+                            <div key={record.id} className="border border-border rounded-lg p-4 bg-card">
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <div className="font-medium">{formatDate(record.date_time)}</div>
+                                  <Badge variant={shift === 'AM' ? 'default' : 'secondary'} className="mt-1">
+                                    {shift}
+                                  </Badge>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-medium text-lg">{parseFloat(record.volume_l).toFixed(1)}L</div>
+                                  <div className="text-sm text-muted-foreground">{formatCurrency(amount)}</div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground text-xs">{t('animals.originalValueHeader')}: </span>
+                                  <span className="font-medium">{record.input_quantity} {record.input_unit.toUpperCase()}</span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground text-xs">{t('animals.pricePerLiterHeader')}: </span>
+                                  <span className="font-medium">{formatCurrency(price)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-8">
                     {t('animals.noProductionRecords')}
@@ -257,44 +384,13 @@ export default function AnimalDetail() {
             <TabsContent value="health" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-4">{t('animals.healthEvents')}</h3>
-                {animalHealthData.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fecha</TableHead>
-                        <TableHead>{t('animals.type')}</TableHead>
-                        <TableHead>{t('animals.diagnosis')}</TableHead>
-                        <TableHead>{t('animals.treatment')}</TableHead>
-                        <TableHead>{t('animals.withdrawalUntil')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {animalHealthData.map((event) => (
-                        <TableRow key={event.id}>
-                          <TableCell>{formatDate(event.date)}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{event.type}</Badge>
-                          </TableCell>
-                          <TableCell>{event.diagnosis}</TableCell>
-                          <TableCell>{event.treatment} ({event.dose})</TableCell>
-                          <TableCell>
-                            {event.withdrawal_until ? (
-                              <Badge variant="destructive">
-                                {formatDate(event.withdrawal_until)}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    {t('animals.noHealthEvents')}
+                <div className="text-center py-12">
+                  <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">{t('animals.noHealthEvents')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('animals.featureComingSoon')}
                   </p>
-                )}
+                </div>
               </div>
             </TabsContent>
             

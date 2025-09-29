@@ -312,7 +312,7 @@ export default function SettingsUsers() {
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
                   {usersData.users.map((user) => (
-                    <div key={user.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                    <div key={user.id} className="border border-border rounded-lg p-4 bg-card">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1 mr-3">
                           <div className="font-medium text-lg mb-1">
@@ -343,7 +343,7 @@ export default function SettingsUsers() {
                           </Button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 gap-2 text-sm pt-2 border-t border-gray-100">
+                      <div className="grid grid-cols-1 gap-2 text-sm pt-2 border-t border-border/50">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground text-xs">{t("common.lastLogin")}:</span>
                           <span className="font-medium text-xs">
@@ -418,7 +418,7 @@ export default function SettingsUsers() {
                 <Label htmlFor="delete-reason">{t("common.reason")}</Label>
                 <Textarea
                   id="delete-reason"
-                  placeholder="Razón para eliminar al usuario..."
+                  placeholder={t("common.deleteUserReasonPlaceholder")}
                   value={deleteReason}
                   onChange={(e) => setDeleteReason(e.target.value)}
                   rows={3}

@@ -5,6 +5,7 @@ import { createMilkProduction, createMilkProductionsBulk } from "@/services/milk
 import { createMilkDelivery } from "@/services/milkDeliveries";
 import { convertToLiters } from "@/lib/mock-data";
 import type { MilkCollectionFormData, DeliveryFormData } from "./useMilkCollectionForm";
+import { formatLocalDateShort, formatLocalTime } from "@/utils/dateUtils";
 
 export function useMilkCollectionActions(
   formData: MilkCollectionFormData,
@@ -12,8 +13,10 @@ export function useMilkCollectionActions(
   selectedAnimals: string[],
   animalQuantities: Record<string, string>,
   deliveryDateFrom: string,
+  animals: Array<{ id: string; name?: string | null; tag?: string | null }>,
   resetProductionForm: () => void,
-  resetDeliveryForm: () => void
+  resetDeliveryForm: () => void,
+  onBulkConflicts?: (payload: { header: string; lines: string[] }) => void
 ) {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -71,7 +74,7 @@ export function useMilkCollectionActions(
       resetProductionForm();
     } catch (err: any) {
       console.error(err);
-      toast({ title: t("common.error"), description: t("common.recordError") + " la producción", variant: "destructive" });
+      toast({ title: t("common.error"), description: err?.details?.message || (t("common.recordError") + " la producción"), variant: "destructive" });
     }
   };
 
@@ -121,7 +124,30 @@ export function useMilkCollectionActions(
       resetProductionForm();
     } catch (err: any) {
       console.error(err);
-      toast({ title: t("common.error"), description: t("common.recordError") + " el bulk", variant: "destructive" });
+      const conflicts = err?.details?.conflicts as Array<{ animal_id: string; date: string; shift: string; input_quantity: string; existing_date_time?: string }> | undefined;
+      if (conflicts && conflicts.length > 0) {
+        const nameOf = (id: string) => {
+          const a = animals.find(x => x.id === id);
+          return a ? `${a.name ?? ''} (${a.tag ?? ''})`.trim() : id;
+        };
+        const lines = conflicts.map(c => {
+          const when = c.existing_date_time
+            ? `${formatLocalDateShort(c.existing_date_time)} ${formatLocalTime(c.existing_date_time)}`
+            : `${c.shift} ${formData.date}`;
+          return `• ${nameOf(c.animal_id)} — ${c.input_quantity} (${c.shift} ${when})`;
+        });
+        if (onBulkConflicts) {
+          onBulkConflicts({ header: t("milk.bulkConflictsHeader"), lines });
+        } else {
+          toast({
+            title: t("common.error"),
+            description: [t("milk.bulkConflictsHeader"), ...lines].join("\n"),
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({ title: t("common.error"), description: err?.details?.message || (t("common.recordError") + " el bulk"), variant: "destructive" });
+      }
     }
   };
 

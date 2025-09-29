@@ -84,6 +84,7 @@ export default {
   invalidDateRange: "La fecha hasta debe ser posterior a la fecha desde",
 
   // Default periods
+  today: "Hoy",
   lastWeek: "Última Semana",
   lastMonth: "Último Mes",
   last3Months: "Últimos 3 Meses",
@@ -143,4 +144,8 @@ export default {
   topPerformers: "Mejores Productores",
   averageProduction: "Producción Promedio",
   noAnimalsDataForCharts: "No hay datos de animales disponibles para mostrar gráficos",
+
+  // Totals
+  total: "Total",
+  records: "registros",
 };
