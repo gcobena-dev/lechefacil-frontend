@@ -8,18 +8,20 @@ import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X, Sparkles } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses } from "@/services/animals";
+import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, getNextTag } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AnimalPhotoUpload, PhotoFile } from "@/components/animals/AnimalPhotoUpload";
 
 interface AnimalFormData {
   tag: string;
   name: string;
   breed: string;
   breedId: string;
+  breedVariant: string;
   birthDate: string;
   lot: string;
   lotId: string;
@@ -39,12 +41,18 @@ export default function AnimalForm() {
     name: "",
     breed: "",
     breedId: "",
+    breedVariant: "",
     birthDate: "",
     lot: "",
     lotId: "",
     statusId: "",
     notes: ""
   });
+
+  const [photos, setPhotos] = useState<PhotoFile[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<any[]>([]);
+  const [photosToDelete, setPhotosToDelete] = useState<string[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
   const { data: existing, isLoading: loadingAnimal } = useQuery({
     queryKey: ["animal", id],
@@ -66,6 +74,12 @@ export default function AnimalForm() {
     queryFn: () => getLots({ active: true }),
   });
 
+  const { data: existingPhotosData } = useQuery({
+    queryKey: ["animal-photos", id],
+    queryFn: () => listAnimalPhotos(id as string),
+    enabled: isEditing,
+  });
+
   useEffect(() => {
     if (existing) {
       setFormData({
@@ -73,6 +87,7 @@ export default function AnimalForm() {
         name: existing.name ?? "",
         breed: existing.breed ?? "",
         breedId: (existing as any).breed_id ?? "",
+        breedVariant: (existing as any).breed_variant ?? "",
         birthDate: existing.birth_date ? String(existing.birth_date).slice(0, 10) : "",
         lot: existing.lot ?? "",
         lotId: (existing as any).lot_id ?? "",
@@ -81,6 +96,12 @@ export default function AnimalForm() {
       });
     }
   }, [existing]);
+
+  useEffect(() => {
+    if (existingPhotosData) {
+      setExistingPhotos(existingPhotosData);
+    }
+  }, [existingPhotosData]);
 
   // Determine if selected breed is Girolando (by code or name); fallback to legacy name
   const isGirolando = useMemo(() => {
@@ -113,6 +134,8 @@ export default function AnimalForm() {
       return;
     }
     try {
+      let animalId = id;
+
       if (isEditing && existing) {
         const body = {
           version: existing.version,
@@ -133,8 +156,28 @@ export default function AnimalForm() {
           lot_id: formData.lotId || null,
           status_id: formData.statusId || undefined,
         };
-        await doCreate(body);
+        const created = await doCreate(body);
+        animalId = created.id;
       }
+
+      // Handle photos
+      if (animalId) {
+        setUploadingPhotos(true);
+
+        // Delete marked photos
+        for (const photoId of photosToDelete) {
+          await deleteAnimalPhoto(animalId, photoId);
+        }
+
+        // Upload new photos
+        if (photos.length > 0) {
+          const files = photos.map(p => p.file);
+          await uploadMultiplePhotos(animalId, files);
+        }
+
+        setUploadingPhotos(false);
+      }
+
       toast({
         title: isEditing ? t('animals.animalUpdatedMsg') : t('animals.animalCreatedMsg'),
         description: `${formData.tag} ${t('animals.savedSuccessfully')}`,
@@ -142,12 +185,40 @@ export default function AnimalForm() {
       navigate("/animals");
     } catch (err: any) {
       console.error(err);
+      setUploadingPhotos(false);
       toast({ title: t('common.error'), description: t('animals.couldNotSave'), variant: "destructive" });
     }
   };
 
+  const handleDeleteExistingPhoto = (photoId: string) => {
+    setPhotosToDelete(prev => [...prev, photoId]);
+    setExistingPhotos(prev => prev.filter(p => p.id !== photoId));
+  };
+
   const handleInputChange = (field: keyof AnimalFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const { mutateAsync: generateTag, isPending: generatingTag } = useMutation({
+    mutationFn: getNextTag,
+    onSuccess: (data) => {
+      setFormData(prev => ({ ...prev, tag: data.next_tag }));
+      toast({
+        title: t('animals.tagGenerated'),
+        description: t('animals.tagGeneratedDesc').replace('{tag}', data.next_tag),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t('common.error'),
+        description: t('animals.couldNotGenerateTag'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleGenerateTag = async () => {
+    await generateTag();
   };
 
   return (
@@ -169,7 +240,22 @@ export default function AnimalForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tag">{t('animals.tagNumber')} *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="tag">{t('animals.tagNumber')} *</Label>
+                  {!isEditing && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateTag}
+                      disabled={generatingTag}
+                      className="h-7 text-xs"
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      {generatingTag ? t('animals.generatingTag') : t('animals.generateTag')}
+                    </Button>
+                  )}
+                </div>
                 <Input
                   id="tag"
                   value={formData.tag}
@@ -226,6 +312,19 @@ export default function AnimalForm() {
                   type="date"
                   value={formData.birthDate}
                   onChange={(e) => handleInputChange("birthDate", e.target.value)}
+                  onClick={(e) => {
+                    // Show the date picker when clicking anywhere on the input
+                    const input = e.currentTarget;
+                    if (input && typeof input.showPicker === 'function') {
+                      try {
+                        input.showPicker();
+                      } catch (error) {
+                        // Fallback for browsers that don't support showPicker
+                        input.focus();
+                      }
+                    }
+                  }}
+                  className="cursor-pointer"
                 />
               </div>
             </div>
@@ -326,9 +425,45 @@ export default function AnimalForm() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>{t('animals.animalPhotos')}</Label>
+              {isEditing && existingPhotos.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+                  {existingPhotos.map((photo, index) => (
+                    <Card key={photo.id} className="relative group overflow-hidden">
+                      <div className="aspect-square relative">
+                        <img
+                          src={photo.url}
+                          alt={photo.title || `Foto ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {photo.is_primary && (
+                          <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">
+                            {t('animals.primaryPhoto')}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleDeleteExistingPhoto(photo.id)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          type="button"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              <AnimalPhotoUpload
+                photos={photos}
+                onPhotosChange={setPhotos}
+                maxPhotos={6 - existingPhotos.length}
+              />
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button type="submit" className="flex-1" disabled={creating || updating || (isEditing && loadingAnimal)}>
-                {isEditing ? (updating ? t('animals.updating') : t('animals.updateAnimal')) : (creating ? t('animals.creating') : t('animals.createAnimal'))}
+              <Button type="submit" className="flex-1" disabled={creating || updating || uploadingPhotos || (isEditing && loadingAnimal)}>
+                {uploadingPhotos ? t('animals.uploadingPhotos') : isEditing ? (updating ? t('animals.updating') : t('animals.updateAnimal')) : (creating ? t('animals.creating') : t('animals.createAnimal'))}
               </Button>
               <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/animals")}>
                 {t('common.cancel')}

@@ -18,6 +18,13 @@ import {
   TableRow
 } from "@/components/ui/table";
 import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
   ArrowLeft,
   Edit,
   Milk,
@@ -33,12 +40,20 @@ import { formatDate } from "@/utils/format";
 import { useAnimalDetail } from "@/hooks/useAnimalDetail";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
+import { useQuery } from "@tanstack/react-query";
+import { listAnimalPhotos } from "@/services/animals";
 
 export default function AnimalDetail() {
   const { id } = useParams();
   const { t } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
   const { data: animalData, isLoading, error } = useAnimalDetail(id as string);
+
+  const { data: photos = [] } = useQuery({
+    queryKey: ["animal-photos", id],
+    queryFn: () => listAnimalPhotos(id as string),
+    enabled: !!id,
+  });
 
   if (isLoading) {
     return <div className="text-center py-8">{t('animals.loading')}</div>;
@@ -119,6 +134,51 @@ export default function AnimalDetail() {
           </Link>
         </Button>
       </div>
+
+      {/* Photo Carousel */}
+      {photos.length > 0 && (
+        <Card>
+          <CardContent className="p-6">
+            <Carousel className="w-full max-w-lg mx-auto">
+              <CarouselContent>
+                {photos
+                  .sort((a, b) => {
+                    if (a.is_primary) return -1;
+                    if (b.is_primary) return 1;
+                    return a.position - b.position;
+                  })
+                  .map((photo) => (
+                    <CarouselItem key={photo.id}>
+                      <div className="aspect-square relative rounded-lg overflow-hidden">
+                        <img
+                          src={photo.url}
+                          alt={photo.title || "Foto del animal"}
+                          className="w-full h-full object-cover"
+                        />
+                        {photo.is_primary && (
+                          <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">
+                            {t('animals.primaryPhoto')}
+                          </div>
+                        )}
+                      </div>
+                      {photo.title && (
+                        <p className="text-center text-sm text-muted-foreground mt-2">
+                          {photo.title}
+                        </p>
+                      )}
+                    </CarouselItem>
+                  ))}
+              </CarouselContent>
+              {photos.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-2" />
+                  <CarouselNext className="right-2" />
+                </>
+              )}
+            </Carousel>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Animal Info Card */}
       <Card>

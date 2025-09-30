@@ -91,3 +91,30 @@ export interface MilkDeliveryResponse {
   created_at: string;
   updated_at: string;
 }
+
+export interface AnimalPhotoUploadResponse {
+  upload_url: string;
+  storage_key: string;
+  fields: {
+    'Content-Type': string;
+    key: string;
+    AWSAccessKeyId: string;
+    policy: string;
+    signature: string;
+  };
+}
+
+export interface AnimalPhotoResponse {
+  id: UUID;
+  animal_id: UUID;
+  storage_key: string;
+  url: string;
+  mime_type: string;
+  size_bytes: number;
+  title?: string | null;
+  description?: string | null;
+  is_primary: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}

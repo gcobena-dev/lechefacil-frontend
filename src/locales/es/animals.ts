@@ -225,4 +225,20 @@ export default {
 
   // Funcionalidades futuras
   featureComingSoon: "Esta funcionalidad estará disponible próximamente",
+
+  // Fotos
+  animalPhotos: "Fotos del animal",
+  primaryPhoto: "Principal",
+  uploadPhotos: "Subir fotos",
+  dragPhotosHere: "Arrastra fotos aquí o haz clic para seleccionar",
+  maxPhotos: "Máximo {max} fotos ({current}/{max})",
+  photoOf: "Foto del animal",
+  uploadingPhotos: "Subiendo fotos...",
+
+  // Auto-generar tag
+  generateTag: "Generar",
+  generatingTag: "Generando...",
+  tagGenerated: "Arrete generado",
+  tagGeneratedDesc: "Se generó el arrete: {tag}",
+  couldNotGenerateTag: "No se pudo generar el arrete",
 };
