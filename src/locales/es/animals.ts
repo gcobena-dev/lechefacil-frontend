@@ -234,6 +234,10 @@ export default {
   maxPhotos: "Máximo {max} fotos ({current}/{max})",
   photoOf: "Foto del animal",
   uploadingPhotos: "Subiendo fotos...",
+  setPrimary: "Marcar como principal",
+  primaryPhotoUpdated: "Foto principal actualizada",
+  primaryPhotoUpdatedDesc: "La foto principal ha sido actualizada correctamente",
+  couldNotUpdatePrimary: "No se pudo actualizar la foto principal",
 
   // Auto-generar tag
   generateTag: "Generar",

@@ -34,7 +34,12 @@ import {
   MapPin,
   BarChart3,
   Clock,
-  Info
+  Info,
+  Check,
+  X,
+  Maximize2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { formatDate } from "@/utils/format";
 import { useAnimalDetail } from "@/hooks/useAnimalDetail";
@@ -42,12 +47,15 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimalPhotos } from "@/services/animals";
+import { useState } from "react";
 
 export default function AnimalDetail() {
   const { id } = useParams();
   const { t } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
   const { data: animalData, isLoading, error } = useAnimalDetail(id as string);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
   const { data: photos = [] } = useQuery({
     queryKey: ["animal-photos", id],
@@ -68,6 +76,30 @@ export default function AnimalDetail() {
   }
 
   const { animal, productionData, productionSummary } = animalData;
+
+  const sortedPhotos = photos
+    .sort((a, b) => {
+      if (a.is_primary) return -1;
+      if (b.is_primary) return 1;
+      return a.position - b.position;
+    });
+
+  const openFullscreen = (index: number) => {
+    setFullscreenIndex(index);
+    setFullscreenOpen(true);
+  };
+
+  const closeFullscreen = () => {
+    setFullscreenOpen(false);
+  };
+
+  const nextPhoto = () => {
+    setFullscreenIndex((prev) => (prev + 1) % sortedPhotos.length);
+  };
+
+  const prevPhoto = () => {
+    setFullscreenIndex((prev) => (prev - 1 + sortedPhotos.length) % sortedPhotos.length);
+  };
 
   const formatCurrency = (amount: number): string => {
     const currency = tenantSettings?.default_currency || 'USD';
@@ -141,33 +173,30 @@ export default function AnimalDetail() {
           <CardContent className="p-6">
             <Carousel className="w-full max-w-lg mx-auto">
               <CarouselContent>
-                {photos
-                  .sort((a, b) => {
-                    if (a.is_primary) return -1;
-                    if (b.is_primary) return 1;
-                    return a.position - b.position;
-                  })
-                  .map((photo) => (
-                    <CarouselItem key={photo.id}>
-                      <div className="aspect-square relative rounded-lg overflow-hidden">
-                        <img
-                          src={photo.url}
-                          alt={photo.title || "Foto del animal"}
-                          className="w-full h-full object-cover"
-                        />
-                        {photo.is_primary && (
-                          <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">
-                            {t('animals.primaryPhoto')}
-                          </div>
-                        )}
-                      </div>
-                      {photo.title && (
-                        <p className="text-center text-sm text-muted-foreground mt-2">
-                          {photo.title}
-                        </p>
+                {sortedPhotos.map((photo, index) => (
+                  <CarouselItem key={photo.id}>
+                    <div className="aspect-square relative rounded-lg overflow-hidden group cursor-pointer" onClick={() => openFullscreen(index)}>
+                      <img
+                        src={photo.url}
+                        alt={photo.title || "Foto del animal"}
+                        className="w-full h-full object-cover"
+                      />
+                      {photo.is_primary && (
+                        <div className="absolute top-2 left-2 bg-white dark:bg-gray-200 text-black rounded-full p-1.5 shadow-lg">
+                          <Check className="h-4 w-4" />
+                        </div>
                       )}
-                    </CarouselItem>
-                  ))}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Maximize2 className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                    {photo.title && (
+                      <p className="text-center text-sm text-muted-foreground mt-2">
+                        {photo.title}
+                      </p>
+                    )}
+                  </CarouselItem>
+                ))}
               </CarouselContent>
               {photos.length > 1 && (
                 <>
@@ -178,6 +207,64 @@ export default function AnimalDetail() {
             </Carousel>
           </CardContent>
         </Card>
+      )}
+
+      {/* Fullscreen Photo Viewer */}
+      {fullscreenOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={closeFullscreen}>
+          <button
+            onClick={closeFullscreen}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <X className="h-8 w-8" />
+          </button>
+
+          {sortedPhotos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevPhoto();
+                }}
+                className="absolute left-4 text-white hover:text-gray-300 z-50 p-3 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <ChevronLeft className="h-10 w-10" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextPhoto();
+                }}
+                className="absolute right-4 text-white hover:text-gray-300 z-50 p-3 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <ChevronRight className="h-10 w-10" />
+              </button>
+            </>
+          )}
+
+          <div className="relative w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={sortedPhotos[fullscreenIndex].url}
+              alt={sortedPhotos[fullscreenIndex].title || "Foto del animal"}
+              className="max-w-full max-h-full object-contain"
+            />
+            {sortedPhotos[fullscreenIndex].is_primary && (
+              <div className="absolute top-4 left-4 bg-white dark:bg-gray-200 text-black rounded-full p-2 shadow-lg">
+                <Check className="h-5 w-5" />
+              </div>
+            )}
+            {sortedPhotos[fullscreenIndex].title && (
+              <div className="absolute bottom-4 left-0 right-0 text-center">
+                <p className="text-white text-lg bg-black/50 inline-block px-4 py-2 rounded">
+                  {sortedPhotos[fullscreenIndex].title}
+                </p>
+              </div>
+            )}
+            <div className="absolute bottom-4 right-4 text-white text-sm bg-black/50 px-3 py-1 rounded">
+              {fullscreenIndex + 1} / {sortedPhotos.length}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Animal Info Card */}

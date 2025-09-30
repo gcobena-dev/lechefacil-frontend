@@ -134,6 +134,37 @@ export async function deleteAnimalPhoto(animalId: string, photoId: string) {
   });
 }
 
+export async function updateAnimalPhoto(animalId: string, photoId: string, payload: {
+  is_primary?: boolean;
+  position?: number;
+  title?: string;
+  description?: string;
+}) {
+  // Backend expects all fields from CreatePhotoRequest
+  // We need to fetch the photo first to get the required fields
+  const photos = await listAnimalPhotos(animalId);
+  const photo = photos.find(p => p.id === photoId);
+
+  if (!photo) {
+    throw new Error('Photo not found');
+  }
+
+  return apiFetch<AnimalPhotoResponse>(`/api/v1/animals/${animalId}/photos/${photoId}`, {
+    method: "PUT",
+    withAuth: true,
+    withTenant: true,
+    body: {
+      storage_key: photo.storage_key || '',
+      mime_type: photo.mime_type || 'image/jpeg',
+      size_bytes: photo.size_bytes || 0,
+      title: payload.title ?? photo.title,
+      description: payload.description ?? photo.description,
+      is_primary: payload.is_primary ?? photo.is_primary,
+      position: payload.position ?? photo.position,
+    },
+  });
+}
+
 export async function uploadAnimalPhoto(animalId: string, file: File, options?: {
   position?: number;
   is_primary?: boolean;

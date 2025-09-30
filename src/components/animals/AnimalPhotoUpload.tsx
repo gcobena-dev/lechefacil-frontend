@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -47,6 +47,16 @@ export function AnimalPhotoUpload({
       URL.revokeObjectURL(photoToRemove.preview);
     }
     onPhotosChange(photos.filter((p) => p.id !== id));
+  };
+
+  const handleSetPrimary = (index: number) => {
+    if (index === 0) return; // Already primary
+
+    // Move the selected photo to position 0
+    const newPhotos = [...photos];
+    const [selectedPhoto] = newPhotos.splice(index, 1);
+    newPhotos.unshift(selectedPhoto);
+    onPhotosChange(newPhotos);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -116,11 +126,18 @@ export function AnimalPhotoUpload({
                   alt={`Preview ${index + 1}`}
                   className="w-full h-full object-cover"
                 />
-                {index === 0 && (
-                  <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">
-                    {t('animals.primaryPhoto')}
-                  </div>
-                )}
+                <button
+                  onClick={() => handleSetPrimary(index)}
+                  className={`absolute top-2 left-2 rounded-full p-1.5 shadow-lg transition-all ${
+                    index === 0
+                      ? 'bg-white dark:bg-gray-200 text-black scale-110 cursor-default'
+                      : 'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-400/70 dark:hover:bg-gray-600/70 hover:scale-105 cursor-pointer'
+                  }`}
+                  type="button"
+                  title={index === 0 ? t('animals.primaryPhoto') : t('animals.setPrimary')}
+                >
+                  <Check className="h-4 w-4" />
+                </button>
                 <button
                   onClick={() => handleRemovePhoto(photo.id)}
                   className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -129,11 +146,11 @@ export function AnimalPhotoUpload({
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="p-2 bg-white">
-                <p className="text-xs text-gray-500 truncate">
+              <div className="p-2 bg-card">
+                <p className="text-xs text-muted-foreground truncate">
                   {photo.file.name}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground/70">
                   {(photo.file.size / 1024).toFixed(1)} KB
                 </p>
               </div>

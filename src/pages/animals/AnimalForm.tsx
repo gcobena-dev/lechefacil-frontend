@@ -8,9 +8,9 @@ import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Sparkles } from "lucide-react";
+import { ArrowLeft, X, Sparkles, Check } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, getNextTag } from "@/services/animals";
+import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -193,6 +193,33 @@ export default function AnimalForm() {
   const handleDeleteExistingPhoto = (photoId: string) => {
     setPhotosToDelete(prev => [...prev, photoId]);
     setExistingPhotos(prev => prev.filter(p => p.id !== photoId));
+  };
+
+  const handleSetPrimaryPhoto = async (photoId: string) => {
+    if (!id) return;
+
+    try {
+      // Update the clicked photo to be primary
+      await updateAnimalPhoto(id, photoId, { is_primary: true });
+
+      // Update local state
+      setExistingPhotos(prev => prev.map(p => ({
+        ...p,
+        is_primary: p.id === photoId
+      })));
+
+      toast({
+        title: t('animals.primaryPhotoUpdated'),
+        description: t('animals.primaryPhotoUpdatedDesc'),
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: t('common.error'),
+        description: t('animals.couldNotUpdatePrimary'),
+        variant: "destructive"
+      });
+    }
   };
 
   const handleInputChange = (field: keyof AnimalFormData, value: string) => {
@@ -437,11 +464,18 @@ export default function AnimalForm() {
                           alt={photo.title || `Foto ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
-                        {photo.is_primary && (
-                          <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded">
-                            {t('animals.primaryPhoto')}
-                          </div>
-                        )}
+                        <button
+                          onClick={() => handleSetPrimaryPhoto(photo.id)}
+                          className={`absolute top-2 left-2 rounded-full p-1.5 shadow-lg transition-all ${
+                            photo.is_primary
+                              ? 'bg-white dark:bg-gray-200 text-black scale-110'
+                              : 'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-400/70 dark:hover:bg-gray-600/70 hover:scale-105'
+                          }`}
+                          type="button"
+                          title={photo.is_primary ? t('animals.primaryPhoto') : t('animals.setPrimary')}
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => handleDeleteExistingPhoto(photo.id)}
                           className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
