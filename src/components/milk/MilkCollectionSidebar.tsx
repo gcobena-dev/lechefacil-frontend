@@ -87,7 +87,6 @@ export default function MilkCollectionSidebar({
   };
 
   const priceFor = (p: Production) => {
-    // @ts-ignore optional field from API sometimes present
     const snap = (p as any).price_snapshot;
     const parsed = snap ? parseFloat(String(snap)) : undefined;
     return parsed ?? effectivePrice ?? 0;
