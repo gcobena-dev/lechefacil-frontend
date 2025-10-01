@@ -87,6 +87,7 @@ export default {
   enterQuantityAtLeast: "Ingresa la cantidad para al menos un animal seleccionado",
   bulkRecordSuccessful: "Registro bulk exitoso",
   registrationError: "Error al registrar",
+  futureDateNotAllowed: "No se puede registrar con fecha futura",
 
   // Placeholders comunes
   selectAnimal: "Seleccionar animal",

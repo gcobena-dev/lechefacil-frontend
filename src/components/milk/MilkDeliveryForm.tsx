@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Truck } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import ConfigurationInfo from "./ConfigurationInfo";
+import { getLocalDateTimeInputValue } from "@/utils/dateUtils";
 import type { DeliveryFormData } from "@/hooks/useMilkCollectionForm";
 
 interface Buyer {
@@ -31,6 +32,7 @@ export default function MilkDeliveryForm({
   onSubmit
 }: MilkDeliveryFormProps) {
   const { t } = useTranslation();
+  const maxDateTime = getLocalDateTimeInputValue();
 
   return (
     <Card>
@@ -48,6 +50,7 @@ export default function MilkDeliveryForm({
                 value={deliveryFormData.dateTime}
                 onChange={(e) => onFormDataChange({ dateTime: e.target.value })}
                 onClick={(e) => e.currentTarget.showPicker?.()}
+                max={maxDateTime}
                 required
               />
             </div>

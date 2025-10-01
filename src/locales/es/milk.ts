@@ -1,5 +1,3 @@
-import { title } from "process";
-
 export default {
   // Recolección de leche
   milkCollectionTitle: "Recolección de Leche",
@@ -193,4 +191,25 @@ export default {
   // Additional
   unknownBuyer: "Comprador desconocido",
   title: "Registro de Ordeño",
+
+  // OCR Photo Upload
+  ocrUploadTitle: "Cargar registros desde foto",
+  ocrSelectPhoto: "Click para seleccionar una foto de los registros",
+  ocrFileTypes: "JPG, PNG (máx 10MB)",
+  ocrProcessing: "Procesando...",
+  ocrProcessWithAI: "Procesar con IA",
+  ocrRecordsLoaded: "Se cargaron {count} registros en la tabla",
+  ocrInvalidImage: "Por favor selecciona una imagen válida",
+  ocrImageTooLarge: "La imagen es muy grande. Máximo 10MB",
+  ocrProcessingError: "Error al procesar la imagen. Intenta nuevamente.",
+  previewAlt: "Vista previa",
+  ocrUnmatchedSummary: "{count} registros no se pudieron identificar",
+  ocrNoRecordsFound: "No se encontraron registros en la imagen",
+  dailyRecords: "Registros del día",
+  shift: "Turno",
+  pounds: "Libras",
+  liters: "Litros",
+  amount: "Monto",
+  perPage: "Por página",
+  totalAmount: "Monto del día",
 };

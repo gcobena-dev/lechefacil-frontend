@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 export default function MilkCollect() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("production");
+  const [ocrResetKey, setOcrResetKey] = useState<number>(0);
 
   // Get initial form data and billing
   const initialFormData = { date: getTodayLocalDateString(), buyerId: '' };
@@ -76,7 +77,8 @@ export default function MilkCollect() {
     animals,
     resetProductionForm,
     resetDeliveryForm,
-    openConflictsDialog
+    openConflictsDialog,
+    () => setOcrResetKey((k) => k + 1)
   );
 
   // Auto-select all active animals when list loads for bulk mode
@@ -144,6 +146,7 @@ export default function MilkCollect() {
                 onToggleAnimalSelection={toggleAnimalSelection}
                 onUpdateAnimalQuantity={updateAnimalQuantity}
                 onSubmit={handleProductionSubmit}
+                ocrResetKey={ocrResetKey}
               />
             </div>
             <div>
@@ -153,6 +156,7 @@ export default function MilkCollect() {
                 recentDeliveries={recentDeliveries}
                 productions={productions}
                 formData={formData}
+                effectivePrice={effectivePrice}
               />
             </div>
           </div>

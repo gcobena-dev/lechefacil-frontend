@@ -88,3 +88,85 @@ export async function listMilkProductionsPaginated(params: { date_from?: string;
     },
   });
 }
+
+// OCR endpoints
+export interface PresignUploadResponse {
+  upload_url: string;
+  storage_key: string;
+  fields?: Record<string, string>;
+}
+
+export interface OcrMatchedResult {
+  animal_id: string;
+  animal_name: string;
+  animal_tag: string;
+  liters: number;
+  match_confidence: number;
+  extracted_name: string;
+}
+
+export interface OcrUnmatchedResult {
+  extracted_name: string;
+  liters: number;
+  suggestions?: Array<{
+    animal_id: string;
+    name: string;
+    similarity: number;
+  }>;
+}
+
+export interface ProcessOcrResponse {
+  image_url: string;
+  attachment_id: string;
+  matched: OcrMatchedResult[];
+  unmatched: OcrUnmatchedResult[];
+  total_extracted: number;
+}
+
+export async function getOcrUploadUrl(contentType: string) {
+  return apiFetch<PresignUploadResponse>("/api/v1/milk-productions/ocr/uploads", {
+    method: "POST",
+    withAuth: true,
+    withTenant: true,
+    body: {
+      content_type: contentType,
+    },
+  });
+}
+
+export async function uploadToS3(presignedData: PresignUploadResponse, file: File) {
+  const formData = new FormData();
+
+  // Add fields if present (for some S3 configurations)
+  if (presignedData.fields) {
+    Object.entries(presignedData.fields).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+  }
+
+  formData.append("file", file);
+
+  const response = await fetch(presignedData.upload_url, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`S3 upload failed: ${response.statusText}`);
+  }
+
+  return presignedData.storage_key;
+}
+
+export async function processOcrImage(payload: {
+  storage_key: string;
+  mime_type: string;
+  size_bytes: number;
+}) {
+  return apiFetch<ProcessOcrResponse>("/api/v1/milk-productions/ocr/process", {
+    method: "POST",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
+}

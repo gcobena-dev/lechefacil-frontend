@@ -16,7 +16,8 @@ export function useMilkCollectionActions(
   animals: Array<{ id: string; name?: string | null; tag?: string | null }>,
   resetProductionForm: () => void,
   resetDeliveryForm: () => void,
-  onBulkConflicts?: (payload: { header: string; lines: string[] }) => void
+  onBulkConflicts?: (payload: { header: string; lines: string[] }) => void,
+  onBulkSuccess?: () => void
 ) {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -39,6 +40,12 @@ export function useMilkCollectionActions(
   });
 
   const handleSingleSubmit = async () => {
+    // Disallow future dates
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (formData.date > todayStr) {
+      toast({ title: t("common.error"), description: t("common.futureDateNotAllowed"), variant: "destructive" });
+      return;
+    }
     if (!formData.animalId || !formData.inputValue) {
       toast({
         title: t("common.error"),
@@ -79,6 +86,12 @@ export function useMilkCollectionActions(
   };
 
   const handleBulkSubmit = async () => {
+    // Disallow future dates
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (formData.date > todayStr) {
+      toast({ title: t("common.error"), description: t("common.futureDateNotAllowed"), variant: "destructive" });
+      return;
+    }
     const animalsWithQuantities = selectedAnimals.filter(animalId => animalQuantities[animalId]);
 
     if (animalsWithQuantities.length === 0) {
@@ -122,6 +135,8 @@ export function useMilkCollectionActions(
 
       // Clear quantities but keep selection for next shift
       resetProductionForm();
+      // Notify UI to clear OCR widget/cards
+      onBulkSuccess?.();
     } catch (err: any) {
       console.error("Bulk submission error:", err);
 
@@ -172,6 +187,13 @@ export function useMilkCollectionActions(
   };
 
   const handleDeliverySubmit = async () => {
+    // Disallow future datetime
+    const now = new Date();
+    const dt = new Date(deliveryFormData.dateTime);
+    if (dt.getTime() > now.getTime()) {
+      toast({ title: t("common.error"), description: t("common.futureDateNotAllowed"), variant: "destructive" });
+      return;
+    }
     if (!deliveryFormData.buyerId || !deliveryFormData.volumeL) {
       toast({
         title: t("common.error"),

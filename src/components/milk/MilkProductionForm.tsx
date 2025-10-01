@@ -7,10 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Calculator, CheckCircle } from "lucide-react";
 import { convertToLiters } from "@/lib/mock-data";
+import { getTodayLocalDateString } from "@/utils/dateUtils";
 import { useTranslation } from "@/hooks/useTranslation";
 import BulkAnimalSelection from "./BulkAnimalSelection";
 import SearchableAnimalSelect from "./SearchableAnimalSelect";
 import ConfigurationInfo from "./ConfigurationInfo";
+import OcrPhotoUpload from "./OcrPhotoUpload";
 import type { MilkCollectionFormData } from "@/hooks/useMilkCollectionForm";
 
 interface Animal {
@@ -39,6 +41,16 @@ interface MilkProductionFormProps {
   onToggleAnimalSelection: (animalId: string) => void;
   onUpdateAnimalQuantity: (animalId: string, quantity: string) => void;
   onSubmit: () => void;
+  ocrResetKey?: string | number;
+}
+
+interface OcrResult {
+  animalId: string | null;
+  animalName: string;
+  liters: number;
+  matchConfidence: number;
+  extractedName: string;
+  suggestions?: Array<{ animalId: string; name: string; similarity: number }>;
 }
 
 export default function MilkProductionForm({
@@ -55,9 +67,11 @@ export default function MilkProductionForm({
   onBulkModeChange,
   onToggleAnimalSelection,
   onUpdateAnimalQuantity,
-  onSubmit
+  onSubmit,
+  ocrResetKey
 }: MilkProductionFormProps) {
   const { t } = useTranslation();
+  const todayStr = getTodayLocalDateString();
 
   const calculatedLiters = formData.inputValue ?
     convertToLiters(parseFloat(formData.inputValue), formData.inputUnit as any, parseFloat(formData.density)) : 0;
@@ -69,6 +83,23 @@ export default function MilkProductionForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
+  };
+
+  const handleOcrResults = (results: OcrResult[]) => {
+    // Auto-fill quantities based on OCR results
+    results.forEach((result) => {
+      if (result.animalId && result.matchConfidence > 0.7) {
+        // Only auto-fill if confidence is high enough
+        // Convert liters to the current input unit
+        const quantity = result.liters.toString();
+        onUpdateAnimalQuantity(result.animalId, quantity);
+
+        // Ensure animal is selected
+        if (!selectedAnimals.includes(result.animalId)) {
+          onToggleAnimalSelection(result.animalId);
+        }
+      }
+    });
   };
 
   return (
@@ -102,6 +133,7 @@ export default function MilkProductionForm({
                   value={formData.date}
                   onChange={(e) => onFormDataChange({ date: e.target.value })}
                   onClick={(e) => e.currentTarget.showPicker?.()}
+                  max={todayStr}
                   required
                 />
               </div>
@@ -133,15 +165,26 @@ export default function MilkProductionForm({
               </div>
             ) : (
               /* Bulk Mode */
-              <BulkAnimalSelection
-                animals={activeAnimals}
-                selectedAnimals={selectedAnimals}
-                animalQuantities={animalQuantities}
-                inputUnit={formData.inputUnit}
-                density={formData.density}
-                onToggleSelection={onToggleAnimalSelection}
-                onUpdateQuantity={onUpdateAnimalQuantity}
-              />
+              <div className="space-y-4">
+                {/* OCR Photo Upload */}
+                <OcrPhotoUpload
+                  key={String(ocrResetKey ?? '')}
+                  onResultsProcessed={handleOcrResults}
+                  disabled={creating || creatingBulk}
+                  resetKey={ocrResetKey}
+                />
+
+                {/* Bulk Animal Selection */}
+                <BulkAnimalSelection
+                  animals={activeAnimals}
+                  selectedAnimals={selectedAnimals}
+                  animalQuantities={animalQuantities}
+                  inputUnit={formData.inputUnit}
+                  density={formData.density}
+                  onToggleSelection={onToggleAnimalSelection}
+                  onUpdateQuantity={onUpdateAnimalQuantity}
+                />
+              </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-3">
