@@ -1,6 +1,6 @@
 export default {
   // Login
-  loginTitle: "Finca Lechera",
+  loginTitle: "LecheFácil",
   loginDescription: "Sistema de Gestión de Producción Lechera",
   loginButton: "Iniciar Sesión",
   loginInProgress: "Iniciando sesión...",

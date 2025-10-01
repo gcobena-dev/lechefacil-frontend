@@ -66,8 +66,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light via-background to-secondary p-4">
       <Card className="w-full max-w-md shadow-strong">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-            <Milk className="w-8 h-8 text-primary-foreground" />
+          <div className="mx-auto flex items-center justify-center">
+            <img src="/logo.png" alt="LecheFácil" className="h-24 w-auto" />
           </div>
           <div>
             <CardTitle className="text-2xl">{t("auth.loginTitle")}</CardTitle>

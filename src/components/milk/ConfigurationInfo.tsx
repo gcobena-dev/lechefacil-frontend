@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function ConfigurationInfo() {
@@ -11,8 +12,24 @@ export default function ConfigurationInfo() {
         <div>
           <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">{t("milk.configuration")}</p>
           <div className="text-xs text-blue-700 dark:text-blue-300">
-            <p className="mb-1">{t("milk.configurationChangeUnit")} <strong>{t("milk.configurationMyProfile")}</strong></p>
-            <p>{t("milk.configurationChangePrices")} <strong>{t("milk.milkPricesTitle")}</strong></p>
+            <p className="mb-1">
+              {t("milk.configurationChangeUnit")}{" "}
+              <Link
+                to="/settings?tab=tenant"
+                className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+              >
+                {t("milk.configurationMyProfile")}
+              </Link>
+            </p>
+            <p>
+              {t("milk.configurationChangePrices")}{" "}
+              <Link
+                to="/milk/prices"
+                className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+              >
+                {t("milk.milkPricesTitle")}
+              </Link>
+            </p>
           </div>
         </div>
       </div>

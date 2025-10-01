@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -43,12 +44,14 @@ const clamp = (n: number, min = 0, max = 100) => Math.min(max, Math.max(min, n))
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const userRoleRaw = useUserRole();
   const userRole: 'ADMIN' | 'WORKER' | 'VET' =
     userRoleRaw === 'MANAGER' ? 'ADMIN'
     : userRoleRaw === 'VETERINARIAN' ? 'VET'
     : (userRoleRaw as 'ADMIN' | 'WORKER' | 'VET') || 'ADMIN';
   const userId = useUserId();
+  const [retryCount, setRetryCount] = useState(0);
 
 
   // Get dashboard data based on user role
@@ -66,6 +69,18 @@ export default function Dashboard() {
   } = useDashboardData(userRole);
 
   const today = new Date();
+
+  // If error persists after retry, logout
+  useEffect(() => {
+    if (hasError && retryCount >= 1) {
+      const logoutAndRedirect = async () => {
+        const { performLogout } = await import('@/services/auth');
+        await performLogout();
+        navigate('/login');
+      };
+      logoutAndRedirect();
+    }
+  }, [hasError, retryCount, navigate]);
 
   // -----------------------------
   // Derivados con casting/guardas
@@ -113,12 +128,17 @@ export default function Dashboard() {
   }
 
   if (hasError) {
+    const handleRetry = () => {
+      setRetryCount(prev => prev + 1);
+      window.location.reload();
+    };
+
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h2 className="text-lg font-semibold mb-2">{t("dashboard.error")}</h2>
-          <Button onClick={() => window.location.reload()}>
+          <Button onClick={handleRetry}>
             <RefreshCw className="h-4 w-4 mr-2" />
             {t("dashboard.retry")}
           </Button>

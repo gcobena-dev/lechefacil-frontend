@@ -47,7 +47,9 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimalPhotos } from "@/services/animals";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listMilkProductionsPaginated, type MilkProductionListResponse } from "@/services/milkProductions";
 
 export default function AnimalDetail() {
   const { id } = useParams();
@@ -56,10 +58,30 @@ export default function AnimalDetail() {
   const { data: animalData, isLoading, error } = useAnimalDetail(id as string);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(0);
 
   const { data: photos = [] } = useQuery({
     queryKey: ["animal-photos", id],
     queryFn: () => listAnimalPhotos(id as string),
+    enabled: !!id,
+  });
+
+  // Compute last 90 days range like hook
+  const today = useMemo(() => new Date(), []);
+  const ninetyDaysAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d; }, []);
+  const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
+
+  // Paginated productions for the table
+  const { data: pagedProductions } = useQuery<MilkProductionListResponse>({
+    queryKey: ["animal-production-paged", id, pageSize, page, formatDateISO(ninetyDaysAgo), formatDateISO(today)],
+    queryFn: () => listMilkProductionsPaginated({
+      animal_id: id as string,
+      date_from: formatDateISO(ninetyDaysAgo),
+      date_to: formatDateISO(today),
+      limit: pageSize,
+      offset: page * pageSize,
+    }),
     enabled: !!id,
   });
 
@@ -76,6 +98,10 @@ export default function AnimalDetail() {
   }
 
   const { animal, productionData, productionSummary } = animalData;
+  const total = pagedProductions?.total ?? 0;
+  const items = pagedProductions?.items ?? [];
+  const start = total === 0 ? 0 : (page * pageSize) + 1;
+  const end = Math.min((page + 1) * pageSize, total);
 
   const sortedPhotos = photos
     .sort((a, b) => {
@@ -436,8 +462,35 @@ export default function AnimalDetail() {
             <TabsContent value="production" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-4">{t('animals.milkingRecords')}</h3>
-                {productionData.length > 0 ? (
+                {total > 0 ? (
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Mostrando {start}-{end} de {total}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Por página</span>
+                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue placeholder="10" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="30">30</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-2 ml-2">
+                          <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                     {/* Desktop Table */}
                     <div className="hidden md:block">
                       <div className="overflow-x-auto">
@@ -453,11 +506,10 @@ export default function AnimalDetail() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {productionData
+                            {items
                               .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
                               .map((record) => {
-                                const date = new Date(record.date_time);
-                                const shift = date.getHours() < 12 ? 'AM' : 'PM';
+                                const shift = record.shift || 'AM';
                                 const price = record.price_snapshot ? parseFloat(record.price_snapshot) : (tenantSettings?.default_price_per_l || 0);
                                 const amount = parseFloat(record.volume_l) * price;
 
@@ -483,11 +535,10 @@ export default function AnimalDetail() {
 
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
-                      {productionData
+                      {items
                         .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
                         .map((record) => {
-                          const date = new Date(record.date_time);
-                          const shift = date.getHours() < 12 ? 'AM' : 'PM';
+                          const shift = record.shift || 'AM';
                           const price = record.price_snapshot ? parseFloat(record.price_snapshot) : (tenantSettings?.default_price_per_l || 0);
                           const amount = parseFloat(record.volume_l) * price;
 
