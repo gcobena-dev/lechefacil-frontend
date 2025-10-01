@@ -15,16 +15,27 @@ export interface MilkProductionItem {
   amount?: string | null;
 }
 
-export async function listMilkProductions(params: { date_from?: string; date_to?: string; animal_id?: string }) {
-  return apiFetch<MilkProductionItem[]>("/api/v1/milk-productions/", {
+export interface MilkProductionListResponse {
+  items: MilkProductionItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export async function listMilkProductions(params: { date_from?: string; date_to?: string; animal_id?: string; limit?: number; offset?: number }) {
+  // Backward-compatible helper that returns only items
+  const resp = await apiFetch<MilkProductionListResponse>("/api/v1/milk-productions/", {
     withAuth: true,
     withTenant: true,
     query: {
       date_from: params.date_from,
       date_to: params.date_to,
       animal_id: params.animal_id,
+      limit: params.limit,
+      offset: params.offset,
     },
   });
+  return resp.items;
 }
 
 export async function createMilkProduction(payload: {
@@ -61,5 +72,19 @@ export async function createMilkProductionsBulk(payload: {
     withAuth: true,
     withTenant: true,
     body: payload,
+  });
+}
+
+export async function listMilkProductionsPaginated(params: { date_from?: string; date_to?: string; animal_id?: string; limit?: number; offset?: number }) {
+  return apiFetch<MilkProductionListResponse>("/api/v1/milk-productions/", {
+    withAuth: true,
+    withTenant: true,
+    query: {
+      date_from: params.date_from,
+      date_to: params.date_to,
+      animal_id: params.animal_id,
+      limit: params.limit,
+      offset: params.offset,
+    },
   });
 }

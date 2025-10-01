@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Settings as SettingsIcon, Users, KeyRound, Building2, Layers3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsUsers from "./SettingsUsers";
@@ -9,7 +10,15 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Settings() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("users");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && ["users", "password", "tenant", "catalogs"].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 px-4">

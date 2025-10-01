@@ -20,7 +20,6 @@ import {
   Beef
 } from "lucide-react";
 
-
 export function AppSidebar() {
   const { state, setOpenMobile } = useSidebar();
   const { t } = useTranslation();
@@ -39,13 +38,15 @@ export function AppSidebar() {
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent>
-        <div className="p-4">
-          <h2 className={`font-bold text-primary ${collapsed ? 'text-xs text-center' : 'text-lg'}`}>
-{collapsed ? 'FL' : t("auth.loginTitle")}
-          </h2>
+        <div className={`flex items-center justify-center ${collapsed ? "py-2 px-2" : "py-1 px-2"}`}>
+          <img
+            src={collapsed ? "/logo.png" : "/logo.webp"}
+            alt="LecheFácil"
+            className={collapsed ? 'h-10 w-10 object-contain' : 'h-40 w-auto'}
+          />
         </div>
-        
-        <SidebarGroup>
+
+        <SidebarGroup className={collapsed ? "mt-1" : "-mt-8"}>
           <SidebarGroupLabel>{t("common.dashboard")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Sparkles, Check } from "lucide-react";
+import { ArrowLeft, X, Sparkles, Check, Info } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
@@ -438,6 +438,26 @@ export default function AnimalForm() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">{t('animals.catalogsConfig')}</p>
+                  <div className="text-xs text-blue-700 dark:text-blue-300">
+                    <p>
+                      {t('animals.catalogsConfigDescPrefix')}{' '}
+                      <Link
+                        to="/settings?tab=catalogs"
+                        className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+                      >
+                        {t('animals.catalogsConfigLink')}
+                      </Link>
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 

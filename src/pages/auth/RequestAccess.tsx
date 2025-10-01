@@ -82,8 +82,8 @@ const RequestAccess = () => {
       <div className="w-full max-w-2xl">
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="text-center space-y-4 pb-8">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <Home className="h-8 w-8 text-primary" />
+            <div className="mx-auto flex items-center justify-center">
+              <img src="/logo.png" alt="LecheFácil" className="h-24 w-auto" />
             </div>
             <div>
               <CardTitle className="text-2xl md:text-3xl font-bold">

@@ -9,7 +9,7 @@ export default {
   breed: "Raza",
   birthDate: "Fecha de Nacimiento",
   weight: "Peso",
-  status: "Estado",
+  status: "Clasificación",
   gender: "Género",
   motherId: "ID de la Madre",
   acquisitionDate: "Fecha de Adquisición",
@@ -245,4 +245,9 @@ export default {
   tagGenerated: "Arrete generado",
   tagGeneratedDesc: "Se generó el arrete: {tag}",
   couldNotGenerateTag: "No se pudo generar el arrete",
+
+  // Configuración de catálogos
+  catalogsConfig: "Configuración de Catálogos",
+  catalogsConfigDescPrefix: "Para gestionar razas y lotes, ve a",
+  catalogsConfigLink: "Configuración → Catálogos",
 };
