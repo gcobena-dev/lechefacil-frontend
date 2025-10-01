@@ -1,3 +1,5 @@
+/// <reference types="@capacitor/status-bar" />
+/// <reference types="@capawesome/capacitor-android-edge-to-edge-support" />
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
