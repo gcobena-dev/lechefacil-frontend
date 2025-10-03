@@ -93,6 +93,12 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleRelease
 
+      - name: List APK outputs (debug)
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          echo "📋 Listing APK output directory:"
+          find android/app/build/outputs/apk -type f -name "*.apk" || echo "No APKs found"
+
       - name: Upload to S3
         if: steps.check.outputs.changed == 'true'
         env:
@@ -100,13 +106,20 @@ jobs:
           S3_MOBILE_BUCKET: ${{ secrets.S3_MOBILE_BUCKET }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          APK="android/app/build/outputs/apk/release/app-release.apk"
+          # Find the release APK (might be app-release-unsigned.apk or app-release.apk)
+          APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -1)
 
+          if [ -z "$APK" ]; then
+            echo "❌ No APK found in android/app/build/outputs/apk/release/"
+            exit 1
+          fi
+
+          echo "📦 Found APK: $APK"
           echo "📤 Uploading APK version ${VERSION} to S3..."
 
           # Upload versioned APK
           aws s3 cp "$APK" \
-            "s3://${S3_BUCKET}/lechefacil-${VERSION}.apk" \
+            "s3://${S3_MOBILE_BUCKET}/lechefacil-${VERSION}.apk" \
             --content-type application/vnd.android.package-archive
 
           # Upload latest (overwrite)
