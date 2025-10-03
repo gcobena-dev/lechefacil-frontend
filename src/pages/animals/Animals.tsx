@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -12,13 +13,15 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { 
-  Plus, 
-  Search, 
+import {
+  Plus,
+  Search,
   Filter,
   Eye,
   Edit,
-  Milk
+  Milk,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
@@ -31,13 +34,20 @@ export default function Animals() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lotFilter, setLotFilter] = useState<string>("");
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(0);
 
   const { data } = useQuery({
-    queryKey: ["animals", { q: searchTerm }],
-    queryFn: () => listAnimals({ q: searchTerm || undefined }),
+    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize }],
+    queryFn: () => listAnimals({
+      q: searchTerm || undefined,
+      limit: pageSize,
+      offset: page * pageSize
+    }),
   });
 
   const items = data?.items ?? [];
+  const total = data?.total ?? 0;
   const { data: lots = [] } = useQuery({
     queryKey: ["lots", { active: true }],
     queryFn: () => getLots({ active: true }),
@@ -210,6 +220,37 @@ export default function Animals() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between border-b pb-4 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Mostrando {filteredAnimals.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Por página</span>
+                <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="10" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -256,11 +297,40 @@ export default function Animals() {
 
       {/* Animals Cards - Mobile */}
       <div className="md:hidden space-y-4">
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            {filteredAnimals.length} {t('animals.animalsFound')}
-          </p>
-        </div>
+        {/* Pagination Controls - Mobile */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Mostrando {filteredAnimals.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Por página</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue placeholder="10" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {filteredAnimals.map((animal) => (
           <Card key={animal.id}>
             <CardContent className="p-4">

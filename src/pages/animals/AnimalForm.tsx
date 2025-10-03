@@ -48,7 +48,7 @@ interface AnimalFormData {
   farm: string;
   certificateName: string;
   associationCode: string;
-  notes: string;
+  certNotes: string;
 }
 
 export default function AnimalForm() {
@@ -87,7 +87,7 @@ export default function AnimalForm() {
     farm: "",
     certificateName: "",
     associationCode: "",
-    notes: "",
+    certNotes: "",
   });
 
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
@@ -166,6 +166,9 @@ export default function AnimalForm() {
         breeder: "",
         owner: "",
         farm: "",
+        certificateName: "",
+        associationCode: "",
+        certNotes: "",
       });
     }
   }, [existing]);
@@ -184,7 +187,7 @@ export default function AnimalForm() {
         farm: existingCertificate.farm ?? "",
         certificateName: existingCertificate.certificate_name ?? "",
         associationCode: existingCertificate.association_code ?? "",
-        notes: existingCertificate.notes ?? "",
+        certNotes: existingCertificate.notes ?? "",
       }));
     }
   }, [existingCertificate]);
@@ -280,7 +283,7 @@ export default function AnimalForm() {
             farm: formData.farm || undefined,
             certificate_name: formData.certificateName || undefined,
             association_code: formData.associationCode || undefined,
-            notes: formData.notes || undefined,
+            certNotes: formData.certNotes || undefined,
           };
 
           try {
@@ -813,11 +816,11 @@ export default function AnimalForm() {
 
                   <div className="space-y-2">
                     <Label htmlFor="associationCode">Código de Asociación</Label>
-                    <Input
+                    <Input                      
                       id="associationCode"
                       value={formData.associationCode}
                       onChange={(e) => handleInputChange("associationCode", e.target.value)}
-                      placeholder="Ej: ASOHOLSTEIN-EC-2024-001"
+                      placeholder="Ej: ASOHOLSTEIN-EC-2024certN001"
                     />
                   </div>
 
@@ -904,8 +907,8 @@ export default function AnimalForm() {
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="notes">Notas</Label>
                     <Textarea
-                      id="notes"
-                      value={formData.notes}
+                      id="certNotes"
+                      value={formData.certNotes}
                       onChange={(e) => handleInputChange("notes", e.target.value)}
                       placeholder="Notas adicionales sobre el certificado..."
                       rows={3}

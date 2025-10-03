@@ -38,6 +38,13 @@ export interface EventEffects {
   message?: string;
 }
 
+export interface AnimalEventListResponse {
+  items: AnimalEvent[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
 export interface RegisterEventPayload {
   type: EventType;
   occurred_at: string;
@@ -88,13 +95,17 @@ export const registerAnimalEvent = async (
 /**
  * Get the timeline of events for an animal
  */
-export const getAnimalEvents = async (animalId: string): Promise<AnimalEvent[]> => {
-  const response = await apiFetch<{ items: AnimalEvent[] }>(`/api/v1/animals/${animalId}/events`, {
+export const getAnimalEvents = async (
+  animalId: string,
+  page: number = 1,
+  perPage: number = 10
+): Promise<AnimalEventListResponse> => {
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+  return apiFetch<AnimalEventListResponse>(`/api/v1/animals/${animalId}/events?${params.toString()}`, {
     method: 'GET',
     withAuth: true,
     withTenant: true,
   });
-  return response.items;
 };
 
 /**

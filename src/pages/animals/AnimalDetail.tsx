@@ -76,9 +76,12 @@ export default function AnimalDetail() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(0);
   const [registerEventOpen, setRegisterEventOpen] = useState(false);
+  // Events pagination
+  const [eventsPageSize, setEventsPageSize] = useState<number>(10);
+  const [eventsPage, setEventsPage] = useState<number>(1);
 
   // Fetch events and lactations
-  const { data: events = [] } = useAnimalEvents(id);
+  const { data: eventsResp } = useAnimalEvents(id, eventsPage, eventsPageSize);
   const { data: lactations = [] } = useAnimalLactations(id);
 
   const { data: photos = [] } = useQuery({
@@ -685,9 +688,37 @@ export default function AnimalDetail() {
                   </Alert>
                 )}
 
-                {events.length > 0 ? (
+                {eventsResp && eventsResp.total > 0 ? (
                   <div className="space-y-3">
-                    {events.map((event) => (
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Mostrando {Math.min((eventsPage - 1) * eventsPageSize + 1, eventsResp.total)}-
+                        {Math.min(eventsPage * eventsPageSize, eventsResp.total)} de {eventsResp.total}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Por página</span>
+                        <Select value={String(eventsPageSize)} onValueChange={(v) => { setEventsPageSize(parseInt(v, 10)); setEventsPage(1); }}>
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue placeholder="10" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="30">30</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-2 ml-2">
+                          <Button variant="outline" size="sm" onClick={() => setEventsPage((p) => Math.max(1, p - 1))} disabled={eventsPage === 1}>
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setEventsPage((p) => (p * eventsPageSize < (eventsResp?.total || 0) ? p + 1 : p))} disabled={eventsPage * eventsPageSize >= (eventsResp?.total || 0)}>
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    {eventsResp.items.map((event) => (
                       <EventTimelineCard key={event.id} event={event} />
                     ))}
                   </div>
@@ -862,6 +893,9 @@ export default function AnimalDetail() {
         isOpen={registerEventOpen}
         onClose={() => setRegisterEventOpen(false)}
         animalSex={animal.sex}
+        animalBreed={animal.breed}
+        animalBreedId={(animal as any).breed_id}
+        animalBreedVariant={(animal as any).breed_variant}
       />
     </div>
   );

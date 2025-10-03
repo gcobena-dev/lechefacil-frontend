@@ -60,6 +60,7 @@ export interface AnimalResponse {
 export interface AnimalsListResponse {
   items: AnimalResponse[];
   next_cursor?: string | null;
+  total?: number | null;
 }
 
 export interface AnimalStatusResponse {
