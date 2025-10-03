@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Tooltip,
   TooltipContent,
@@ -39,7 +40,15 @@ import {
   X,
   Maximize2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  FileText,
+  AlertCircle,
+  Baby,
+  Activity,
+  Stethoscope,
+  ArrowLeftRight,
+  GitBranch
 } from "lucide-react";
 import { formatDate } from "@/utils/format";
 import { useAnimalDetail } from "@/hooks/useAnimalDetail";
@@ -50,6 +59,12 @@ import { listAnimalPhotos } from "@/services/animals";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listMilkProductionsPaginated, type MilkProductionListResponse } from "@/services/milkProductions";
+import { useAnimalEvents } from "@/hooks/useAnimalEvents";
+import { useAnimalLactations } from "@/hooks/useAnimalLactations";
+import EventTimelineCard from "@/components/animals/EventTimelineCard";
+import LactationCard from "@/components/animals/LactationCard";
+import { getAnimalCertificate } from "@/services/animalCertificates";
+import RegisterEventDialog from "@/components/animals/RegisterEventDialog";
 
 export default function AnimalDetail() {
   const { id } = useParams();
@@ -60,10 +75,22 @@ export default function AnimalDetail() {
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(0);
+  const [registerEventOpen, setRegisterEventOpen] = useState(false);
+
+  // Fetch events and lactations
+  const { data: events = [] } = useAnimalEvents(id);
+  const { data: lactations = [] } = useAnimalLactations(id);
 
   const { data: photos = [] } = useQuery({
     queryKey: ["animal-photos", id],
     queryFn: () => listAnimalPhotos(id as string),
+    enabled: !!id,
+  });
+
+  // Fetch certificate
+  const { data: certificate } = useQuery({
+    queryKey: ["animal-certificate", id],
+    queryFn: () => getAnimalCertificate(id as string),
     enabled: !!id,
   });
 
@@ -204,7 +231,7 @@ export default function AnimalDetail() {
                     <div className="aspect-square relative rounded-lg overflow-hidden group cursor-pointer" onClick={() => openFullscreen(index)}>
                       <img
                         src={photo.url}
-                        alt={photo.title || "Foto del animal"}
+                        alt={photo.title || t('animals.animalPhoto')}
                         className="w-full h-full object-cover"
                       />
                       {photo.is_primary && (
@@ -271,7 +298,7 @@ export default function AnimalDetail() {
           <div className="relative w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
             <img
               src={sortedPhotos[fullscreenIndex].url}
-              alt={sortedPhotos[fullscreenIndex].title || "Foto del animal"}
+              alt={sortedPhotos[fullscreenIndex].title || t('animals.animalPhoto')}
               className="max-w-full max-h-full object-contain"
             />
             {sortedPhotos[fullscreenIndex].is_primary && (
@@ -417,10 +444,10 @@ export default function AnimalDetail() {
                     </TooltipTrigger>
                     <TooltipContent>
                       <div className="max-w-xs text-sm">
-                        <p className="mb-1">Compara el promedio de los últimos 30 días vs. los últimos 90 días.</p>
-                        <p className="text-green-600">Verde: mejorando</p>
-                        <p className="text-red-600">Rojo: &lt;80% del promedio</p>
-                        <p className="text-gray-600">Gris: estable</p>
+                        <p className="mb-1">{t('animals.trendHint')}</p>
+                        <p className="text-green-600">{t('animals.trendGreen')}</p>
+                        <p className="text-red-600">{t('animals.trendRed')}</p>
+                        <p className="text-gray-600">{t('animals.trendGray')}</p>
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -451,10 +478,35 @@ export default function AnimalDetail() {
       <Card>
         <Tabs defaultValue="production" className="w-full">
           <CardHeader>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="production">{t('animals.production')}</TabsTrigger>
-              <TabsTrigger value="health">{t('animals.health')}</TabsTrigger>
-              <TabsTrigger value="movements">{t('animals.movements')}</TabsTrigger>
+            <TabsList className="w-full">
+              <TabsTrigger value="production" className="flex items-center gap-1.5">
+                <Milk className="h-4 w-4" />
+                <span>{t('animals.production')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="lactations" className="flex items-center gap-1.5">
+                <Baby className="h-4 w-4" />
+                <span>{t('animals.lactations')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="events" className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" />
+                <span>{t('animals.events')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="health" className="flex items-center gap-1.5">
+                <Stethoscope className="h-4 w-4" />
+                <span>{t('animals.health')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="movements" className="flex items-center gap-1.5">
+                <ArrowLeftRight className="h-4 w-4" />
+                <span>{t('animals.movements')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="genealogy" className="flex items-center gap-1.5">
+                <GitBranch className="h-4 w-4" />
+                <span>{t('animals.genealogy')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="certificate" className="flex items-center gap-1.5">
+                <FileText className="h-4 w-4" />
+                <span>{t('animals.certificate')}</span>
+              </TabsTrigger>
             </TabsList>
           </CardHeader>
           
@@ -578,7 +630,85 @@ export default function AnimalDetail() {
                 )}
               </div>
             </TabsContent>
-            
+
+            {/* Lactations Tab */}
+            <TabsContent value="lactations" className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Historial de Lactancias</h3>
+                  <Badge variant="secondary">
+                    {lactations.length} lactancia{lactations.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+
+                {lactations.length > 0 ? (
+                  <div className="space-y-4">
+                    {lactations.map((lactation) => (
+                      <LactationCard key={lactation.id} lactation={lactation} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Milk className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">
+                      No hay lactancias registradas
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Las lactancias se crean automáticamente al registrar un evento de parto
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Events Tab */}
+            <TabsContent value="events" className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Timeline de Eventos</h3>
+                  <Button onClick={() => setRegisterEventOpen(true)} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Registrar Evento
+                  </Button>
+                </div>
+
+                {animal.disposition_at && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Animal dado de baja</AlertTitle>
+                    <AlertDescription>
+                      Fecha: {formatDate(animal.disposition_at)}
+                      {animal.disposition_reason && (
+                        <><br />Razón: {animal.disposition_reason}</>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {events.length > 0 ? (
+                  <div className="space-y-3">
+                    {events.map((event) => (
+                      <EventTimelineCard key={event.id} event={event} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">
+                      No hay eventos registrados
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Comienza registrando eventos importantes del animal
+                    </p>
+                    <Button onClick={() => setRegisterEventOpen(true)} variant="outline">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Registrar Primer Evento
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
             <TabsContent value="health" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-4">{t('animals.healthEvents')}</h3>
@@ -621,9 +751,118 @@ export default function AnimalDetail() {
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="genealogy" className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">{t('animals.genealogyInfo')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">{t('animals.gender')}</p>
+                    <p className="font-medium">
+                      {animal.sex === 'FEMALE' ? t('animals.female') : animal.sex === 'MALE' ? t('animals.male') : '-'}
+                    </p>
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">{t('animals.dam')}</p>
+                    <p className="font-medium">
+                      {animal.dam_id ? (
+                        <Link to={`/animals/${animal.dam_id}`} className="text-primary hover:underline">
+                          {t('animals.viewDam')}
+                        </Link>
+                      ) : '-'}
+                    </p>
+                  </div>
+                  <div className="p-3 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">{t('animals.sire')}</p>
+                    <p className="font-medium">
+                      {animal.sire_id ? (
+                        <Link to={`/animals/${animal.sire_id}`} className="text-primary hover:underline">
+                          {t('animals.viewSire')}
+                        </Link>
+                      ) : animal.external_sire_code ? (
+                        <span>{animal.external_sire_code} {animal.external_sire_registry ? `(${animal.external_sire_registry})` : ''}</span>
+                      ) : '-'}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-4">
+                  {t('animals.editGenealogyHint')}
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="certificate" className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">{t('animals.certificate')}</h3>
+                {certificate ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.registryNumber')}</p>
+                      <p className="font-medium">{certificate.registry_number || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.bolusId')}</p>
+                      <p className="font-medium">{certificate.bolus_id || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.tattooLeft')}</p>
+                      <p className="font-medium">{certificate.tattoo_left || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.tattooRight')}</p>
+                      <p className="font-medium">{certificate.tattoo_right || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.issueDate')}</p>
+                      <p className="font-medium">{certificate.issue_date ? formatDate(certificate.issue_date) : '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.breeder')}</p>
+                      <p className="font-medium">{certificate.breeder || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.owner')}</p>
+                      <p className="font-medium">{certificate.owner || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">{t('animals.farm')}</p>
+                      <p className="font-medium">{certificate.farm || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">Nombre del Certificado</p>
+                      <p className="font-medium">{certificate.certificate_name || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">Código de Asociación</p>
+                      <p className="font-medium">{certificate.association_code || '-'}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg md:col-span-2">
+                      <p className="text-sm text-muted-foreground">Notas</p>
+                      <p className="font-medium">{certificate.notes || '-'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>{t('animals.noCertificateInfo')}</p>
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground mt-4">
+                  {t('animals.editCertificateHint')}
+                </p>
+              </div>
+            </TabsContent>
           </CardContent>
         </Tabs>
       </Card>
+
+      {/* Register Event Dialog */}
+      <RegisterEventDialog
+        animalId={id!}
+        isOpen={registerEventOpen}
+        onClose={() => setRegisterEventOpen(false)}
+        animalSex={animal.sex}
+      />
     </div>
   );
 }
