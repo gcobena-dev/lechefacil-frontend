@@ -1,22 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Milk, Eye, EyeOff } from "lucide-react";
+import { Fingerprint, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMutation } from "@tanstack/react-query";
 import { login as apiLogin } from "@/services/auth";
 import { setToken, setMustChangePassword } from "@/services/config";
+import { biometricService } from "@/services/biometricService";
+import { BiometryType } from "@capgo/capacitor-native-biometric";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometryType, setBiometryType] = useState<BiometryType>();
+  const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const SERVER_ID = 'com.lechefacil.app';
 
   // Simple check: token presence
   const isAuthenticated = Boolean(localStorage.getItem('lf_token'));
@@ -27,10 +34,53 @@ export default function Login() {
       apiLogin({ email: vars.email, password: vars.password }),
   });
 
+  useEffect(() => {
+    checkBiometric();
+  }, []);
+
+  const checkBiometric = async () => {
+    const { isAvailable, biometryType } = await biometricService.isAvailable();
+    setBiometricAvailable(isAvailable);
+    setBiometryType(biometryType);
+
+    if (isAvailable) {
+      const hasCredentials = await biometricService.hasCredentials(SERVER_ID);
+      setHasSavedCredentials(hasCredentials);
+    }
+  };
+
   // ✅ Return temprano DESPUÉS de todos los hooks
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const handleBiometricLogin = async () => {
+    setLoading(true);
+    try {
+      const credentials = await biometricService.authenticateAndGetCredentials(SERVER_ID);
+
+      if (credentials) {
+        // Intentar login con las credenciales recuperadas
+        const res = await doLogin({ email: credentials.username, password: credentials.password });
+        setToken(res.access_token);
+        setMustChangePassword(res.must_change_password);
+        const count = res.memberships?.length ?? 0;
+        if (count === 0) {
+          navigate("/request-access");
+        } else if (count === 1) {
+          localStorage.setItem("lf_tenant_id", res.memberships[0].tenant_id);
+          navigate(res.must_change_password ? "/force-change-password" : "/dashboard");
+        } else {
+          navigate("/select-farm");
+        }
+      }
+    } catch (err: any) {
+      console.error('Biometric login failed:', err);
+      alert(t("auth.loginError"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +90,20 @@ export default function Login() {
       setToken(res.access_token);
       // store must_change_password flag
       setMustChangePassword(res.must_change_password);
+
+      // Si el login fue exitoso y la biometría está disponible
+      if (biometricAvailable && !hasSavedCredentials) {
+        // Preguntar si quiere guardar credenciales
+        const shouldSave = confirm(
+          `¿Deseas habilitar el inicio de sesión con ${biometricService.getBiometryTypeName(biometryType!)}?`
+        );
+
+        if (shouldSave) {
+          await biometricService.saveCredentials(SERVER_ID, email, password);
+          setHasSavedCredentials(true);
+        }
+      }
+
       const count = res.memberships?.length ?? 0;
       if (count === 0) {
         navigate("/request-access");
@@ -60,6 +124,11 @@ export default function Login() {
     }
   };
 
+  const handleDisableBiometric = async () => {
+    await biometricService.deleteCredentials(SERVER_ID);
+    setHasSavedCredentials(false);
+  };
+
   // Magic link deshabilitado
 
   return (
@@ -78,6 +147,32 @@ export default function Login() {
         </CardHeader>
         
         <CardContent>
+          {/* Botón de autenticación biométrica */}
+          {biometricAvailable && hasSavedCredentials && (
+            <div className="mb-4">
+              <Button
+                onClick={handleBiometricLogin}
+                className="w-full"
+                variant="outline"
+                size="lg"
+                disabled={loading}
+              >
+                <Fingerprint className="mr-2 h-5 w-5" />
+                Iniciar sesión con {biometricService.getBiometryTypeName(biometryType!)}
+              </Button>
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    O continúa con email
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.emailLabel")}</Label>
@@ -127,8 +222,27 @@ export default function Login() {
               {loading ? t("auth.loginInProgress") : t("auth.loginButton")}
             </Button>
           </form>
-          
-          <div className="mt-6 pt-6 border-t">
+
+          <div className="mt-6 pt-6 border-t space-y-4">
+            {/* Opción para desactivar biométrica */}
+            {hasSavedCredentials && (
+              <Button
+                onClick={handleDisableBiometric}
+                variant="ghost"
+                className="w-full text-sm"
+                type="button"
+              >
+                Desactivar inicio de sesión biométrico
+              </Button>
+            )}
+
+            {/* Mostrar info si no hay biometría */}
+            {biometricAvailable === false && (
+              <p className="text-center text-sm text-muted-foreground">
+                Este dispositivo no tiene autenticación biométrica configurada
+              </p>
+            )}
+
             <div className="text-xs text-muted-foreground text-center space-y-1">
               <p>{t("auth.loginInstructions")}</p>
               <Button
