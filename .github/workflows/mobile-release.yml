@@ -89,14 +89,11 @@ jobs:
       - name: Setup release signing
         if: steps.check.outputs.changed == 'true'
         run: |
+          # Use secrets or default password
           KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
-          KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
-
-          # Use default passwords if secrets not set
           if [ -z "$KEYSTORE_PASSWORD" ]; then
             KEYSTORE_PASSWORD="android"
-            KEY_PASSWORD="android"
-            echo "⚠️  Using default passwords (not recommended for production)"
+            echo "⚠️  Using default password 'android' (set KEYSTORE_PASSWORD secret for production)"
           fi
 
           # Generate keystore
@@ -108,21 +105,36 @@ jobs:
             -keysize 2048 \
             -validity 10000 \
             -storepass "${KEYSTORE_PASSWORD}" \
-            -keypass "${KEY_PASSWORD}" \
+            -keypass "${KEYSTORE_PASSWORD}" \
             -dname "CN=LecheFacil, OU=Mobile, O=LecheFacil, L=City, S=State, C=US"
 
-          echo "✅ Keystore generated at android/app/release.keystore"
+          echo "✅ Keystore generated"
+
+          # Export for next step
+          echo "KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD}" >> $GITHUB_ENV
 
       - name: Build signed APK
         if: steps.check.outputs.changed == 'true'
-        env:
-          RELEASE_KEYSTORE_FILE: "release.keystore"
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'android' }}
-          RELEASE_KEY_ALIAS: "lechefacil"
-          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'android' }}
         run: |
+          # Use same password as keystore generation
+          KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            KEYSTORE_PASSWORD="android"
+          fi
+
           cd android
           chmod +x ./gradlew
+
+          echo "🔨 Building APK with signing..."
+          echo "Keystore: app/release.keystore"
+          echo "Alias: lechefacil"
+
+          # Export environment variables for Gradle
+          export RELEASE_KEYSTORE_FILE="release.keystore"
+          export RELEASE_KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD}"
+          export RELEASE_KEY_ALIAS="lechefacil"
+          export RELEASE_KEY_PASSWORD="${KEYSTORE_PASSWORD}"
+
           ./gradlew assembleRelease --stacktrace
 
       - name: List APK outputs (debug)
