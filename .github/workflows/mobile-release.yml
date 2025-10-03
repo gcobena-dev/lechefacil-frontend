@@ -86,49 +86,37 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: npx cap sync android
 
-      - name: Generate keystore
-        if: steps.check.outputs.changed == 'true'
-        run: |
-          echo "🔐 Generating release keystore..."
-          keytool -genkey -v \
-            -keystore android/release.keystore \
-            -alias lechefacil \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass ${{ secrets.KEYSTORE_PASSWORD || 'lechefacil123' }} \
-            -keypass ${{ secrets.KEY_PASSWORD || 'lechefacil123' }} \
-            -dname "CN=LecheFacil, OU=Mobile, O=LecheFacil, L=City, S=State, C=US"
-
-      - name: Build APK
+      - name: Setup release signing
         if: steps.check.outputs.changed == 'true'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'lechefacil123' }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || 'lechefacil123' }}
         run: |
-          cd android
-          chmod +x ./gradlew
+          # Generate keystore
+          echo "🔐 Generating release keystore..."
+          keytool -genkey -v \
+            -keystore android/app/release.keystore \
+            -alias lechefacil \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "${KEYSTORE_PASSWORD}" \
+            -keypass "${KEY_PASSWORD}" \
+            -dname "CN=LecheFacil, OU=Mobile, O=LecheFacil, L=City, S=State, C=US"
 
-          # Create signing config
-          cat >> app/build.gradle <<EOF
-
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file('../release.keystore')
-                      storePassword System.getenv("KEYSTORE_PASSWORD")
-                      keyAlias 'lechefacil'
-                      keyPassword System.getenv("KEY_PASSWORD")
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
+          # Create key.properties for Gradle
+          cat > android/key.properties <<EOF
+          storePassword=${KEYSTORE_PASSWORD}
+          keyPassword=${KEY_PASSWORD}
+          keyAlias=lechefacil
+          storeFile=release.keystore
           EOF
 
+      - name: Build signed APK
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          cd android
+          chmod +x ./gradlew
           ./gradlew assembleRelease
 
       - name: List APK outputs (debug)

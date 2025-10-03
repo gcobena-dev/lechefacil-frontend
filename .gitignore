@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .env
+
+# Android signing keys (sensitive)
+android/key.properties
+android/app/release.keystore
+*.keystore
