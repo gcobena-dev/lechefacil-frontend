@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,12 +38,20 @@ import { useRegisterAnimalEvent } from "@/hooks/useAnimalEvents";
 import type { EventType } from "@/services/animalEvents";
 import { getLocalDateTimeInputValue } from "@/utils/dateUtils";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getNextTag } from "@/services/animals";
+import { getBreeds } from "@/services/breeds";
+import { useToast } from "@/hooks/use-toast";
+import * as SelectPrimitive from "@radix-ui/react-select";
 
 interface RegisterEventDialogProps {
   animalId: string;
   isOpen: boolean;
   onClose: () => void;
   animalSex?: string;
+  animalBreed?: string;
+  animalBreedId?: string;
+  animalBreedVariant?: string;
 }
 
 const EVENT_TYPES: { value: EventType; labelKey: string; descriptionKey: string }[] = [
@@ -64,10 +72,39 @@ export default function RegisterEventDialog({
   isOpen,
   onClose,
   animalSex,
+  animalBreed,
+  animalBreedId,
+  animalBreedVariant,
 }: RegisterEventDialogProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [selectedType, setSelectedType] = useState<EventType | null>(null);
   const { mutate: registerEvent, isPending } = useRegisterAnimalEvent(animalId);
+
+  // Fetch breeds
+  const { data: breeds = [] } = useQuery({
+    queryKey: ["breeds", { active: true }],
+    queryFn: () => getBreeds({ active: true }),
+  });
+
+  // Autogenerate tag mutation
+  const { mutateAsync: generateTag, isPending: generatingTag } = useMutation({
+    mutationFn: getNextTag,
+    onSuccess: (data) => {
+      form.setValue("calf_tag", data.next_tag);
+      toast({
+        title: t('animals.tagGenerated'),
+        description: t('animals.tagGeneratedDesc').replace('{tag}', data.next_tag),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t('common.error'),
+        description: t('animals.couldNotGenerateTag'),
+        variant: "destructive",
+      });
+    },
+  });
 
   const form = useForm({
     defaultValues: {
@@ -80,6 +117,9 @@ export default function RegisterEventDialog({
       calf_sex: "",
       calf_name: "",
       birth_weight: "",
+      breed: animalBreed || "",
+      breed_id: animalBreedId || "",
+      breed_variant: animalBreedVariant || "",
       // Service fields
       external_sire_code: "",
       external_sire_registry: "",
@@ -103,6 +143,9 @@ export default function RegisterEventDialog({
         data.calf_sex = values.calf_sex;
         if (values.calf_name) data.calf_name = values.calf_name;
         if (values.birth_weight) data.birth_weight = parseFloat(values.birth_weight);
+        if (values.breed) data.breed = values.breed;
+        if (values.breed_id) data.breed_id = values.breed_id;
+        if (values.breed_variant) data.breed_variant = values.breed_variant;
         break;
 
       case "SERVICE":
@@ -166,9 +209,21 @@ export default function RegisterEventDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('animals.calfTag')} *</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t('animals.tagExample')} />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input {...field} placeholder={t('animals.tagExample')} />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => generateTag()}
+                      disabled={generatingTag}
+                      title={t('animals.autoGenerate')}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -224,6 +279,74 @@ export default function RegisterEventDialog({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="breed_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('animals.breed')} *</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      const selectedBreed = breeds.find((b: any) => b.id === value);
+                      if (selectedBreed) {
+                        form.setValue("breed", selectedBreed.name);
+                        // Reset variant if breed is not Girolando
+                        if (selectedBreed.name !== "Girolando") {
+                          form.setValue("breed_variant", "");
+                        }
+                      }
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('animals.selectBreed')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {breeds.map((breed: any) => (
+                        <SelectPrimitive.Item key={breed.id} value={breed.id} className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                          <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                            <SelectPrimitive.ItemIndicator>
+                              <span className="h-2 w-2 rounded-full bg-primary" />
+                            </SelectPrimitive.ItemIndicator>
+                          </span>
+                          <SelectPrimitive.ItemText>{breed.name}</SelectPrimitive.ItemText>
+                        </SelectPrimitive.Item>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.watch("breed") === "Girolando" && (
+              <FormField
+                control={form.control}
+                name="breed_variant"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('animals.variant')}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('animals.selectVariant')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="5/8">5/8</SelectItem>
+                        <SelectItem value="3/4">3/4</SelectItem>
+                        <SelectItem value="7/8">7/8</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </>
         );
 

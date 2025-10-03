@@ -5,6 +5,7 @@ import {
   type AnimalEvent,
   type RegisterEventPayload,
   type EventEffects,
+  type AnimalEventListResponse,
 } from '@/services/animalEvents';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -12,10 +13,14 @@ import { useTranslation } from '@/hooks/useTranslation';
 /**
  * Hook to fetch animal events (timeline)
  */
-export const useAnimalEvents = (animalId: string | undefined) => {
-  return useQuery<AnimalEvent[], Error>({
-    queryKey: ['animal-events', animalId],
-    queryFn: () => getAnimalEvents(animalId!),
+export const useAnimalEvents = (
+  animalId: string | undefined,
+  page: number = 1,
+  perPage: number = 10
+) => {
+  return useQuery<AnimalEventListResponse, Error>({
+    queryKey: ['animal-events', animalId, page, perPage],
+    queryFn: () => getAnimalEvents(animalId!, page, perPage),
     enabled: !!animalId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

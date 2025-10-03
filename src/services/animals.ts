@@ -1,13 +1,14 @@
 import { apiFetch } from "./client";
 import { AnimalResponse, AnimalsListResponse, AnimalStatusResponse, AnimalPhotoUploadResponse, AnimalPhotoResponse } from "./types";
 
-export async function listAnimals(params?: { cursor?: string; limit?: number; q?: string; status_codes?: string }) {
+export async function listAnimals(params?: { cursor?: string; limit?: number; offset?: number; q?: string; status_codes?: string }) {
   return apiFetch<AnimalsListResponse>("/api/v1/animals/", {
     withAuth: true,
     withTenant: true,
     query: {
       cursor: params?.cursor,
       limit: params?.limit,
+      offset: params?.offset,
       q: params?.q,
       status_codes: params?.status_codes,
     },
