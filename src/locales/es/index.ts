@@ -6,6 +6,7 @@ import milk from './milk';
 import health from './health';
 import forms from './forms';
 import reports from './reports';
+import updates from './updates';
 
 export default {
   common,
@@ -16,4 +17,5 @@ export default {
   health,
   forms,
   reports,
+  updates,
 };

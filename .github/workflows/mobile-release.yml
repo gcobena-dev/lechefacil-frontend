@@ -1,0 +1,144 @@
+name: Mobile Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "📦 Current version: $VERSION"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Check if version changed
+        id: check
+        env:
+          S3_MOBILE_BUCKET: ${{ secrets.S3_MOBILE_BUCKET }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Check if version.json exists in S3
+          if aws s3 ls "s3://${S3_MOBILE_BUCKET}/version.json" 2>/dev/null; then
+            # Download and extract last deployed version
+            aws s3 cp "s3://${S3_MOBILE_BUCKET}/version.json" /tmp/version.json
+            LAST_VERSION=$(node -p "require('/tmp/version.json').version")
+            echo "📋 Last deployed version: $LAST_VERSION"
+
+            if [ "$VERSION" == "$LAST_VERSION" ]; then
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              echo "⏭️  Version $VERSION already deployed, skipping build"
+              exit 0
+            else
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              echo "✅ Version changed from $LAST_VERSION to $VERSION"
+            fi
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "✅ First deployment, version $VERSION"
+          fi
+
+      - name: Setup Node.js
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java 17
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        if: steps.check.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Build production app
+        if: steps.check.outputs.changed == 'true'
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Sync Capacitor
+        if: steps.check.outputs.changed == 'true'
+        run: npx cap sync android
+
+      - name: Build APK
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload to S3
+        if: steps.check.outputs.changed == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          S3_MOBILE_BUCKET: ${{ secrets.S3_MOBILE_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+
+          echo "📤 Uploading APK version ${VERSION} to S3..."
+
+          # Upload versioned APK
+          aws s3 cp "$APK" \
+            "s3://${S3_BUCKET}/lechefacil-${VERSION}.apk" \
+            --content-type application/vnd.android.package-archive
+
+          # Upload latest (overwrite)
+          aws s3 cp "$APK" \
+            "s3://${S3_MOBILE_BUCKET}/lechefacil-latest.apk" \
+            --content-type application/vnd.android.package-archive
+
+          # Create update bundle
+          echo "📦 Creating update bundle..."
+          cd dist && zip -r ../update.zip . && cd ..
+          aws s3 cp update.zip \
+            "s3://${S3_MOBILE_BUCKET}/updates/${VERSION}.zip"
+
+          # Generate version.json
+          echo "📝 Generating version.json..."
+          cat > version.json <<EOF
+          {
+            "version": "${VERSION}",
+            "versionCode": ${{ github.run_number }},
+            "apkUrl": "https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/lechefacil-${VERSION}.apk",
+            "latestApkUrl": "https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/lechefacil-latest.apk",
+            "updateBundleUrl": "https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/updates/${VERSION}.zip",
+            "releaseDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "minVersion": "0.0.1",
+            "changelog": "Release ${VERSION}"
+          }
+          EOF
+
+          aws s3 cp version.json \
+            "s3://${S3_MOBILE_BUCKET}/version.json" \
+            --content-type application/json \
+            --cache-control "no-cache, must-revalidate"
+
+          echo "✅ Successfully deployed version ${VERSION}"
+          echo "📱 APK: https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/lechefacil-${VERSION}.apk"

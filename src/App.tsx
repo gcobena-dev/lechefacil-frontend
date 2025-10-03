@@ -8,6 +8,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import { RequirePasswordChange } from "./components/auth/RequirePasswordChange";
 import { RequireTenant } from "./components/auth/RequireTenant";
+import { UpdateChecker } from "./components/updates/UpdateChecker";
 // Auth pages
 import Login from "./pages/auth/Login";
 import SignIn from "./pages/auth/SignIn";
@@ -50,6 +51,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <UpdateChecker />
         <BrowserRouter>
         <Routes>
           <Route path="/" element={<RequireAuth><RequireTenant><RequirePasswordChange><AppLayout /></RequirePasswordChange></RequireTenant></RequireAuth>}>
