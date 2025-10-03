@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Sparkles, Check, Info } from "lucide-react";
+import { ArrowLeft, X, Sparkles, Check, Info, FileText, GitBranch } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag } from "@/services/animals";
+import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag, listAnimals } from "@/services/animals";
+import { getAnimalCertificate, createCertificate, updateCertificate } from "@/services/animalCertificates";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -26,6 +29,25 @@ interface AnimalFormData {
   lot: string;
   lotId: string;
   statusId: string;
+  notes: string;
+  // Genealogy
+  sex: string;
+  damId: string;
+  sireType: "internal" | "external";
+  sireId: string;
+  externalSireCode: string;
+  externalSireRegistry: string;
+  // Certificate
+  registryNumber: string;
+  bolusId: string;
+  tattooLeft: string;
+  tattooRight: string;
+  issueDate: string;
+  breeder: string;
+  owner: string;
+  farm: string;
+  certificateName: string;
+  associationCode: string;
   notes: string;
 }
 
@@ -46,7 +68,26 @@ export default function AnimalForm() {
     lot: "",
     lotId: "",
     statusId: "",
-    notes: ""
+    notes: "",
+    // Genealogy
+    sex: "",
+    damId: "",
+    sireType: "external",
+    sireId: "",
+    externalSireCode: "",
+    externalSireRegistry: "",
+    // Certificate
+    registryNumber: "",
+    bolusId: "",
+    tattooLeft: "",
+    tattooRight: "",
+    issueDate: "",
+    breeder: "",
+    owner: "",
+    farm: "",
+    certificateName: "",
+    associationCode: "",
+    notes: "",
   });
 
   const [photos, setPhotos] = useState<PhotoFile[]>([]);
@@ -80,6 +121,22 @@ export default function AnimalForm() {
     enabled: isEditing,
   });
 
+  // Fetch all animals for dam/sire selection (max 100 per backend limit)
+  const { data: animalsListData } = useQuery({
+    queryKey: ["animals-list"],
+    queryFn: () => listAnimals({ limit: 100 }),
+  });
+
+  // Fetch existing certificate
+  const { data: existingCertificate } = useQuery({
+    queryKey: ["animal-certificate", id],
+    queryFn: () => getAnimalCertificate(id as string),
+    enabled: isEditing,
+  });
+
+  const femaleAnimals = animalsListData?.items?.filter((a: any) => a.sex === 'FEMALE') || [];
+  const maleAnimals = animalsListData?.items?.filter((a: any) => a.sex === 'MALE') || [];
+
   useEffect(() => {
     if (existing) {
       setFormData({
@@ -93,9 +150,44 @@ export default function AnimalForm() {
         lotId: (existing as any).lot_id ?? "",
         statusId: (existing as any).status_id ?? "",
         notes: "",
+        // Genealogy
+        sex: (existing as any).sex ?? "",
+        damId: (existing as any).dam_id ?? "",
+        sireType: (existing as any).sire_id ? "internal" : "external",
+        sireId: (existing as any).sire_id ?? "",
+        externalSireCode: (existing as any).external_sire_code ?? "",
+        externalSireRegistry: (existing as any).external_sire_registry ?? "",
+        // Certificate - will be loaded separately
+        registryNumber: "",
+        bolusId: "",
+        tattooLeft: "",
+        tattooRight: "",
+        issueDate: "",
+        breeder: "",
+        owner: "",
+        farm: "",
       });
     }
   }, [existing]);
+
+  useEffect(() => {
+    if (existingCertificate) {
+      setFormData(prev => ({
+        ...prev,
+        registryNumber: existingCertificate.registry_number ?? "",
+        bolusId: existingCertificate.bolus_id ?? "",
+        tattooLeft: existingCertificate.tattoo_left ?? "",
+        tattooRight: existingCertificate.tattoo_right ?? "",
+        issueDate: existingCertificate.issue_date ? String(existingCertificate.issue_date).slice(0, 10) : "",
+        breeder: existingCertificate.breeder ?? "",
+        owner: existingCertificate.owner ?? "",
+        farm: existingCertificate.farm ?? "",
+        certificateName: existingCertificate.certificate_name ?? "",
+        associationCode: existingCertificate.association_code ?? "",
+        notes: existingCertificate.notes ?? "",
+      }));
+    }
+  }, [existingCertificate]);
 
   useEffect(() => {
     if (existingPhotosData) {
@@ -145,6 +237,12 @@ export default function AnimalForm() {
           birth_date: formData.birthDate || null,
           lot_id: formData.lotId || null,
           status_id: formData.statusId || null,
+          // Genealogy
+          sex: formData.sex || null,
+          dam_id: formData.damId || null,
+          sire_id: formData.sireType === "internal" ? (formData.sireId || null) : null,
+          external_sire_code: formData.sireType === "external" ? (formData.externalSireCode || null) : null,
+          external_sire_registry: formData.sireType === "external" ? (formData.externalSireRegistry || null) : null,
         };
         await doUpdate({ id: id as string, body });
       } else {
@@ -155,9 +253,50 @@ export default function AnimalForm() {
           birth_date: formData.birthDate || null,
           lot_id: formData.lotId || null,
           status_id: formData.statusId || undefined,
+          // Genealogy
+          sex: formData.sex || null,
+          dam_id: formData.damId || null,
+          sire_id: formData.sireType === "internal" ? (formData.sireId || null) : null,
+          external_sire_code: formData.sireType === "external" ? (formData.externalSireCode || null) : null,
+          external_sire_registry: formData.sireType === "external" ? (formData.externalSireRegistry || null) : null,
         };
         const created = await doCreate(body);
         animalId = created.id;
+      }
+
+      // Handle certificate (save separately if any field has data)
+      if (animalId) {
+        const hasCertificateData = formData.registryNumber || formData.bolusId || formData.tattooLeft || formData.tattooRight || formData.breeder || formData.owner || formData.farm || formData.issueDate || formData.certificateName || formData.associationCode || formData.notes;
+
+        if (hasCertificateData) {
+          const certificatePayload = {
+            registry_number: formData.registryNumber || undefined,
+            bolus_id: formData.bolusId || undefined,
+            tattoo_left: formData.tattooLeft || undefined,
+            tattoo_right: formData.tattooRight || undefined,
+            issue_date: formData.issueDate || undefined,
+            breeder: formData.breeder || undefined,
+            owner: formData.owner || undefined,
+            farm: formData.farm || undefined,
+            certificate_name: formData.certificateName || undefined,
+            association_code: formData.associationCode || undefined,
+            notes: formData.notes || undefined,
+          };
+
+          try {
+            if (existingCertificate) {
+              await updateCertificate(animalId, {
+                version: existingCertificate.version,
+                ...certificatePayload,
+              });
+            } else {
+              await createCertificate(animalId, certificatePayload);
+            }
+          } catch (certError) {
+            console.error("Error saving certificate:", certError);
+            // Don't fail the whole operation if certificate save fails
+          }
+        }
       }
 
       // Handle photos
@@ -265,6 +404,23 @@ export default function AnimalForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="w-full">
+                <TabsTrigger value="basic" className="flex items-center gap-1.5">
+                  <Info className="h-4 w-4" />
+                  <span>{t('animals.basicInfo')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="genealogy" className="flex items-center gap-1.5">
+                  <GitBranch className="h-4 w-4" />
+                  <span>{t('animals.genealogy')}</span>
+                </TabsTrigger>
+                <TabsTrigger value="certificate" className="flex items-center gap-1.5">
+                  <FileText className="h-4 w-4" />
+                  <span>{t('animals.certificate')}</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="basic" className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -514,6 +670,250 @@ export default function AnimalForm() {
                 maxPhotos={6 - existingPhotos.length}
               />
             </div>
+              </TabsContent>
+
+              <TabsContent value="genealogy" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t('animals.gender')}</Label>
+                    <RadioGroup
+                      value={formData.sex}
+                      onValueChange={(value) => handleInputChange("sex", value)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="FEMALE" id="female" />
+                        <Label htmlFor="female" className="font-normal cursor-pointer">{t('animals.female')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="MALE" id="male" />
+                        <Label htmlFor="male" className="font-normal cursor-pointer">{t('animals.male')}</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dam">{t('animals.dam')}</Label>
+                    <Select value={formData.damId || "none"} onValueChange={(value) => handleInputChange("damId", value === "none" ? "" : value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('animals.selectDam')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                          <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                            <SelectPrimitive.ItemIndicator>
+                              <Check className="h-4 w-4" />
+                            </SelectPrimitive.ItemIndicator>
+                          </span>
+                          <SelectPrimitive.ItemText>{t('common.none')}</SelectPrimitive.ItemText>
+                        </SelectPrimitive.Item>
+                        {femaleAnimals.map((animal: any) => (
+                          <SelectPrimitive.Item
+                            key={animal.id}
+                            value={animal.id}
+                            className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                              <SelectPrimitive.ItemIndicator>
+                                <Check className="h-4 w-4" />
+                              </SelectPrimitive.ItemIndicator>
+                            </span>
+                            <SelectPrimitive.ItemText>{animal.tag} - {animal.name || t('common.none')}</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t('animals.sire')}</Label>
+                    <RadioGroup
+                      value={formData.sireType}
+                      onValueChange={(value: any) => handleInputChange("sireType", value)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="internal" id="sire-internal" />
+                        <Label htmlFor="sire-internal" className="font-normal cursor-pointer">{t('animals.sireInternal')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="external" id="sire-external" />
+                        <Label htmlFor="sire-external" className="font-normal cursor-pointer">{t('animals.sireExternal')}</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {formData.sireType === "internal" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="sire">{t('animals.selectSire')}</Label>
+                      <Select value={formData.sireId || "none"} onValueChange={(value) => handleInputChange("sireId", value === "none" ? "" : value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('animals.selectSire')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                            <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                              <SelectPrimitive.ItemIndicator>
+                                <Check className="h-4 w-4" />
+                              </SelectPrimitive.ItemIndicator>
+                            </span>
+                            <SelectPrimitive.ItemText>Ninguno</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                          {maleAnimals.map((animal: any) => (
+                            <SelectPrimitive.Item
+                              key={animal.id}
+                              value={animal.id}
+                              className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                            >
+                              <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                                <SelectPrimitive.ItemIndicator>
+                                  <Check className="h-4 w-4" />
+                                </SelectPrimitive.ItemIndicator>
+                              </span>
+                              <SelectPrimitive.ItemText>{animal.tag} - {animal.name || 'Sin nombre'}</SelectPrimitive.ItemText>
+                            </SelectPrimitive.Item>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="externalSireCode">Código del Toro</Label>
+                        <Input
+                          id="externalSireCode"
+                          value={formData.externalSireCode}
+                          onChange={(e) => handleInputChange("externalSireCode", e.target.value)}
+                          placeholder="Ej: USA123456"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="externalSireRegistry">{t('animals.registry')}</Label>
+                        <Input
+                          id="externalSireRegistry"
+                          value={formData.externalSireRegistry}
+                          onChange={(e) => handleInputChange("externalSireRegistry", e.target.value)}
+                          placeholder={t('animals.registryExample')}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="certificate" className="space-y-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="certificateName">Nombre del Certificado</Label>
+                    <Input
+                      id="certificateName"
+                      value={formData.certificateName}
+                      onChange={(e) => handleInputChange("certificateName", e.target.value)}
+                      placeholder="Ej: Certificado de Registro Holstein"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="associationCode">Código de Asociación</Label>
+                    <Input
+                      id="associationCode"
+                      value={formData.associationCode}
+                      onChange={(e) => handleInputChange("associationCode", e.target.value)}
+                      placeholder="Ej: ASOHOLSTEIN-EC-2024-001"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="registryNumber">{t('animals.registryNumber')}</Label>
+                    <Input
+                      id="registryNumber"
+                      value={formData.registryNumber}
+                      onChange={(e) => handleInputChange("registryNumber", e.target.value)}
+                      placeholder={t('animals.registryNumberExample')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bolusId">{t('animals.bolusId')}</Label>
+                    <Input
+                      id="bolusId"
+                      value={formData.bolusId}
+                      onChange={(e) => handleInputChange("bolusId", e.target.value)}
+                      placeholder={t('animals.bolusIdExample')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tattooLeft">{t('animals.tattooLeft')}</Label>
+                    <Input
+                      id="tattooLeft"
+                      value={formData.tattooLeft}
+                      onChange={(e) => handleInputChange("tattooLeft", e.target.value)}
+                      placeholder={t('animals.tattooExample')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tattooRight">{t('animals.tattooRight')}</Label>
+                    <Input
+                      id="tattooRight"
+                      value={formData.tattooRight}
+                      onChange={(e) => handleInputChange("tattooRight", e.target.value)}
+                      placeholder={t('animals.tattooExample')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="issueDate">{t('animals.issueDate')}</Label>
+                    <Input
+                      id="issueDate"
+                      type="date"
+                      value={formData.issueDate}
+                      onChange={(e) => handleInputChange("issueDate", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="breeder">{t('animals.breeder')}</Label>
+                    <Input
+                      id="breeder"
+                      value={formData.breeder}
+                      onChange={(e) => handleInputChange("breeder", e.target.value)}
+                      placeholder={t('animals.breederNamePlaceholder')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="owner">{t('animals.owner')}</Label>
+                    <Input
+                      id="owner"
+                      value={formData.owner}
+                      onChange={(e) => handleInputChange("owner", e.target.value)}
+                      placeholder={t('animals.ownerNamePlaceholder')}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="farm">{t('animals.farm')}</Label>
+                    <Input
+                      id="farm"
+                      value={formData.farm}
+                      onChange={(e) => handleInputChange("farm", e.target.value)}
+                      placeholder={t('animals.farmNamePlaceholder')}
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="notes">Notas</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => handleInputChange("notes", e.target.value)}
+                      placeholder="Notas adicionales sobre el certificado..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button type="submit" className="flex-1" disabled={creating || updating || uploadingPhotos || (isEditing && loadingAnimal)}>
