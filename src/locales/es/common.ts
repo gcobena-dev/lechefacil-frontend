@@ -40,6 +40,7 @@ export default {
   settings: "Configuración",
   logout: "Cerrar Sesión",
   myAccount: "Mi Cuenta",
+  user: "Usuario",
   milkManagementSystem: "Sistema de Gestión Lechera",
 
   // Configuración de tenant

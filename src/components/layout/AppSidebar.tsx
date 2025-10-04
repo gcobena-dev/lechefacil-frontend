@@ -78,16 +78,8 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className={`flex items-center justify-between px-3 py-2 border-t ${collapsed ? 'flex-col gap-1' : ''}`}>
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {localStorage.getItem('lf_user_email') || t('common.user')}
-              </span>
-            </div>
-          )}
-          <VersionLabel variant="small" className={collapsed ? '' : ''} />
+        <div className="flex items-center justify-center px-3 py-2 border-t">
+          <VersionLabel variant="small" />
         </div>
       </SidebarFooter>
     </Sidebar>
