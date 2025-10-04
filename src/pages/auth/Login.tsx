@@ -11,6 +11,7 @@ import { login as apiLogin } from "@/services/auth";
 import { setToken, setMustChangePassword } from "@/services/config";
 import { biometricService } from "@/services/biometricService";
 import { BiometryType } from "@capgo/capacitor-native-biometric";
+import { VersionLabel } from "@/components/updates/VersionLabel";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -132,7 +133,12 @@ export default function Login() {
   // Magic link deshabilitado
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light via-background to-secondary p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light via-background to-secondary p-4 relative">
+      {/* Version label in bottom left corner */}
+      <div className="fixed bottom-4 left-4">
+        <VersionLabel variant="small" />
+      </div>
+
       <Card className="w-full max-w-md shadow-strong">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto flex items-center justify-center">

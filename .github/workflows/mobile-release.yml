@@ -173,7 +173,15 @@ jobs:
 
           # Create update bundle
           echo "📦 Creating update bundle..."
-          cd dist && zip -r ../update.zip . && cd ..
+          echo "📋 Contents of dist directory:"
+          ls -la dist/
+
+          # Create zip with files at root level (not in dist/ subfolder)
+          (cd dist && zip -r ../update.zip .)
+
+          echo "📋 Contents of update.zip:"
+          unzip -l update.zip | head -20
+
           aws s3 cp update.zip \
             "s3://${S3_MOBILE_BUCKET}/updates/${VERSION}.zip"
 

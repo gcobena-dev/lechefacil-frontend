@@ -47,12 +47,12 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="system" storageKey="lechefacil-ui-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <UpdateChecker />
-        <BrowserRouter>
+      <ThemeProvider defaultTheme="system" storageKey="lechefacil-ui-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <UpdateChecker />
+          <BrowserRouter>
         <Routes>
           <Route path="/" element={<RequireAuth><RequireTenant><RequirePasswordChange><AppLayout /></RequirePasswordChange></RequireTenant></RequireAuth>}>
             <Route index element={<Dashboard />} />

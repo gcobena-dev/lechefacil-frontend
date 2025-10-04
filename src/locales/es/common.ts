@@ -12,6 +12,7 @@ export default {
   clear: "Limpiar",
   close: "Cerrar",
   confirm: "Confirmar",
+  ok: "OK",
   yes: "Sí",
   no: "No",
   back: "Atrás",

@@ -59,32 +59,47 @@ export class UpdateService {
    */
   async downloadAndInstall(updateInfo: VersionInfo): Promise<boolean> {
     try {
+      console.log("📦 Starting update process...");
+      console.log("Version:", updateInfo.version);
+      console.log("URL:", updateInfo.updateBundleUrl);
+
       // Dynamic import to avoid errors if plugin not installed
       const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
 
-      console.log(
-        `Downloading update ${updateInfo.version} from ${updateInfo.updateBundleUrl}`
-      );
-
       // Download update bundle
-      const { id } = await CapacitorUpdater.download({
+      console.log("⬇️  Downloading update bundle...");
+      const downloadResult = await CapacitorUpdater.download({
         url: updateInfo.updateBundleUrl,
         version: updateInfo.version,
       });
 
-      console.log(`Update downloaded with ID: ${id}`);
+      console.log("✅ Download result:", downloadResult);
 
-      // Set as current version
-      await CapacitorUpdater.set({ id });
+      // downloadResult is BundleInfo which has 'id' directly
+      const bundleId = downloadResult.id;
 
-      console.log("Update applied, reloading...");
+      if (!bundleId) {
+        throw new Error("Download succeeded but no bundle ID returned");
+      }
+
+      console.log("📦 Bundle ID:", bundleId);
+
+      // Set the new bundle as current (will apply on next reload)
+      console.log("🔄 Setting new bundle...");
+      await CapacitorUpdater.set({ id: bundleId });
+
+      console.log("🚀 Reloading app...");
 
       // Reload app to apply update
       await CapacitorUpdater.reload();
 
       return true;
     } catch (error) {
-      console.error("Failed to install update:", error);
+      console.error("❌ Update failed:", error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
       return false;
     }
   }

@@ -7,4 +7,6 @@ export default {
   updateError: "Error al actualizar. Intenta nuevamente más tarde.",
   checkingUpdates: "Verificando actualizaciones...",
   noUpdates: "Ya tienes la última versión",
+  updateInstalledTitle: "¡Actualización completada!",
+  updateInstalledSuccess: "La aplicación se ha actualizado correctamente a la versión {{version}}.",
 };
