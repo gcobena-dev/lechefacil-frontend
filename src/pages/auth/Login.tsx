@@ -41,11 +41,13 @@ export default function Login() {
 
   const checkBiometric = async () => {
     const { isAvailable, biometryType } = await biometricService.isAvailable();
+    console.log('🔐 Biometric check:', { isAvailable, biometryType });
     setBiometricAvailable(isAvailable);
     setBiometryType(biometryType);
 
     if (isAvailable) {
       const hasCredentials = await biometricService.hasCredentials(SERVER_ID);
+      console.log('🔐 Has saved credentials:', hasCredentials);
       setHasSavedCredentials(hasCredentials);
     }
   };
@@ -92,28 +94,37 @@ export default function Login() {
       // store must_change_password flag
       setMustChangePassword(res.must_change_password);
 
-      // Si el login fue exitoso y la biometría está disponible
-      if (biometricAvailable && !hasSavedCredentials) {
-        // Preguntar si quiere guardar credenciales
-        const shouldSave = confirm(
-          `¿Deseas habilitar el inicio de sesión con ${biometricService.getBiometryTypeName(biometryType!)}?`
-        );
+      // Determinar a dónde navegar
+      const count = res.memberships?.length ?? 0;
+      let targetRoute = "/request-access";
 
-        if (shouldSave) {
-          await biometricService.saveCredentials(SERVER_ID, email, password);
-          setHasSavedCredentials(true);
+      if (count === 1) {
+        localStorage.setItem("lf_tenant_id", res.memberships[0].tenant_id);
+        targetRoute = res.must_change_password ? "/force-change-password" : "/dashboard";
+      } else if (count > 1) {
+        targetRoute = "/select-farm";
+      }
+
+      // Si el login fue exitoso y la biometría está disponible, preguntar ANTES de navegar
+      if (biometricAvailable && !hasSavedCredentials) {
+        try {
+          // Preguntar si quiere guardar credenciales
+          const shouldSave = confirm(
+            `¿Deseas habilitar el inicio de sesión con ${biometricService.getBiometryTypeName(biometryType!)}?`
+          );
+
+          if (shouldSave) {
+            await biometricService.saveCredentials(SERVER_ID, email, password);
+            setHasSavedCredentials(true);
+          }
+        } catch (bioErr) {
+          console.error('Error saving biometric credentials:', bioErr);
+          // No bloquear el login si falla guardar biometría
         }
       }
 
-      const count = res.memberships?.length ?? 0;
-      if (count === 0) {
-        navigate("/request-access");
-      } else if (count === 1) {
-        localStorage.setItem("lf_tenant_id", res.memberships[0].tenant_id);
-        navigate(res.must_change_password ? "/force-change-password" : "/dashboard");
-      } else {
-        navigate("/select-farm");
-      }
+      // Navegar después de intentar guardar biometría
+      navigate(targetRoute);
     } catch (err: any) {
       console.error(err);
       const msg = err?.message?.includes("VITE_API_URL")
@@ -240,13 +251,6 @@ export default function Login() {
               >
                 Desactivar inicio de sesión biométrico
               </Button>
-            )}
-
-            {/* Mostrar info si no hay biometría */}
-            {biometricAvailable === false && (
-              <p className="text-center text-sm text-muted-foreground">
-                Este dispositivo no tiene autenticación biométrica configurada
-              </p>
             )}
 
             <div className="text-xs text-muted-foreground text-center space-y-1">
