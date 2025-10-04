@@ -41,13 +41,11 @@ export default function Login() {
 
   const checkBiometric = async () => {
     const { isAvailable, biometryType } = await biometricService.isAvailable();
-    console.log('🔐 Biometric check:', { isAvailable, biometryType });
     setBiometricAvailable(isAvailable);
     setBiometryType(biometryType);
 
     if (isAvailable) {
       const hasCredentials = await biometricService.hasCredentials(SERVER_ID);
-      console.log('🔐 Has saved credentials:', hasCredentials);
       setHasSavedCredentials(hasCredentials);
     }
   };
@@ -60,7 +58,13 @@ export default function Login() {
   const handleBiometricLogin = async () => {
     setLoading(true);
     try {
-      const credentials = await biometricService.authenticateAndGetCredentials(SERVER_ID);
+      const credentials = await biometricService.authenticateAndGetCredentials(SERVER_ID, {
+        reason: t("auth.biometricVerifyReason"),
+        title: t("auth.biometricVerifyTitle"),
+        subtitle: t("auth.biometricVerifySubtitle"),
+        description: t("auth.biometricVerifyDescription"),
+        negativeButtonText: t("auth.biometricVerifyCancel"),
+      });
 
       if (credentials) {
         // Intentar login con las credenciales recuperadas
@@ -78,8 +82,7 @@ export default function Login() {
         }
       }
     } catch (err: any) {
-      console.error('Biometric login failed:', err);
-      alert(t("auth.loginError"));
+      alert(t("auth.biometricLoginError"));
     } finally {
       setLoading(false);
     }
@@ -110,7 +113,7 @@ export default function Login() {
         try {
           // Preguntar si quiere guardar credenciales
           const shouldSave = confirm(
-            `¿Deseas habilitar el inicio de sesión con ${biometricService.getBiometryTypeName(biometryType!)}?`
+            `${t("auth.biometricEnablePrompt")} ${biometricService.getBiometryTypeName(biometryType!)}?`
           );
 
           if (shouldSave) {
@@ -118,7 +121,6 @@ export default function Login() {
             setHasSavedCredentials(true);
           }
         } catch (bioErr) {
-          console.error('Error saving biometric credentials:', bioErr);
           // No bloquear el login si falla guardar biometría
         }
       }
@@ -175,7 +177,7 @@ export default function Login() {
                 disabled={loading}
               >
                 <Fingerprint className="mr-2 h-5 w-5" />
-                Iniciar sesión con {biometricService.getBiometryTypeName(biometryType!)}
+                {t("auth.biometricLoginWith")} {biometricService.getBiometryTypeName(biometryType!)}
               </Button>
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
@@ -183,7 +185,7 @@ export default function Login() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    O continúa con email
+                    {t("auth.biometricContinueWithEmail")}
                   </span>
                 </div>
               </div>
@@ -249,7 +251,7 @@ export default function Login() {
                 className="w-full text-sm"
                 type="button"
               >
-                Desactivar inicio de sesión biométrico
+                {t("auth.biometricDisable")}
               </Button>
             )}
 

@@ -34,7 +34,19 @@ export default {
 
   // Errors
   loginError: "Error al iniciar sesión. Verifica tus credenciales.",
+  biometricLoginError: "Error al iniciar sesión con biometría. Intenta nuevamente.",
   configError: "Configura VITE_API_URL en .env para conectar al backend",
+
+  // Biometric
+  biometricLoginWith: "Iniciar sesión con",
+  biometricContinueWithEmail: "O continúa con email",
+  biometricDisable: "Desactivar inicio de sesión biométrico",
+  biometricEnablePrompt: "¿Deseas habilitar el inicio de sesión con",
+  biometricVerifyReason: "Inicia sesión con tu huella dactilar",
+  biometricVerifyTitle: "Autenticación biométrica",
+  biometricVerifySubtitle: "Coloca tu dedo en el sensor",
+  biometricVerifyDescription: "Usa tu huella para acceder a LecheFácil",
+  biometricVerifyCancel: "Cancelar",
 
   // Farm Selection
   selectFarmDescription: "Selecciona la finca con la que deseas trabajar",

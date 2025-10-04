@@ -22,7 +22,6 @@ export class BiometricService {
         biometryType: result.biometryType,
       };
     } catch (error: any) {
-      console.error('Biometric check error:', error);
       return { isAvailable: false, errorCode: error.code };
     }
   }
@@ -59,18 +58,27 @@ export class BiometricService {
   /**
    * Autentica con biometría y recupera credenciales
    */
-  async authenticateAndGetCredentials(server: string): Promise<{
+  async authenticateAndGetCredentials(
+    server: string,
+    options?: {
+      reason?: string;
+      title?: string;
+      subtitle?: string;
+      description?: string;
+      negativeButtonText?: string;
+    }
+  ): Promise<{
     username: string;
     password: string;
   } | null> {
     try {
       // Verificar que el usuario puede autenticarse
       await NativeBiometric.verifyIdentity({
-        reason: 'Inicia sesión con tu huella dactilar',
-        title: 'Autenticación biométrica',
-        subtitle: 'Coloca tu dedo en el sensor',
-        description: 'Usa tu huella para acceder a LecheFácil',
-        negativeButtonText: 'Cancelar',
+        reason: options?.reason || 'Inicia sesión con tu huella dactilar',
+        title: options?.title || 'Autenticación biométrica',
+        subtitle: options?.subtitle || 'Coloca tu dedo en el sensor',
+        description: options?.description || 'Usa tu huella para acceder a LecheFácil',
+        negativeButtonText: options?.negativeButtonText || 'Cancelar',
         maxAttempts: 3,
       });
 
@@ -85,7 +93,6 @@ export class BiometricService {
         password: credentials.password,
       };
     } catch (error) {
-      console.error('Biometric authentication error:', error);
       return null;
     }
   }
@@ -99,7 +106,7 @@ export class BiometricService {
         server,
       });
     } catch (error) {
-      console.error('Error deleting credentials:', error);
+      // Silently fail
     }
   }
 
