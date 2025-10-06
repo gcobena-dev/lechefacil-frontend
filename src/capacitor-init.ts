@@ -38,22 +38,13 @@ const applyTheme = async (isDarkMode: boolean) => {
 };
 
 export async function initializeCapacitor() {
-  console.log("🔧 initializeCapacitor: Function called");
-
   // Only run on native platforms (Android/iOS)
   if (Capacitor.isNativePlatform()) {
-    console.log("📱 initializeCapacitor: Running on native platform");
-
     // ✅ CRITICAL: Notify Capacitor Updater FIRST, before anything else
     // This MUST be called within 10 seconds of app load to prevent rollback after OTA updates
     try {
-      console.log("📦 initializeCapacitor: Importing CapacitorUpdater...");
       const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
-
-      console.log("📞 initializeCapacitor: Calling notifyAppReady()...");
       await CapacitorUpdater.notifyAppReady();
-
-      console.log("✅ notifyAppReady() called successfully");
     } catch (error) {
       console.error("❌ CRITICAL: Failed to notify app ready:", error);
     }

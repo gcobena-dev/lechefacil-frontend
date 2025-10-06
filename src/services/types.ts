@@ -41,6 +41,7 @@ export interface AnimalResponse {
   status?: string | null; // localized name
   status_desc?: string | null; // localized description
   photo_url: string | null;
+  labels: string[];
   // Genealogy fields
   sex?: string | null;
   dam_id?: UUID | null;

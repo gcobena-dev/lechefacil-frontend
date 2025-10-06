@@ -335,31 +335,32 @@ export default function Animals() {
           <Card key={animal.id}>
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-2">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">{animal.tag}</span>
-                    {getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}
+                <Link to={`/animals/${animal.id}`} className="flex-1 cursor-pointer">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">{animal.tag}</span>
+                      {getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}
+                    </div>
+                    <h3 className="font-medium">{animal.name}</h3>
                   </div>
-                  <h3 className="font-medium">{animal.name}</h3>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/animals/${animal.id}`}>
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to={`/animals/${animal.id}/edit`}>
-                      <Edit className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                >
+                  <Link to={`/animals/${animal.id}/edit`}>
+                    <Edit className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                <div>{t('animals.breed')}: {animal.breed}</div>
-                <div>{t('animals.lot')}: {animal.lot}</div>
-                <div className="col-span-2">{t('animals.age')}: {calculateAge(animal.birth_date)}</div>
-              </div>
+              <Link to={`/animals/${animal.id}`} className="block cursor-pointer">
+                <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                  <div>{t('animals.breed')}: {animal.breed}</div>
+                  <div>{t('animals.lot')}: {animal.lot}</div>
+                  <div className="col-span-2">{t('animals.age')}: {calculateAge(animal.birth_date)}</div>
+                </div>
+              </Link>
             </CardContent>
           </Card>
         ))}

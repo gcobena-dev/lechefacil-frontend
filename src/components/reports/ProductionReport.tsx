@@ -5,26 +5,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Download, BarChart3, Filter, TrendingUp, DollarSign, CalendarIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Download, BarChart3, Filter, TrendingUp, DollarSign, CalendarIcon, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { generateProductionReport, downloadPDFReport, type ReportRequest, type ProductionReportData } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useQuery } from "@tanstack/react-query";
+import { listAnimals, getLabelSuggestions } from "@/services/animals";
+import { getBreeds } from "@/services/breeds";
+import { getLots } from "@/services/lots";
+import { getAnimalStatuses } from "@/services/animals";
+import DailyDetailReport from "./DailyDetailReport";
 
 interface ProductionFilters {
   date_from: string;
   date_to: string;
   period: 'daily' | 'weekly' | 'monthly';
   include_inactive: boolean;
+  animal_ids: string[];
+  labels: string[];
+  breed_ids: string[];
+  lot_ids: string[];
+  status_ids: string[];
 }
 
 export default function ProductionReport() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
-  const [activeTab, setActiveTab] = useState("summary");
+  const [activeTab, setActiveTab] = useState("detalle");
   const [reportData, setReportData] = useState<ProductionReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Helper function to get local date in YYYY-MM-DD format
   const getLocalDateString = (date: Date): string => {
@@ -42,16 +55,63 @@ export default function ProductionReport() {
       date_from: getLocalDateString(today),
       date_to: getLocalDateString(today),
       period: 'daily',
-      include_inactive: false
+      include_inactive: false,
+      animal_ids: [],
+      labels: [],
+      breed_ids: [],
+      lot_ids: [],
+      status_ids: [],
     };
   });
+
+  // Fetch data for filters
+  const { data: animalsData } = useQuery({
+    queryKey: ["animals-list"],
+    queryFn: () => listAnimals(),
+  });
+
+  const { data: breedsData } = useQuery({
+    queryKey: ["breeds"],
+    queryFn: () => getBreeds(),
+  });
+
+  const { data: lotsData } = useQuery({
+    queryKey: ["lots"],
+    queryFn: () => getLots(),
+  });
+
+  const { data: statusesData } = useQuery({
+    queryKey: ["animal-statuses"],
+    queryFn: () => getAnimalStatuses('es'),
+  });
+
+  const { data: labelsData } = useQuery({
+    queryKey: ["all-labels"],
+    queryFn: () => getLabelSuggestions(''),
+  });
+
+  const animals = animalsData?.items || [];
+  const breeds = breedsData || [];
+  const lots = lotsData || [];
+  const statuses = statusesData || [];
+  const allLabels = labelsData || [];
 
   const loadReportData = useCallback(async () => {
     setIsLoading(true);
     try {
       const params: ReportRequest = {
-        ...filters,
-        format: 'json'
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+        period: filters.period,
+        format: 'json',
+        filters: {
+          animal_ids: filters.animal_ids.length > 0 ? filters.animal_ids : undefined,
+          labels: filters.labels.length > 0 ? filters.labels : undefined,
+          breed_ids: filters.breed_ids.length > 0 ? filters.breed_ids : undefined,
+          lot_ids: filters.lot_ids.length > 0 ? filters.lot_ids : undefined,
+          status_ids: filters.status_ids.length > 0 ? filters.status_ids : undefined,
+          include_inactive: filters.include_inactive,
+        }
       };
 
       const response = await generateProductionReport(params);
@@ -87,19 +147,19 @@ export default function ProductionReport() {
       }
 
       if (isNaN(date.getTime())) {
-        return { formatted: 'Invalid Date', dayName: '' };
+        return { formatted: t('forms.invalidDate'), dayName: '' };
       }
 
       return {
-        formatted: date.toLocaleDateString('es-ES', {
+        formatted: date.toLocaleDateString(i18n.language || 'es-EC', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit'
         }),
-        dayName: date.toLocaleDateString('es-ES', { weekday: 'long' })
+        dayName: date.toLocaleDateString(i18n.language || 'es-EC', { weekday: 'long' })
       };
     } catch (error) {
-      return { formatted: 'Invalid Date', dayName: '' };
+      return { formatted: t('forms.invalidDate'), dayName: '' };
     }
   };
 
@@ -110,7 +170,7 @@ export default function ProductionReport() {
 
   const formatCurrency = (amount: number): string => {
     const currency = tenantSettings?.default_currency || 'USD';
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat(i18n.language || 'es-EC', {
       style: 'currency',
       currency: currency
     }).format(amount);
@@ -174,8 +234,18 @@ export default function ProductionReport() {
   const downloadPDF = async () => {
     try {
       const params: ReportRequest = {
-        ...filters,
-        format: 'pdf'
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+        period: filters.period,
+        format: 'pdf',
+        filters: {
+          animal_ids: filters.animal_ids.length > 0 ? filters.animal_ids : undefined,
+          labels: filters.labels.length > 0 ? filters.labels : undefined,
+          breed_ids: filters.breed_ids.length > 0 ? filters.breed_ids : undefined,
+          lot_ids: filters.lot_ids.length > 0 ? filters.lot_ids : undefined,
+          status_ids: filters.status_ids.length > 0 ? filters.status_ids : undefined,
+          include_inactive: filters.include_inactive,
+        }
       };
 
       const response = await generateProductionReport(params);
@@ -333,6 +403,227 @@ export default function ProductionReport() {
             </div>
           </div>
 
+          {/* Advanced Filters Toggle */}
+          <div className="border-t pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="flex items-center gap-2 w-full justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                Filtros Avanzados
+                {(filters.animal_ids.length > 0 || filters.labels.length > 0 || filters.breed_ids.length > 0 || filters.lot_ids.length > 0 || filters.status_ids.length > 0) && (
+                  <Badge variant="secondary" className="ml-2">
+                    {filters.animal_ids.length + filters.labels.length + filters.breed_ids.length + filters.lot_ids.length + filters.status_ids.length}
+                  </Badge>
+                )}
+              </span>
+              {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+
+            {showAdvancedFilters && (
+              <div className="mt-4 space-y-4 border rounded-lg p-4 bg-muted/30">
+                {/* Animals Multi-Select */}
+                <div className="space-y-2">
+                  <Label>Animales Específicos</Label>
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      if (!filters.animal_ids.includes(value)) {
+                        setFilters(prev => ({ ...prev, animal_ids: [...prev.animal_ids, value] }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar animal..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {animals.map((animal: any) => (
+                        <SelectItem key={animal.id} value={animal.id}>
+                          {animal.tag} - {animal.name || 'Sin nombre'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {filters.animal_ids.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {filters.animal_ids.map((id) => {
+                        const animal = animals.find((a: any) => a.id === id);
+                        return (
+                          <Badge key={id} variant="secondary" className="gap-1">
+                            {animal?.tag || id}
+                            <button
+                              onClick={() => setFilters(prev => ({ ...prev, animal_ids: prev.animal_ids.filter(aid => aid !== id) }))}
+                              className="ml-1 hover:bg-destructive/20 rounded-full"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Labels Multi-Select */}
+                <div className="space-y-2">
+                  <Label>Etiquetas</Label>
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      if (!filters.labels.includes(value)) {
+                        setFilters(prev => ({ ...prev, labels: [...prev.labels, value] }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar etiqueta..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allLabels.map((label: string) => (
+                        <SelectItem key={label} value={label}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {filters.labels.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {filters.labels.map((label) => (
+                        <Badge key={label} variant="secondary" className="gap-1">
+                          {label}
+                          <button
+                            onClick={() => setFilters(prev => ({ ...prev, labels: prev.labels.filter(l => l !== label) }))}
+                            className="ml-1 hover:bg-destructive/20 rounded-full"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Breeds, Lots, Status in a grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Breeds */}
+                  <div className="space-y-2">
+                    <Label>Razas</Label>
+                    <Select
+                      value=""
+                      onValueChange={(value) => {
+                        if (!filters.breed_ids.includes(value)) {
+                          setFilters(prev => ({ ...prev, breed_ids: [...prev.breed_ids, value] }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {breeds.map((breed: any) => (
+                          <SelectItem key={breed.id} value={breed.id}>
+                            {breed.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {filters.breed_ids.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.breed_ids.map((id) => {
+                          const breed = breeds.find((b: any) => b.id === id);
+                          return (
+                            <Badge key={id} variant="outline" className="text-xs gap-1">
+                              {breed?.name || id}
+                              <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, breed_ids: prev.breed_ids.filter(bid => bid !== id) }))} />
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lots */}
+                  <div className="space-y-2">
+                    <Label>Lotes</Label>
+                    <Select
+                      value=""
+                      onValueChange={(value) => {
+                        if (!filters.lot_ids.includes(value)) {
+                          setFilters(prev => ({ ...prev, lot_ids: [...prev.lot_ids, value] }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lots.map((lot: any) => (
+                          <SelectItem key={lot.id} value={lot.id}>
+                            {lot.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {filters.lot_ids.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.lot_ids.map((id) => {
+                          const lot = lots.find((l: any) => l.id === id);
+                          return (
+                            <Badge key={id} variant="outline" className="text-xs gap-1">
+                              {lot?.name || id}
+                              <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, lot_ids: prev.lot_ids.filter(lid => lid !== id) }))} />
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label>Estados</Label>
+                    <Select
+                      value=""
+                      onValueChange={(value) => {
+                        if (!filters.status_ids.includes(value)) {
+                          setFilters(prev => ({ ...prev, status_ids: [...prev.status_ids, value] }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map((status: any) => (
+                          <SelectItem key={status.id} value={status.id}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {filters.status_ids.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.status_ids.map((id) => {
+                          const status = statuses.find((s: any) => s.id === id);
+                          return (
+                            <Badge key={id} variant="outline" className="text-xs gap-1">
+                              {status?.name || id}
+                              <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, status_ids: prev.status_ids.filter(sid => sid !== id) }))} />
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <input
@@ -356,10 +647,16 @@ export default function ProductionReport() {
       {/* Data Visualization Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
+          <TabsTrigger value="detalle">{t('reports.dailyDetail')}</TabsTrigger>
           <TabsTrigger value="summary">{t("reports.summary")}</TabsTrigger>
           <TabsTrigger value="charts">{t("reports.charts")}</TabsTrigger>
           <TabsTrigger value="tables">{t("reports.tables")}</TabsTrigger>
         </TabsList>
+
+        {/* Detalle Diario Tab */}
+        <TabsContent value="detalle" className="space-y-4">
+          {reportData && <DailyDetailReport reportData={reportData} />}
+        </TabsContent>
 
         <TabsContent value="summary" className="space-y-4">
           {reportData?.summary && (
@@ -466,7 +763,7 @@ export default function ProductionReport() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{animal.total_liters.toLocaleString()}L</p>
-                        <p className="text-sm text-muted-foreground">{animal.avg_per_day.toFixed(1)}L/día</p>
+                        <p className="text-sm text-muted-foreground">{animal.avg_per_day.toFixed(1)}L/{t('reports.dayOfWeek').toLowerCase()}</p>
                       </div>
                     </div>
                   ))}
@@ -530,7 +827,7 @@ export default function ProductionReport() {
                             if (name === 'ingresos') return [formatCurrency(value), t("reports.totalRevenue")];
                             return [value, name];
                           }}
-                          labelFormatter={(label: string) => `Fecha: ${label}`}
+                          labelFormatter={(label: string) => `${t('reports.dateLabel')}: ${label}`}
                         />
                         <Legend />
                         <Bar
@@ -677,7 +974,7 @@ export default function ProductionReport() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xs text-muted-foreground">Total</div>
+                            <div className="text-xs text-muted-foreground">{t('reports.total')}</div>
                             <div className="font-medium text-green-700">
                               {row.entregados > 0 ? formatCurrency(row.ingresos) : '-'}
                             </div>
@@ -710,7 +1007,7 @@ export default function ProductionReport() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-muted-foreground">Total</div>
+                        <div className="text-xs text-muted-foreground">{t('reports.total')}</div>
                         <div className="font-bold text-lg text-green-700">
                           {calculateTableTotals().totalRevenue > 0 ? formatCurrency(calculateTableTotals().totalRevenue) : '-'}
                         </div>

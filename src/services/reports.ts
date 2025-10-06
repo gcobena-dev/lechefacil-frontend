@@ -39,6 +39,10 @@ export interface ReportRequest {
   filters?: {
     animal_ids?: string[];
     buyer_ids?: string[];
+    labels?: string[];
+    breed_ids?: string[];
+    lot_ids?: string[];
+    status_ids?: string[];
     include_inactive?: boolean;
     [key: string]: any;
   };
@@ -63,6 +67,12 @@ export interface ProductionReportData {
     animal_tag: string;
     total_liters: number;
     avg_per_day: number;
+  }>;
+  daily_by_animal?: Record<string, Record<string, { weight_lb: number; total_liters: number }>>;
+  animals?: Array<{
+    id: string;
+    tag: string;
+    name: string | null;
   }>;
 }
 

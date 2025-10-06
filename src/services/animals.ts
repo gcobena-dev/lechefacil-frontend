@@ -33,6 +33,7 @@ export async function createAnimal(payload: {
   lot_id?: string | null;
   status_id?: string | null;
   photo_url?: string | null;
+  labels?: string[];
 }) {
   return apiFetch<AnimalResponse>("/api/v1/animals/", {
     method: "POST",
@@ -73,6 +74,14 @@ export async function getNextTag() {
   return apiFetch<{ next_tag: string }>("/api/v1/animals/next-tag", {
     withAuth: true,
     withTenant: true,
+  });
+}
+
+export async function getLabelSuggestions(query: string = '') {
+  return apiFetch<string[]>("/api/v1/animals/labels/suggestions", {
+    withAuth: true,
+    withTenant: true,
+    query: { q: query },
   });
 }
 

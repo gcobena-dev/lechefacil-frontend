@@ -100,6 +100,10 @@ export default {
   searchByNameOrTag: "Buscar por nombre o número...",
   noAnimalsAvailable: "No hay animales disponibles",
   showingResults: "Mostrando {{start}}-{{end}} de {{total}} resultados",
+  labels: "Etiquetas",
+  addLabels: "Agregar etiquetas...",
+  labelsHelper: "{{count}}/{{max}} etiquetas • Presiona espacio, coma o Enter para agregar",
+  removeTagAria: "Eliminar {{tag}}",
 
   // Configuración de perfil
   profileConfigTitle: "Configuración del Perfil",

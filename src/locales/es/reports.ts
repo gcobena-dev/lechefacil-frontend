@@ -102,6 +102,7 @@ export default {
   summary: "Resumen",
   charts: "Gráficos",
   tables: "Tablas",
+  dailyDetail: "Detalle Diario",
 
   // Production specific
   totalLiters: "Total de Litros",
@@ -148,4 +149,8 @@ export default {
   // Totals
   total: "Total",
   records: "registros",
+
+  // UI snippets
+  showingAnimalsRange: "Mostrando {{start}}-{{end}} de {{total}} animales",
+  revenue: "Ingresos",
 };

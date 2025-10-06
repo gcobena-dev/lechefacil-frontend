@@ -353,6 +353,20 @@ export default function AnimalDetail() {
               <span>{(animal as any).birth_date ? formatDate((animal as any).birth_date) : '-'}</span>
             </div>
           </div>
+
+          {/* Labels Section */}
+          {animal.labels && animal.labels.length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-sm font-medium text-muted-foreground mb-3">Labels</p>
+              <div className="flex flex-wrap gap-2">
+                {animal.labels.map((label, index) => (
+                  <Badge key={index} variant="secondary" className="px-3 py-1">
+                    {label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

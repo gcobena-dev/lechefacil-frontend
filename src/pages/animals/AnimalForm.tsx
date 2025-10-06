@@ -12,12 +12,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, X, Sparkles, Check, Info, FileText, GitBranch } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag, listAnimals } from "@/services/animals";
+import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag, listAnimals, getLabelSuggestions } from "@/services/animals";
 import { getAnimalCertificate, createCertificate, updateCertificate } from "@/services/animalCertificates";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AnimalPhotoUpload, PhotoFile } from "@/components/animals/AnimalPhotoUpload";
+import { TagInput } from "@/components/ui/tag-input";
 
 interface AnimalFormData {
   tag: string;
@@ -30,6 +31,7 @@ interface AnimalFormData {
   lotId: string;
   statusId: string;
   notes: string;
+  labels: string[];
   // Genealogy
   sex: string;
   damId: string;
@@ -69,6 +71,7 @@ export default function AnimalForm() {
     lotId: "",
     statusId: "",
     notes: "",
+    labels: [],
     // Genealogy
     sex: "",
     damId: "",
@@ -94,6 +97,7 @@ export default function AnimalForm() {
   const [existingPhotos, setExistingPhotos] = useState<any[]>([]);
   const [photosToDelete, setPhotosToDelete] = useState<string[]>([]);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [labelSuggestions, setLabelSuggestions] = useState<string[]>([]);
 
   const { data: existing, isLoading: loadingAnimal } = useQuery({
     queryKey: ["animal", id],
@@ -150,6 +154,7 @@ export default function AnimalForm() {
         lotId: (existing as any).lot_id ?? "",
         statusId: (existing as any).status_id ?? "",
         notes: "",
+        labels: existing.labels ?? [],
         // Genealogy
         sex: (existing as any).sex ?? "",
         damId: (existing as any).dam_id ?? "",
@@ -240,6 +245,7 @@ export default function AnimalForm() {
           birth_date: formData.birthDate || null,
           lot_id: formData.lotId || null,
           status_id: formData.statusId || null,
+          labels: formData.labels,
           // Genealogy
           sex: formData.sex || null,
           dam_id: formData.damId || null,
@@ -256,6 +262,7 @@ export default function AnimalForm() {
           birth_date: formData.birthDate || null,
           lot_id: formData.lotId || null,
           status_id: formData.statusId || undefined,
+          labels: formData.labels,
           // Genealogy
           sex: formData.sex || null,
           dam_id: formData.damId || null,
@@ -366,6 +373,15 @@ export default function AnimalForm() {
 
   const handleInputChange = (field: keyof AnimalFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLabelSearch = async (query: string) => {
+    try {
+      const suggestions = await getLabelSuggestions(query);
+      setLabelSuggestions(suggestions);
+    } catch (error) {
+      console.error('Error fetching label suggestions:', error);
+    }
   };
 
   const { mutateAsync: generateTag, isPending: generatingTag } = useMutation({
@@ -600,6 +616,17 @@ export default function AnimalForm() {
               </div>
             </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="labels">{t('animals.labels')}</Label>
+                <TagInput
+                  value={formData.labels}
+                  onChange={(labels) => setFormData(prev => ({ ...prev, labels }))}
+                  suggestions={labelSuggestions}
+                  onSearch={handleLabelSearch}
+                placeholder={t('common.addLabels')}
+                />
+              </div>
+
             <div className="p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
@@ -752,14 +779,14 @@ export default function AnimalForm() {
                           <SelectValue placeholder={t('animals.selectSire')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
-                            <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-                              <SelectPrimitive.ItemIndicator>
-                                <Check className="h-4 w-4" />
-                              </SelectPrimitive.ItemIndicator>
-                            </span>
-                            <SelectPrimitive.ItemText>Ninguno</SelectPrimitive.ItemText>
-                          </SelectPrimitive.Item>
+                        <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                          <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                            <SelectPrimitive.ItemIndicator>
+                              <Check className="h-4 w-4" />
+                            </SelectPrimitive.ItemIndicator>
+                          </span>
+                          <SelectPrimitive.ItemText>{t('common.none')}</SelectPrimitive.ItemText>
+                        </SelectPrimitive.Item>
                           {maleAnimals.map((animal: any) => (
                             <SelectPrimitive.Item
                               key={animal.id}
@@ -771,8 +798,8 @@ export default function AnimalForm() {
                                   <Check className="h-4 w-4" />
                                 </SelectPrimitive.ItemIndicator>
                               </span>
-                              <SelectPrimitive.ItemText>{animal.tag} - {animal.name || 'Sin nombre'}</SelectPrimitive.ItemText>
-                            </SelectPrimitive.Item>
+                              <SelectPrimitive.ItemText>{animal.tag} - {animal.name || t('animals.noName')}</SelectPrimitive.ItemText>
+                        </SelectPrimitive.Item>
                           ))}
                         </SelectContent>
                       </Select>
@@ -780,12 +807,12 @@ export default function AnimalForm() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="externalSireCode">Código del Toro</Label>
+                        <Label htmlFor="externalSireCode">{t('animals.sireCode')}</Label>
                         <Input
                           id="externalSireCode"
                           value={formData.externalSireCode}
                           onChange={(e) => handleInputChange("externalSireCode", e.target.value)}
-                          placeholder="Ej: USA123456"
+                          placeholder={t('animals.sireCodeExample')}
                         />
                       </div>
                       <div className="space-y-2">
@@ -805,22 +832,22 @@ export default function AnimalForm() {
               <TabsContent value="certificate" className="space-y-4 mt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="certificateName">Nombre del Certificado</Label>
+                    <Label htmlFor="certificateName">{t('animals.certificateName')}</Label>
                     <Input
                       id="certificateName"
                       value={formData.certificateName}
                       onChange={(e) => handleInputChange("certificateName", e.target.value)}
-                      placeholder="Ej: Certificado de Registro Holstein"
+                      placeholder={t('animals.certificateNameExample')}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="associationCode">Código de Asociación</Label>
+                    <Label htmlFor="associationCode">{t('animals.associationCode')}</Label>
                     <Input                      
                       id="associationCode"
                       value={formData.associationCode}
                       onChange={(e) => handleInputChange("associationCode", e.target.value)}
-                      placeholder="Ej: ASOHOLSTEIN-EC-2024certN001"
+                      placeholder={t('animals.associationCodeExample')}
                     />
                   </div>
 
@@ -905,12 +932,12 @@ export default function AnimalForm() {
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="notes">Notas</Label>
+                    <Label htmlFor="notes">{t('animals.certificateNotes')}</Label>
                     <Textarea
                       id="certNotes"
                       value={formData.certNotes}
                       onChange={(e) => handleInputChange("notes", e.target.value)}
-                      placeholder="Notas adicionales sobre el certificado..."
+                      placeholder={t('animals.certificateNotesPlaceholder')}
                       rows={3}
                     />
                   </div>

@@ -245,6 +245,8 @@ export default {
   primaryPhotoUpdated: "Foto principal actualizada",
   primaryPhotoUpdatedDesc: "La foto principal ha sido actualizada correctamente",
   couldNotUpdatePrimary: "No se pudo actualizar la foto principal",
+  labels: "Etiquetas",
+  noName: "Sin nombre",
 
   // Auto-generar tag
   generateTag: "Generar",
@@ -258,6 +260,16 @@ export default {
   catalogsConfigDescPrefix: "Para gestionar razas y lotes, ve a",
   catalogsConfigLink: "Configuración → Catálogos",
   // Lactations
+
+  // Certificado y asociación
+  certificateName: "Nombre del Certificado",
+  certificateNameExample: "Ej: Certificado de Registro Holstein",
+  associationCode: "Código de Asociación",
+  associationCodeExample: "Ej: ASOHOLSTEIN-EC-2024certN001",
+  certificateNotes: "Notas del Certificado",
+  certificateNotesPlaceholder: "Notas adicionales sobre el certificado...",
+  sireCode: "Código del Toro",
+  sireCodeExample: "Ej: USA123456",
   lactation: "Lactancia",
   lactationOpen: "Abierta",
   lactationClosed: "Cerrada",
@@ -303,8 +315,6 @@ export default {
   price: "Precio",
   cause: "Causa",
   reason: "Razón",
-  sireCode: "Código del Toro",
-  sireCodeExample: "Ej: USA123456",
   registry: "Registro",
   registryExample: "Ej: HOLSTEIN_USA",
   selectDam: "Seleccionar madre...",
