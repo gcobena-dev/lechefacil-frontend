@@ -1,6 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Bell, User, Settings } from "lucide-react";
+import { User, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { performLogout } from "@/services/auth";
 import { useTranslation } from "@/hooks/useTranslation";
+import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const navigate = useNavigate();
@@ -35,12 +36,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

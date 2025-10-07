@@ -20,6 +20,7 @@ export default {
   previous: "Anterior",
   submit: "Enviar",
   loading: "Cargando...",
+  refresh: "Actualizar",
 
   // Estados comunes
   active: "Activo",
@@ -161,6 +162,8 @@ export default {
   page: "Página",
   of: "de",
   itemsPerPage: "elementos por página",
+  perPage: "Por página",
+  showingRange: "Mostrando {{from}} - {{to}} de {{total}}",
   actions: "Acciones",
   cannotDeleteSelf: "No puedes eliminarte a ti mismo",
 

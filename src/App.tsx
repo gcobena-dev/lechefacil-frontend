@@ -39,9 +39,11 @@ import HealthEventForm from "./pages/health/HealthEventForm";
 // Settings pages
 import Profile from "./pages/settings/Profile";
 import Settings from "./pages/settings/Settings";
+import NotificationsPage from "./pages/notifications/Notifications";
 
 // Other pages
 import NotFound from "./pages/NotFound";
+import { useSilentRefresh } from "./hooks/useSilentRefresh";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <UpdateChecker />
+          {/** Activate silent refresh globally */}
+          <SilentRefreshActivator />
           <BrowserRouter>
         <Routes>
           <Route path="/" element={<RequireAuth><RequireTenant><RequirePasswordChange><AppLayout /></RequirePasswordChange></RequireTenant></RequireAuth>}>
@@ -68,6 +72,7 @@ const App = () => (
             <Route path="health" element={<Health />} />
             <Route path="health/new" element={<HealthEventForm />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
           </Route>
@@ -86,3 +91,9 @@ const App = () => (
 );
 
 export default App;
+
+// Minimal component to run the silent refresh hook at app root
+function SilentRefreshActivator() {
+  useSilentRefresh({ enabled: true, intervalMs: 45 * 60 * 1000 });
+  return null;
+}

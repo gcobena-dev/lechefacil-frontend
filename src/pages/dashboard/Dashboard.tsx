@@ -13,7 +13,8 @@ import {
   Users,
   AlertTriangle,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Bell
 } from "lucide-react";
 import { formatCurrency } from "@/lib/mock-data";
 import { RoleBasedSections } from "@/components/dashboard/RoleBasedSections";
@@ -21,6 +22,13 @@ import { Link } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserRole, useUserId } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
+import {
+  getNotificationRoute,
+  getNotificationBadgeVariant,
+  getNotificationIconColor,
+  getNotificationTypeLabel,
+} from "@/utils/notification-routes";
 
 // -----------------------------
 // Helpers seguros reutilizables
@@ -53,6 +61,8 @@ export default function Dashboard() {
   const userId = useUserId();
   const [retryCount, setRetryCount] = useState(0);
 
+  // Get notifications
+  const { notifications, markAsRead } = useNotifications();
 
   // Get dashboard data based on user role
   const {
@@ -309,40 +319,67 @@ export default function Dashboard() {
             {/* Alerts and Notifications */}
             <Card>
               <CardHeader>
-                <CardTitle>{t("dashboard.alertsTitle")}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  {t("dashboard.alertsTitle")}
+                </CardTitle>
                 <CardDescription>{t("dashboard.alertsDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {alertsList.length > 0 ? (
-                    alertsList.map((alert: any) => (
-                      <div key={toStr(alert?.id)} className="flex items-start gap-3 p-3 rounded-lg border">
-                        <AlertTriangle className={`h-4 w-4 mt-0.5 ${
-                          alert?.priority === 'high' ? 'text-destructive' :
-                          alert?.priority === 'medium' ? 'text-warning' : 'text-muted-foreground'
-                        }`} />
-                        <div className="flex-1 space-y-1">
-                          <p className="text-sm font-medium">{toStr(alert?.message, "-")}</p>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant={
-                                alert?.priority === 'high' ? 'destructive' :
-                                alert?.priority === 'medium' ? 'secondary' : 'outline'
-                              }
-                              className="text-xs"
-                            >
-                              {alert?.type === 'health' ? t("dashboard.health") :
-                               alert?.type === 'production' ? t("dashboard.production") : t("dashboard.price")}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {alert?.created_at ? new Date(alert.created_at).toLocaleDateString('es-EC') : ''}
-                            </span>
+                  {notifications.slice(0, 2).length > 0 ? (
+                    notifications.slice(0, 2).map((notification) => {
+                      const route = getNotificationRoute(notification);
+
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-accent ${
+                            !notification.read ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200' : ''
+                          }`}
+                          onClick={() => {
+                            if (!notification.read) {
+                              markAsRead([notification.id]);
+                            }
+                            // Navegar usando la utilidad centralizada
+                            if (route) {
+                              navigate(route);
+                            }
+                          }}
+                        >
+                          <AlertTriangle className={`h-4 w-4 mt-0.5 ${getNotificationIconColor(notification.type)}`} />
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium">{notification.title}</p>
+                            <p className="text-sm text-muted-foreground">{notification.message}</p>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={getNotificationBadgeVariant(notification.type)}
+                                className="text-xs"
+                              >
+                                {getNotificationTypeLabel(notification.type)}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(notification.created_at).toLocaleDateString('es-EC')}
+                              </span>
+                            </div>
                           </div>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1" />
+                          )}
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p className="text-muted-foreground text-center py-4">{t("dashboard.noData")}</p>
+                  )}
+                  {notifications.length > 2 && (
+                    <Button
+                      variant="ghost"
+                      className="w-full text-sm"
+                      onClick={() => navigate('/notifications')}
+                    >
+                      {t('notifications.viewAll')}
+                    </Button>
                   )}
                 </div>
               </CardContent>

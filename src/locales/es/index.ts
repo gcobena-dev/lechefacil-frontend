@@ -7,6 +7,7 @@ import health from './health';
 import forms from './forms';
 import reports from './reports';
 import updates from './updates';
+import notifications from './notifications';
 
 export default {
   common,
@@ -18,4 +19,5 @@ export default {
   forms,
   reports,
   updates,
+  notifications,
 };

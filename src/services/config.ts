@@ -46,6 +46,14 @@ export function getToken(): string | null {
 export function setToken(token: string | null) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
+  // Notify listeners in this tab about token changes
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('lf_token_changed'));
+    } catch (_e) {
+      // no-op
+    }
+  }
 }
 
 export function getTenantId(): string | null {
