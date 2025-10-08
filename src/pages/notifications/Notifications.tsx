@@ -21,9 +21,9 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t('notifications.title')}</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl sm:text-2xl font-semibold">{t('notifications.title')}</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant={unreadCount > 0 ? 'destructive' : 'secondary'}>
             {t('notifications.unreadCount', { count: unreadCount })}
           </Badge>
@@ -40,13 +40,13 @@ export default function NotificationsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">{t('notifications.all')}</CardTitle>
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-sm sm:text-base">{t('notifications.all')}</CardTitle>
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{t('common.perPage')}</span>
                 <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="w-[92px] sm:w-[100px]">
                     <SelectValue placeholder="10" />
                   </SelectTrigger>
                   <SelectContent>
@@ -91,8 +91,8 @@ export default function NotificationsPage() {
                   </div>
                 </div>
               ))}
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm text-muted-foreground">{t('common.showingRange', { from: notifications.length === 0 ? 0 : (page * pageSize) + 1, to: Math.min((page + 1) * pageSize, total), total })}</span>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-2">
+                <span className="text-xs sm:text-sm text-muted-foreground">{t('common.showingRange', { from: notifications.length === 0 ? 0 : (page * pageSize) + 1, to: Math.min((page + 1) * pageSize, total), total })}</span>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
                     <ChevronLeft className="h-4 w-4" />

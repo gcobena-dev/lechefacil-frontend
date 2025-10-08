@@ -63,8 +63,11 @@ export async function logoutServer(): Promise<void> {
 
 // Unified logout utility to avoid duplicating logic in components
 import { logout as clearLocalSession } from "./config";
+import { unregisterPushNotifications } from "./push";
 export async function performLogout(): Promise<void> {
   try {
+    // Try to unregister push token first (best-effort)
+    await unregisterPushNotifications();
     await logoutServer();
   } catch (_) {
     // ignore server logout errors (e.g., no cookie); proceed to clear local

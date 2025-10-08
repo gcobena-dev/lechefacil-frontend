@@ -1,6 +1,7 @@
 import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+import { initPushNotifications } from '@/services/push';
 
 const hslToHex = (h: number, s: number, l: number): string => {
   l /= 100;
@@ -59,6 +60,14 @@ export async function initializeCapacitor() {
 
       // Apply initial theme
       await applyTheme(isDarkMode);
+
+      // Initialize push notifications (requires authenticated session to register with backend)
+      // Safe to call; it will no-op if not native or permissions denied
+      await initPushNotifications();
+      // Re-register on auth token changes (e.g., user logs in), best-effort
+      window.addEventListener('lf_token_changed', () => {
+        initPushNotifications();
+      });
 
       // Listen for system theme changes
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async (e) => {
