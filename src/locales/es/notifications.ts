@@ -12,5 +12,5 @@ export default {
   hoursAgo: 'Hace {{count}}h',
   daysAgo: 'Hace {{count}}d',
   unreadCount: '{{count}} sin leer',
+  requestPermissions: 'Solicitar permisos de notificaciones',
 };
-

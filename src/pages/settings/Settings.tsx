@@ -7,6 +7,8 @@ import ChangePasswordForm from "@/components/settings/ChangePasswordForm";
 import TenantSettings from "@/components/settings/TenantSettings";
 import Catalogs from "@/components/settings/Catalogs";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Button } from "@/components/ui/button";
+import { requestPushPermissionsManually } from "@/services/push";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -68,6 +70,11 @@ export default function Settings() {
         <TabsContent value="catalogs" className="mt-6">
           <Catalogs />
         </TabsContent>
+        <div className="mt-6 flex justify-end">
+          <Button variant="outline" onClick={() => requestPushPermissionsManually()}>
+            {t('notifications.requestPermissions')}
+          </Button>
+        </div>
       </Tabs>
     </div>
   );
