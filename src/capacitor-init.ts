@@ -66,15 +66,7 @@ export async function initializeCapacitor() {
       // Apply initial theme
       await applyTheme(isDarkMode);
 
-      // Initialize push notifications (requires authenticated session to register with backend)
-      // Safe to call; it will no-op if not native or permissions denied
-      await initPushNotifications();
-      // Re-register on auth token changes (e.g., user logs in), best-effort
-      window.addEventListener('lf_token_changed', () => {
-        initPushNotifications();
-      });
-
-      // On app resume (foreground), attempt silent refresh and invalidate queries
+      // Register app resume handler (place BEFORE notifications to ensure it runs early)
       App.addListener('appStateChange', async ({ isActive }: { isActive: boolean }) => {
         try {
           if (!isActive) return;
@@ -99,6 +91,55 @@ export async function initializeCapacitor() {
         } catch (err) {
           console.error('[capacitor] appStateChange handler error', err);
         }
+      });
+
+      // Also trigger a refresh shortly after startup (fallback)
+      setTimeout(async () => {
+        try {
+          const token = getToken();
+          if (!token) return;
+          console.log('[capacitor] startup timer: attempting refresh');
+          try {
+            const data = await refreshAccess();
+            setToken(data.access_token);
+            setMustChangePassword(data.must_change_password);
+            console.log('[capacitor] startup refresh ok');
+          } catch (e) {
+            console.warn('[capacitor] startup refresh failed', e);
+          }
+          await queryClient.invalidateQueries();
+        } catch (e) {
+          console.warn('[capacitor] startup timer error', e);
+        }
+      }, 5000);
+
+      // Visibility fallback (when WebView reports visibility changes)
+      document.addEventListener('visibilitychange', async () => {
+        try {
+          if (document.visibilityState !== 'visible') return;
+          const token = getToken();
+          if (!token) return;
+          console.log('[capacitor] visibility visible: attempting refresh');
+          try {
+            const data = await refreshAccess();
+            setToken(data.access_token);
+            setMustChangePassword(data.must_change_password);
+            console.log('[capacitor] visibility refresh ok');
+          } catch (e) {
+            console.warn('[capacitor] visibility refresh failed', e);
+          }
+          await queryClient.invalidateQueries();
+        } catch (e) {
+          console.warn('[capacitor] visibility handler error', e);
+        }
+      });
+
+      // Initialize push notifications (requires authenticated session to register with backend)
+      // Safe to call; it will no-op if not native or permissions denied
+      await initPushNotifications();
+      // Re-register on auth token changes (e.g., user logs in), best-effort
+      window.addEventListener('lf_token_changed', () => {
+        initPushNotifications();
       });
 
       // Listen for system theme changes
