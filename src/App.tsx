@@ -45,7 +45,16 @@ import NotificationsPage from "./pages/notifications/Notifications";
 import NotFound from "./pages/NotFound";
 import { useSilentRefresh } from "./hooks/useSilentRefresh";
 
-const queryClient = new QueryClient();
+// Force queries to run even if the browser reports offline.
+// This helps in Android WebView/Chrome cases where navigator.onLine can be false
+// and prevents retries/refetch after token expiry.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      networkMode: 'always',
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
