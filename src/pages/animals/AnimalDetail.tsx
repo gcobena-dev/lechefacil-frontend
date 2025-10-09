@@ -213,8 +213,13 @@ export default function AnimalDetail() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{animal.name ?? '-'}</h1>
-            <p className="text-muted-foreground truncate">Tag: {animal.tag} • {animal.breed ?? '-'}</p>
+            <h1
+              className="text-2xl sm:text-3xl font-bold text-foreground whitespace-normal break-words"
+              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+            >
+              {animal.name ?? '-'}
+            </h1>
+            <p className="text-muted-foreground whitespace-normal break-words">Tag: {animal.tag} • {animal.breed ?? '-'}</p>
           </div>
         </div>
         <div className="sm:ml-auto">

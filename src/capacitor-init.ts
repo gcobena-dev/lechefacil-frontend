@@ -1,7 +1,9 @@
 import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support';
 import { StatusBar, Style } from '@capacitor/status-bar';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { initPushNotifications } from '@/services/push';
+// Use registerPlugin to avoid bundling @capacitor/app (not installed in web)
+const App = registerPlugin<any>('App');
 
 const hslToHex = (h: number, s: number, l: number): string => {
   l /= 100;
@@ -72,6 +74,18 @@ export async function initializeCapacitor() {
       // Listen for system theme changes
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async (e) => {
         await applyTheme(e.matches);
+      });
+
+      // Handle Android hardware back button to navigate within the app
+      App.addListener('backButton', ({ canGoBack }) => {
+        try {
+          if (canGoBack) {
+            window.history.back();
+          }
+          // If cannot go back, allow default behavior (usually exits app)
+        } catch (err) {
+          console.error('Error handling backButton:', err);
+        }
       });
     } catch (error) {
       console.error('Error initializing Capacitor:', error);
