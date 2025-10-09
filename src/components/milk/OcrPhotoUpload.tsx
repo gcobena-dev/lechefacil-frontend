@@ -125,7 +125,7 @@ export default function OcrPhotoUpload({ onResultsProcessed, disabled, resetKey 
         console.warn('Failed to reset file input value', e);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [resetKey]);
 
   return (

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Calculator, CheckCircle } from "lucide-react";
+import { Calculator, CheckCircle, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { convertToLiters } from "@/lib/mock-data";
 import { getTodayLocalDateString } from "@/utils/dateUtils";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -14,6 +14,7 @@ import SearchableAnimalSelect from "./SearchableAnimalSelect";
 import ConfigurationInfo from "./ConfigurationInfo";
 import OcrPhotoUpload from "./OcrPhotoUpload";
 import type { MilkCollectionFormData } from "@/hooks/useMilkCollectionForm";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Animal {
   id: string;
@@ -209,30 +210,48 @@ export default function MilkProductionForm({
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label>{t("milk.pricePerLiter")}</Label>
-                <div className="p-3 bg-muted rounded-md">
-                  <p className="text-sm font-medium">
-                    {effectivePrice !== undefined ? `$${effectivePrice.toFixed(2)}` : t('milk.notConfigured')}
-                  </p>
-                </div>
-              </div>
+              {/* Desktop (md+) secondary info always visible */}
+              <div className="hidden md:block md:col-span-2">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>{t("milk.pricePerLiter")}</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-sm font-medium">
+                        {effectivePrice !== undefined ? `$${effectivePrice.toFixed(2)}` : t('milk.notConfigured')}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>{t("milk.unit")}</Label>
-                <div className="p-3 bg-muted rounded-md">
-                  <p className="text-sm font-medium">
-                    {formData.inputUnit === 'L' ? t('milk.litersL') : formData.inputUnit === 'KG' ? t('milk.kilogramsKG') : t('milk.poundsLB')}
-                  </p>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label>{t("milk.unit")}</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-sm font-medium">
+                        {formData.inputUnit === 'L' ? t('milk.litersL') : formData.inputUnit === 'KG' ? t('milk.kilogramsKG') : t('milk.poundsLB')}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>{t("milk.density")}</Label>
-                <div className="p-3 bg-muted rounded-md">
-                  <p className="text-sm font-medium">{formData.density} (kg/m³)</p>
+                  <div className="space-y-2">
+                    <Label>{t("milk.density")}</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-sm font-medium">{formData.density} (kg/m³)</p>
+                    </div>
+                  </div>
                 </div>
               </div>
+              {/* Desktop (md+) buyer in remaining column when bulk mode (fills the empty spot) */}
+              {isBulkMode && (
+                <div className="hidden md:block">
+                  <div className="space-y-2">
+                    <Label>{t("milk.buyerText")}</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-sm font-medium">
+                        {formData.buyerId ? buyers.find(b => b.id === formData.buyerId)?.name || t('milk.notFound') : t('milk.notConfigured')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {((!isBulkMode && formData.inputValue) || (isBulkMode && bulkCalculatedTotal > 0)) && (
@@ -267,27 +286,93 @@ export default function MilkProductionForm({
               </Card>
             )}
 
-            <div className="space-y-2">
-              <Label>{t("milk.buyerText")}</Label>
-              <div className="p-3 bg-muted rounded-md">
-                <p className="text-sm font-medium">
-                  {formData.buyerId ? buyers.find(b => b.id === formData.buyerId)?.name || t('milk.notFound') : t('milk.notConfigured')}
-                </p>
-              </div>
+            {/* Mobile (sm) collapsible for secondary fields */}
+            <div className="md:hidden">
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      <SlidersHorizontal className="h-4 w-4" /> {t('milk.additionalOptions')}
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-70" />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-4">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>{t("milk.pricePerLiter")}</Label>
+                      <div className="p-3 bg-muted rounded-md">
+                        <p className="text-sm font-medium">
+                          {effectivePrice !== undefined ? `$${effectivePrice.toFixed(2)}` : t('milk.notConfigured')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("milk.unit")}</Label>
+                      <div className="p-3 bg-muted rounded-md">
+                        <p className="text-sm font-medium">
+                          {formData.inputUnit === 'L' ? t('milk.litersL') : formData.inputUnit === 'KG' ? t('milk.kilogramsKG') : t('milk.poundsLB')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("milk.density")}</Label>
+                      <div className="p-3 bg-muted rounded-md">
+                        <p className="text-sm font-medium">{formData.density} (kg/m³)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>{t("milk.buyerText")}</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-sm font-medium">
+                        {formData.buyerId ? buyers.find(b => b.id === formData.buyerId)?.name || t('milk.notFound') : t('milk.notConfigured')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <ConfigurationInfo />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">{t("milk.optionalNotes")}</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => onFormDataChange({ notes: e.target.value })}
+                      placeholder={t("common.milkingNotes")}
+                      rows={2}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
 
-            {/* Configuration info */}
-            <ConfigurationInfo />
+            {/* Desktop (md+) buyer, config info and notes */}
+            <div className="hidden md:block space-y-4">
+              {!isBulkMode && (
+                <div className="space-y-2">
+                  <Label>{t("milk.buyerText")}</Label>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm font-medium">
+                      {formData.buyerId ? buyers.find(b => b.id === formData.buyerId)?.name || t('milk.notFound') : t('milk.notConfigured')}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">{t("milk.optionalNotes")}</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => onFormDataChange({ notes: e.target.value })}
-                placeholder={t("common.milkingNotes")}
-                rows={2}
-              />
+              <ConfigurationInfo />
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">{t("milk.optionalNotes")}</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => onFormDataChange({ notes: e.target.value })}
+                  placeholder={t("common.milkingNotes")}
+                  rows={2}
+                />
+              </div>
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={creating || creatingBulk}>

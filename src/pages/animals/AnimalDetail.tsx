@@ -205,22 +205,26 @@ export default function AnimalDetail() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground">{animal.name ?? '-'}</h1>
-          <p className="text-muted-foreground">Tag: {animal.tag} • {animal.breed ?? '-'}</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{animal.name ?? '-'}</h1>
+            <p className="text-muted-foreground truncate">Tag: {animal.tag} • {animal.breed ?? '-'}</p>
+          </div>
         </div>
-        <Button className="flex items-center gap-2" asChild>
-          <Link to={`/animals/${(animal as any).id}/edit`}>
-            <Edit className="h-4 w-4" />
-            {t('animals.edit')}
-          </Link>
-        </Button>
+        <div className="sm:ml-auto">
+          <Button className="flex items-center gap-2 w-full sm:w-auto justify-center" asChild>
+            <Link to={`/animals/${(animal as any).id}/edit`}>
+              <Edit className="h-4 w-4" />
+              <span>{t('animals.edit')}</span>
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Photo Carousel */}
@@ -495,7 +499,7 @@ export default function AnimalDetail() {
       <Card>
         <Tabs defaultValue="production" className="w-full">
           <CardHeader>
-            <TabsList className="w-full">
+            <TabsList className="w-full overflow-x-auto whitespace-nowrap">
               <TabsTrigger value="production" className="flex items-center gap-1.5">
                 <Milk className="h-4 w-4" />
                 <span>{t('animals.production')}</span>
@@ -533,14 +537,14 @@ export default function AnimalDetail() {
                 <h3 className="text-lg font-semibold mb-4">{t('animals.milkingRecords')}</h3>
                 {total > 0 ? (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-sm text-muted-foreground">
                         Mostrando {start}-{end} de {total}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 justify-end">
                         <span className="text-sm">Por página</span>
                         <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
-                          <SelectTrigger className="w-[100px]">
+                          <SelectTrigger className="w-24">
                             <SelectValue placeholder="10" />
                           </SelectTrigger>
                           <SelectContent>
@@ -550,7 +554,7 @@ export default function AnimalDetail() {
                             <SelectItem value="50">50</SelectItem>
                           </SelectContent>
                         </Select>
-                        <div className="flex items-center gap-2 ml-2">
+                        <div className="flex items-center gap-2 ml-0 sm:ml-2">
                           <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
@@ -652,7 +656,7 @@ export default function AnimalDetail() {
             <TabsContent value="lactations" className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Historial de Lactancias</h3>
+                  <h3 className="text-lg font-semibold">{t('animals.lactations')}</h3>
                   <Badge variant="secondary">
                     {lactations.length} lactancia{lactations.length !== 1 ? 's' : ''}
                   </Badge>
@@ -682,10 +686,10 @@ export default function AnimalDetail() {
             <TabsContent value="events" className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Timeline de Eventos</h3>
+                  <h3 className="text-lg font-semibold">{t('animals.events')}</h3>
                   <Button onClick={() => setRegisterEventOpen(true)} size="sm">
                     <Plus className="h-4 w-4 mr-2" />
-                    Registrar Evento
+                    {t('animals.registerEvent')}
                   </Button>
                 </div>
 
@@ -704,15 +708,15 @@ export default function AnimalDetail() {
 
                 {eventsResp && eventsResp.total > 0 ? (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-sm text-muted-foreground">
                         Mostrando {Math.min((eventsPage - 1) * eventsPageSize + 1, eventsResp.total)}-
                         {Math.min(eventsPage * eventsPageSize, eventsResp.total)} de {eventsResp.total}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 justify-end">
                         <span className="text-sm">Por página</span>
                         <Select value={String(eventsPageSize)} onValueChange={(v) => { setEventsPageSize(parseInt(v, 10)); setEventsPage(1); }}>
-                          <SelectTrigger className="w-[100px]">
+                          <SelectTrigger className="w-24">
                             <SelectValue placeholder="10" />
                           </SelectTrigger>
                           <SelectContent>
@@ -722,7 +726,7 @@ export default function AnimalDetail() {
                             <SelectItem value="50">50</SelectItem>
                           </SelectContent>
                         </Select>
-                        <div className="flex items-center gap-2 ml-2">
+                        <div className="flex items-center gap-2 ml-0 sm:ml-2">
                           <Button variant="outline" size="sm" onClick={() => setEventsPage((p) => Math.max(1, p - 1))} disabled={eventsPage === 1}>
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
@@ -740,14 +744,14 @@ export default function AnimalDetail() {
                   <div className="text-center py-12">
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-2">
-                      No hay eventos registrados
+                      {t('animals.noEventsRegistered')}
                     </p>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Comienza registrando eventos importantes del animal
+                      {t('animals.startRegisteringEvents')}
                     </p>
                     <Button onClick={() => setRegisterEventOpen(true)} variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
-                      Registrar Primer Evento
+                      {t('animals.registerFirstEvent')}
                     </Button>
                   </div>
                 )}
@@ -874,15 +878,15 @@ export default function AnimalDetail() {
                       <p className="font-medium">{certificate.farm || '-'}</p>
                     </div>
                     <div className="p-3 border rounded-lg">
-                      <p className="text-sm text-muted-foreground">Nombre del Certificado</p>
+                      <p className="text-sm text-muted-foreground">{t('animals.certificateName')}</p>
                       <p className="font-medium">{certificate.certificate_name || '-'}</p>
                     </div>
                     <div className="p-3 border rounded-lg">
-                      <p className="text-sm text-muted-foreground">Código de Asociación</p>
+                      <p className="text-sm text-muted-foreground">{t('animals.associationCode')}</p>
                       <p className="font-medium">{certificate.association_code || '-'}</p>
                     </div>
                     <div className="p-3 border rounded-lg md:col-span-2">
-                      <p className="text-sm text-muted-foreground">Notas</p>
+                      <p className="text-sm text-muted-foreground">{t('animals.certificateNotes')}</p>
                       <p className="font-medium">{certificate.notes || '-'}</p>
                     </div>
                   </div>
