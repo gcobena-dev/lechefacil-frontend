@@ -2,6 +2,9 @@ import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { initPushNotifications } from '@/services/push';
+import { queryClient } from '@/lib/queryClient';
+import { getToken, setToken, setMustChangePassword, requireApiUrl } from '@/services/config';
+import { refreshAccess } from '@/services/auth';
 // Use registerPlugin to avoid bundling @capacitor/app (not installed in web)
 const App = registerPlugin<any>('App');
 
@@ -69,6 +72,33 @@ export async function initializeCapacitor() {
       // Re-register on auth token changes (e.g., user logs in), best-effort
       window.addEventListener('lf_token_changed', () => {
         initPushNotifications();
+      });
+
+      // On app resume (foreground), attempt silent refresh and invalidate queries
+      App.addListener('appStateChange', async ({ isActive }: { isActive: boolean }) => {
+        try {
+          if (!isActive) return;
+          const token = getToken();
+          if (!token) return; // no session
+          console.log('[capacitor] appStateChange active: attempting refresh');
+          try {
+            const data = await refreshAccess();
+            setToken(data.access_token);
+            setMustChangePassword(data.must_change_password);
+            console.log('[capacitor] refresh on resume ok');
+          } catch (e) {
+            console.warn('[capacitor] refresh on resume failed', e);
+          }
+          try {
+            const base = requireApiUrl();
+            const url = new URL('/api/v1/health', base).toString();
+            console.log('[capacitor] health ping', url);
+            await fetch(url, { method: 'GET', credentials: 'include' });
+          } catch (_) { /* noop */ }
+          await queryClient.invalidateQueries();
+        } catch (err) {
+          console.error('[capacitor] appStateChange handler error', err);
+        }
       });
 
       // Listen for system theme changes

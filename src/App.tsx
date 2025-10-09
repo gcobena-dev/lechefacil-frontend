@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { ThemeProvider } from "@/hooks/useTheme.tsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
@@ -45,16 +46,7 @@ import NotificationsPage from "./pages/notifications/Notifications";
 import NotFound from "./pages/NotFound";
 import { useSilentRefresh } from "./hooks/useSilentRefresh";
 
-// Force queries to run even if the browser reports offline.
-// This helps in Android WebView/Chrome cases where navigator.onLine can be false
-// and prevents retries/refetch after token expiry.
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      networkMode: 'always',
-    },
-  },
-});
+// QueryClient is now centralized in lib/queryClient to allow invalidation from anywhere
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
