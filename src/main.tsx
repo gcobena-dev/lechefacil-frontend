@@ -15,13 +15,68 @@ try {
       const init = args[1];
       const url = typeof input === 'string' ? input : (input as Request).url;
       const method = init?.method ?? (typeof input !== 'string' && (input as Request).method) ?? 'GET';
-       
-      console.log('[global fetch] ->', { method, url, online: navigator.onLine, visibility: document.visibilityState });
+
+      const toPlainHeaders = (h: HeadersInit | undefined): Record<string, string> => {
+        const out: Record<string, string> = {};
+        if (!h) return out;
+        if (h instanceof Headers) {
+          h.forEach((v, k) => { out[k.toLowerCase()] = v; });
+        } else if (Array.isArray(h)) {
+          h.forEach(([k, v]) => { out[String(k).toLowerCase()] = String(v); });
+        } else {
+          Object.entries(h).forEach(([k, v]) => { out[k.toLowerCase()] = String(v); });
+        }
+        ['authorization', 'cookie'].forEach(k => { if (out[k]) out[k] = '***redacted***'; });
+        return out;
+      };
+
+      const headersForLog = toPlainHeaders(init?.headers);
+      let bodyPreview: string | undefined = undefined;
+      if (init?.body) {
+        try {
+          if (typeof init.body === 'string') {
+            const s = init.body as string;
+            bodyPreview = s.length > 500 ? s.slice(0, 500) + '…' : s;
+          } else if (init.body instanceof URLSearchParams) {
+            const s = init.body.toString();
+            bodyPreview = s.length > 500 ? s.slice(0, 500) + '…' : s;
+          } else if (init.body instanceof FormData) {
+            const entries: Record<string, any> = {};
+            (init.body as FormData).forEach((v, k) => { entries[k] = typeof v === 'string' ? v : '[Blob]'; });
+            const s = JSON.stringify(entries);
+            bodyPreview = s.length > 500 ? s.slice(0, 500) + '…' : s;
+          } else if (typeof init.body === 'object') {
+            // If someone passed a plain object (non-standard), try to serialize for visibility
+            const s = JSON.stringify(init.body as any, (_k, val) => (typeof val === 'string' && val.length > 200 ? val.slice(0, 200) + '…' : val));
+            bodyPreview = s.length > 500 ? s.slice(0, 500) + '…' : s;
+          }
+        } catch {
+          // ignore serialization errors
+        }
+      }
+
+      const safeStringify = (obj: any) => {
+        try {
+          const s = JSON.stringify(obj);
+          return s.length > 2000 ? s.slice(0, 2000) + '…' : s;
+        } catch {
+          return '[unserializable]';
+        }
+      };
+      const outReq = {
+        method,
+        url,
+        headers: headersForLog,
+        bodyPreview,
+        online: navigator.onLine,
+        visibility: document.visibilityState,
+      };
+      console.log('[global fetch] -> ' + safeStringify(outReq));
     } catch (_) { /* noop */ }
     const res = await originalFetch(...args);
     try {
-       
-      console.log('[global fetch] <-', { status: res.status, ok: res.ok, url: res.url });
+      const outRes = { status: res.status, ok: res.ok, url: res.url };
+      console.log('[global fetch] <- ' + JSON.stringify(outRes));
     } catch (_) { /* noop */ }
     return res;
   };
