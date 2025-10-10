@@ -70,6 +70,7 @@ try {
         bodyPreview,
         online: navigator.onLine,
         visibility: document.visibilityState,
+        credentials: (init && 'credentials' in init) ? (init as any).credentials : undefined,
       };
       console.log('[global fetch] -> ' + safeStringify(outReq));
     } catch (_) { /* noop */ }

@@ -45,8 +45,14 @@ export async function signin(payload: { email: string; password: string }) {
 export async function refreshAccess(): Promise<LoginResponse> {
   // include credentials so cookie is sent
   const base = requireApiUrl();
-  const res = await fetch(new URL("/api/v1/auth/refresh", base).toString(), {
+  const url = new URL("/api/v1/auth/refresh", base).toString();
+  const { getTenantId } = await import('./config');
+  const tenantId = getTenantId();
+  const headers: Record<string, string> = { 'Accept': 'application/json' };
+  if (tenantId) headers['X-Tenant-ID'] = tenantId;
+  const res = await fetch(url, {
     method: "POST",
+    headers,
     credentials: "include",
   });
   if (!res.ok) throw new Error("refresh_failed");
