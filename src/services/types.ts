@@ -14,6 +14,7 @@ export interface LoginResponse {
   email: string;
   must_change_password: boolean;
   memberships: Membership[];
+  refresh_token?: string | null;
 }
 
 export interface MeResponse {

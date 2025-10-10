@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import { requireApiUrl } from "./config";
+import { requireApiUrl, getTenantId, getRefreshToken, setRefreshToken } from "./config";
 import { LoginResponse, MeResponse, Membership } from "./types";
 
 export async function login(payload: {
@@ -7,12 +7,15 @@ export async function login(payload: {
   password: string;
   tenant_id?: string | null;
 }): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>("/api/v1/auth/login", {
+  const res = await apiFetch<LoginResponse>("/api/v1/auth/login", {
     method: "POST",
     body: payload,
     // Important: allow backend to set HttpOnly refresh cookie
     withCredentials: true,
+    headers: { 'X-Mobile-Client': '1' },
   });
+  try { if ((res as any)?.refresh_token) setRefreshToken((res as any).refresh_token); } catch (_) {}
+  return res;
 }
 
 export async function me(): Promise<MeResponse> {
@@ -46,23 +49,33 @@ export async function refreshAccess(): Promise<LoginResponse> {
   // include credentials so cookie is sent
   const base = requireApiUrl();
   const url = new URL("/api/v1/auth/refresh", base).toString();
-  const { getTenantId } = await import('./config');
   const tenantId = getTenantId();
-  const headers: Record<string, string> = { 'Accept': 'application/json' };
+  const headers: Record<string, string> = { 'Accept': 'application/json', 'X-Mobile-Client': '1' };
   if (tenantId) headers['X-Tenant-ID'] = tenantId;
+  const rt = getRefreshToken();
+  if (rt) headers['Authorization'] = `Bearer ${rt}`;
+  const body = rt ? JSON.stringify({ refresh_token: rt }) : undefined;
   const res = await fetch(url, {
     method: "POST",
     headers,
     credentials: "include",
+    body,
   });
   if (!res.ok) throw new Error("refresh_failed");
-  return await res.json();
+  const data = await res.json();
+  try { if ((data as any)?.refresh_token) setRefreshToken((data as any).refresh_token); } catch (_) {}
+  return data as LoginResponse;
 }
 
 export async function logoutServer(): Promise<void> {
   const base = requireApiUrl();
-  await fetch(new URL("/api/v1/auth/logout", base).toString(), {
+  const url = new URL("/api/v1/auth/logout", base).toString();
+  const tenantId = getTenantId();
+  const headers: Record<string, string> = { 'Accept': 'application/json' };
+  if (tenantId) headers['X-Tenant-ID'] = tenantId;
+  await fetch(url, {
     method: "POST",
+    headers,
     credentials: "include",
   });
 }
@@ -79,6 +92,7 @@ export async function performLogout(): Promise<void> {
     // ignore server logout errors (e.g., no cookie); proceed to clear local
   } finally {
     clearLocalSession();
+    try { setRefreshToken(null); } catch (_) {}
   }
 }
 

@@ -38,6 +38,7 @@ export const TENANT_HEADER = getValidTenantHeader();
 const TOKEN_KEY = "lf_token";
 const TENANT_ID_KEY = "lf_tenant_id";
 const MUST_CHANGE_PASSWORD_KEY = "lf_must_change_password";
+const REFRESH_TOKEN_KEY = "lf_refresh_token";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -88,4 +89,13 @@ export function logout() {
   setToken(null);
   setTenantId(null);
   setMustChangePassword(false);
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setRefreshToken(token: string | null) {
+  if (token) localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  else localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
