@@ -111,15 +111,11 @@ export default function MilkProductionForm({
       <CardContent>
         <div className="space-y-6">
           {/* Mode Toggle */}
-          <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-            <Label htmlFor="bulkMode">{t("milk.registrationMode")}</Label>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 md:p-4 bg-muted rounded-lg">
+            <Label htmlFor="bulkMode" className="text-sm md:text-base">{t("milk.registrationMode")}</Label>
             <div className="flex items-center gap-2">
               <span className={!isBulkMode ? "font-medium" : ""}>{t("milk.individual")}</span>
-              <Switch
-                id="bulkMode"
-                checked={isBulkMode}
-                onCheckedChange={onBulkModeChange}
-              />
+              <Switch id="bulkMode" checked={isBulkMode} onCheckedChange={onBulkModeChange} />
               <span className={isBulkMode ? "font-medium" : ""}>{t("milk.bulk")}</span>
             </div>
           </div>
@@ -375,9 +371,9 @@ export default function MilkProductionForm({
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={creating || creatingBulk}>
+            <Button type="submit" className="w-full px-4" size="lg" disabled={creating || creatingBulk}>
               <CheckCircle className="w-4 h-4 mr-2" />
-              {isBulkMode ? t('milk.registerBulkProduction') : (creating ? t('milk.saving') : t('milk.registerMilking'))}
+              {creating || creatingBulk ? t('milk.saving') : t('milk.registerBulkProduction')}
             </Button>
           </form>
         </div>

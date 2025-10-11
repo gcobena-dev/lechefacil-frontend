@@ -175,12 +175,12 @@ export default function MilkCollectionSidebar({
       {activeTab === "production" && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>{t("milk.dailyRecords")}</span>
-              <div className="flex items-center gap-2">
+            <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="shrink-0">{t("milk.dailyRecords")}</span>
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm hidden sm:inline">{t('milk.perPage')}</span>
                 <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
-                  <SelectTrigger className="w-[90px]">
+                  <SelectTrigger className="w-[84px] sm:w-[90px]">
                     <SelectValue placeholder="10" />
                   </SelectTrigger>
                   <SelectContent>
@@ -190,7 +190,7 @@ export default function MilkCollectionSidebar({
                     <SelectItem value="50">50</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="flex items-center gap-2 ml-2">
+                <div className="flex items-center gap-2 sm:ml-2">
                   <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>

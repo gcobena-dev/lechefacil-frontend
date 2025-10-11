@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -54,7 +53,6 @@ const clamp = (n: number, min = 0, max = 100) => Math.min(max, Math.max(min, n))
 export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const userRoleRaw = useUserRole();
   const userRole: 'ADMIN' | 'WORKER' | 'VET' =
     userRoleRaw === 'MANAGER' ? 'ADMIN'
@@ -140,33 +138,9 @@ export default function Dashboard() {
   }
 
   if (hasError) {
-    const handleRetry = async () => {
-      try {
-        setRetryCount(prev => prev + 1);
-        // 1) Intentar refresh explícito
-        const { refreshAccess } = await import('@/services/auth');
-        const { setToken, setMustChangePassword, requireApiUrl } = await import('@/services/config');
-        try {
-          console.log('[dashboard retry] attempting refresh');
-          const data = await refreshAccess();
-          setToken(data.access_token);
-          setMustChangePassword(data.must_change_password);
-          console.log('[dashboard retry] refresh ok');
-        } catch (e) {
-          console.warn('[dashboard retry] refresh failed', e);
-        }
-        // 2) Ping de salud para forzar salida de red y validar conectividad
-        try {
-          const base = await requireApiUrl();
-          const url = new URL('/api/v1/health', base).toString();
-          console.log('[dashboard retry] ping', url);
-          await fetch(url, { method: 'GET', credentials: 'include' });
-        } catch (_) { /* noop */ }
-        // 3) Invalidar queries del dashboard para forzar refetch
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      } catch (err) {
-        console.error('[dashboard retry] unexpected error', err);
-      }
+    const handleRetry = () => {
+      setRetryCount(prev => prev + 1);
+      window.location.reload();
     };
 
     return (

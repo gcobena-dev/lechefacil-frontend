@@ -2,9 +2,6 @@ import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { initPushNotifications } from '@/services/push';
-import { queryClient } from '@/lib/queryClient';
-import { getToken, setToken, setMustChangePassword, requireApiUrl } from '@/services/config';
-import { refreshAccess } from '@/services/auth';
 // Use registerPlugin to avoid bundling @capacitor/app (not installed in web)
 const App = registerPlugin<any>('App');
 
@@ -65,74 +62,6 @@ export async function initializeCapacitor() {
 
       // Apply initial theme
       await applyTheme(isDarkMode);
-
-      // Register app resume handler (place BEFORE notifications to ensure it runs early)
-      App.addListener('appStateChange', async ({ isActive }: { isActive: boolean }) => {
-        try {
-          if (!isActive) return;
-          const token = getToken();
-          if (!token) return; // no session
-          console.log('[capacitor] appStateChange active: attempting refresh');
-          try {
-            const data = await refreshAccess();
-            setToken(data.access_token);
-            setMustChangePassword(data.must_change_password);
-            console.log('[capacitor] refresh on resume ok');
-          } catch (e) {
-            console.warn('[capacitor] refresh on resume failed', e);
-          }
-          try {
-            const base = requireApiUrl();
-            const url = new URL('/api/v1/health', base).toString();
-            console.log('[capacitor] health ping', url);
-            await fetch(url, { method: 'GET', credentials: 'include' });
-          } catch (_) { /* noop */ }
-          await queryClient.invalidateQueries();
-        } catch (err) {
-          console.error('[capacitor] appStateChange handler error', err);
-        }
-      });
-
-      // Also trigger a refresh shortly after startup (fallback)
-      setTimeout(async () => {
-        try {
-          const token = getToken();
-          if (!token) return;
-          console.log('[capacitor] startup timer: attempting refresh');
-          try {
-            const data = await refreshAccess();
-            setToken(data.access_token);
-            setMustChangePassword(data.must_change_password);
-            console.log('[capacitor] startup refresh ok');
-          } catch (e) {
-            console.warn('[capacitor] startup refresh failed', e);
-          }
-          await queryClient.invalidateQueries();
-        } catch (e) {
-          console.warn('[capacitor] startup timer error', e);
-        }
-      }, 5000);
-
-      // Visibility fallback (when WebView reports visibility changes)
-      document.addEventListener('visibilitychange', async () => {
-        try {
-          if (document.visibilityState !== 'visible') return;
-          const token = getToken();
-          if (!token) return;
-          console.log('[capacitor] visibility visible: attempting refresh');
-          try {
-            const data = await refreshAccess();
-            setToken(data.access_token);
-            setMustChangePassword(data.must_change_password);
-            console.log('[capacitor] visibility refresh ok');
-          } catch (e) {
-            console.warn('[capacitor] visibility refresh failed', e);
-          }
-          await queryClient.invalidateQueries();
-        } catch (e) {
-          console.warn('[capacitor] visibility handler error', e);
-        }
-      });
 
       // Initialize push notifications (requires authenticated session to register with backend)
       // Safe to call; it will no-op if not native or permissions denied

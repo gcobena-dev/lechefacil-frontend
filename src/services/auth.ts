@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 import { requireApiUrl, getTenantId, getRefreshToken, setRefreshToken } from "./config";
+import { isMobileClient } from "@/utils/device";
 import { LoginResponse, MeResponse, Membership } from "./types";
 
 export async function login(payload: {
@@ -7,14 +8,18 @@ export async function login(payload: {
   password: string;
   tenant_id?: string | null;
 }): Promise<LoginResponse> {
+  const isMobile = isMobileClient();
   const res = await apiFetch<LoginResponse>("/api/v1/auth/login", {
     method: "POST",
     body: payload,
     // Important: allow backend to set HttpOnly refresh cookie
     withCredentials: true,
-    headers: { 'X-Mobile-Client': '1' },
+    headers: isMobile ? { 'X-Mobile-Client': '1' } : undefined,
   });
-  try { if ((res as any)?.refresh_token) setRefreshToken((res as any).refresh_token); } catch (_) {}
+  const rtLogin = (res as any)?.refresh_token;
+  if (rtLogin) {
+    try { setRefreshToken(rtLogin); } catch { void 0; }
+  }
   return res;
 }
 
@@ -50,7 +55,9 @@ export async function refreshAccess(): Promise<LoginResponse> {
   const base = requireApiUrl();
   const url = new URL("/api/v1/auth/refresh", base).toString();
   const tenantId = getTenantId();
-  const headers: Record<string, string> = { 'Accept': 'application/json', 'X-Mobile-Client': '1' };
+  const headers: Record<string, string> = { 'Accept': 'application/json' };
+  const isMobile = isMobileClient();
+  if (isMobile) headers['X-Mobile-Client'] = '1';
   if (tenantId) headers['X-Tenant-ID'] = tenantId;
   const rt = getRefreshToken();
   if (rt) headers['Authorization'] = `Bearer ${rt}`;
@@ -63,7 +70,10 @@ export async function refreshAccess(): Promise<LoginResponse> {
   });
   if (!res.ok) throw new Error("refresh_failed");
   const data = await res.json();
-  try { if ((data as any)?.refresh_token) setRefreshToken((data as any).refresh_token); } catch (_) {}
+  const rtNew = (data as any)?.refresh_token;
+  if (rtNew) {
+    try { setRefreshToken(rtNew); } catch { void 0; }
+  }
   return data as LoginResponse;
 }
 
@@ -92,7 +102,7 @@ export async function performLogout(): Promise<void> {
     // ignore server logout errors (e.g., no cookie); proceed to clear local
   } finally {
     clearLocalSession();
-    try { setRefreshToken(null); } catch (_) {}
+    try { setRefreshToken(null); } catch { void 0; }
   }
 }
 
