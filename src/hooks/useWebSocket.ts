@@ -146,12 +146,17 @@ export function useWebSocket({
     };
   }, [url, token, enabled]);
 
-  // Rehabilitar reconexión si el token cambia tras un cierre 1008
+  // Reconnect proactively when token changes so new token is used for auth
   useEffect(() => {
     if (lastTokenRef.current !== token) {
       shouldReconnectRef.current = true;
       lastTokenRef.current = token;
-      if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        try {
+          wsRef.current.close(4001, 'token updated');
+        } catch (_) { /* ignore */ }
+        // onclose handler will schedule reconnect because shouldReconnectRef is true
+      } else if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
         connect();
       }
     }
