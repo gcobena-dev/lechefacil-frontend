@@ -16,6 +16,8 @@ import RequestAccess from "./pages/auth/RequestAccess";
 import SelectFarm from "./pages/auth/SelectFarm";
 import NoAccess from "./pages/auth/NoAccess";
 import ChangePassword from "./pages/auth/ChangePassword";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Dashboard pages
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -78,6 +80,8 @@ const App = () => (
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/request-access" element={<RequestAccess />} />
           <Route path="/select-farm" element={<SelectFarm />} />
           <Route path="/force-change-password" element={<ChangePassword />} />

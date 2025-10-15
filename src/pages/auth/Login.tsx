@@ -260,8 +260,17 @@ export default function Login() {
               <Button
                 type="button"
                 variant="link"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs md:text-sm p-0 h-auto"
+              >
+                {t("auth.forgotPassword")}
+              </Button>
+              <br />
+              <Button
+                type="button"
+                variant="link"
                 onClick={() => navigate("/signin")}
-                className="text-sm p-0 h-auto"
+                className="text-xs md:text-sm p-0 h-auto"
               >
                 {t("auth.noAccount")}
               </Button>

@@ -10,6 +10,7 @@ export default {
   passwordPlaceholder: "••••••••",
   loginInstructions: "Ingresa tu correo y contraseña",
   noAccount: "¿No tienes cuenta? Crear una",
+  forgotPassword: "¿Olvidaste tu contraseña?",
 
   // Register/SignIn
   registerTitle: "Crear Cuenta",
@@ -31,6 +32,17 @@ export default {
   passwordUpdated: "Contraseña actualizada",
   passwordUpdatedDescription: "Se cambió la contraseña correctamente",
   passwordUpdateError: "No se pudo cambiar la contraseña",
+  // Forgot/Reset Password
+  forgotPasswordTitle: "Recuperar contraseña",
+  forgotPasswordDescription: "Ingresa tu correo y te enviaremos un enlace para restablecer la contraseña.",
+  sendResetLink: "Enviar enlace",
+  resetRequestedDescription: "Si el correo existe, te enviamos instrucciones para restablecer tu contraseña.",
+  backToLogin: "Volver a iniciar sesión",
+  resetPasswordTitle: "Crear nueva contraseña",
+  resetPasswordDescription: "Ingresa tu nueva contraseña para continuar.",
+  resetPasswordButton: "Restablecer contraseña",
+  sending: "Enviando...",
+  saving: "Guardando...",
 
   // Errors
   loginError: "Error al iniciar sesión. Verifica tus credenciales.",
@@ -87,7 +99,6 @@ export default {
   additionalMessage: "Mensaje adicional (opcional)",
   additionalMessagePlaceholder: "Explica por qué necesitas acceso o cualquier información adicional...",
   sendRequest: "Enviar solicitud",
-  sending: "Enviando...",
   requestSent: "Solicitud enviada",
   requestSentDescription: "Tu solicitud de acceso ha sido enviada. Te contactaremos pronto.",
   requestError: "No se pudo enviar tu solicitud",

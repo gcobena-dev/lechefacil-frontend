@@ -135,3 +135,17 @@ export async function changePassword(payload: { current_password: string; new_pa
     body: payload,
   });
 }
+
+export async function requestPasswordReset(payload: { email: string }) {
+  return apiFetch<{ status: string }>("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function resetPassword(payload: { token: string; new_password: string }) {
+  return apiFetch<{ status: string }>("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: payload,
+  });
+}
