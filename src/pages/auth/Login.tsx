@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Fingerprint, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Fingerprint, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMutation } from "@tanstack/react-query";
 import { login as apiLogin } from "@/services/auth";
@@ -21,6 +22,9 @@ export default function Login() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometryType, setBiometryType] = useState<BiometryType>();
   const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
+  const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
+  const [biometricPromptDialog, setBiometricPromptDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -82,7 +86,7 @@ export default function Login() {
         }
       }
     } catch (err: any) {
-      alert(t("auth.biometricLoginError"));
+      setErrorDialog({ open: true, message: t("auth.biometricLoginError") });
     } finally {
       setLoading(false);
     }
@@ -110,29 +114,18 @@ export default function Login() {
 
       // Si el login fue exitoso y la biometría está disponible, preguntar ANTES de navegar
       if (biometricAvailable && !hasSavedCredentials) {
-        try {
-          // Preguntar si quiere guardar credenciales
-          const shouldSave = confirm(
-            `${t("auth.biometricEnablePrompt")} ${biometricService.getBiometryTypeName(biometryType!)}?`
-          );
-
-          if (shouldSave) {
-            await biometricService.saveCredentials(SERVER_ID, email, password);
-            setHasSavedCredentials(true);
-          }
-        } catch (bioErr) {
-          // No bloquear el login si falla guardar biometría
-        }
+        setPendingNavigation(targetRoute);
+        setBiometricPromptDialog(true);
+      } else {
+        // Navegar directamente si no hay biometría disponible
+        navigate(targetRoute);
       }
-
-      // Navegar después de intentar guardar biometría
-      navigate(targetRoute);
     } catch (err: any) {
       console.error(err);
       const msg = err?.message?.includes("VITE_API_URL")
         ? t("auth.configError")
         : t("auth.loginError");
-      alert(msg);
+      setErrorDialog({ open: true, message: msg });
     } finally {
       setLoading(false);
     }
@@ -141,6 +134,29 @@ export default function Login() {
   const handleDisableBiometric = async () => {
     await biometricService.deleteCredentials(SERVER_ID);
     setHasSavedCredentials(false);
+  };
+
+  const handleBiometricPromptAccept = async () => {
+    try {
+      await biometricService.saveCredentials(SERVER_ID, email, password);
+      setHasSavedCredentials(true);
+    } catch (bioErr) {
+      // No bloquear el login si falla guardar biometría
+    } finally {
+      setBiometricPromptDialog(false);
+      if (pendingNavigation) {
+        navigate(pendingNavigation);
+        setPendingNavigation(null);
+      }
+    }
+  };
+
+  const handleBiometricPromptDecline = () => {
+    setBiometricPromptDialog(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
   };
 
   // Magic link deshabilitado
@@ -278,6 +294,49 @@ export default function Login() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Error Dialog */}
+      <Dialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ ...errorDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <AlertCircle className="h-12 w-12 text-red-600" />
+            </div>
+            <DialogTitle className="text-center">{t("common.error") || "Error"}</DialogTitle>
+            <DialogDescription className="text-center">
+              {errorDialog.message}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setErrorDialog({ open: false, message: "" })} variant="outline" className="w-full">
+              {t("common.close") || "Cerrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Biometric Prompt Dialog */}
+      <Dialog open={biometricPromptDialog} onOpenChange={setBiometricPromptDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <Fingerprint className="h-12 w-12 text-primary" />
+            </div>
+            <DialogTitle className="text-center">{t("auth.biometricEnableTitle") || "Habilitar Autenticación Biométrica"}</DialogTitle>
+            <DialogDescription className="text-center">
+              {`${t("auth.biometricEnablePrompt")} ${biometricService.getBiometryTypeName(biometryType!)}?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button onClick={handleBiometricPromptDecline} variant="outline" className="w-full sm:w-auto">
+              {t("common.no") || "No"}
+            </Button>
+            <Button onClick={handleBiometricPromptAccept} className="w-full sm:w-auto">
+              {t("common.yes") || "Sí"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

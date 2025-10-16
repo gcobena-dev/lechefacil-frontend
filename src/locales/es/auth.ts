@@ -44,6 +44,20 @@ export default {
   sending: "Enviando...",
   saving: "Guardando...",
 
+  // Set Password (for invitations)
+  setPasswordTitle: "Establece tu Contraseña",
+  setPasswordDescription: "Crea una contraseña segura para tu cuenta",
+  setPasswordButton: "Establecer Contraseña",
+  passwordSetSuccess: "Contraseña establecida correctamente",
+  passwordSetSuccessTitle: "¡Contraseña Establecida!",
+  passwordSetError: "Error al establecer contraseña",
+  confirmPasswordPlaceholder: "Confirma tu contraseña",
+  passwordRequirements: "La contraseña debe tener al menos 8 caracteres.",
+  passwordTooShort: "La contraseña debe tener al menos 8 caracteres",
+  invalidTokenMessage: "Token inválido o faltante",
+  redirectingToLogin: "Redirigiendo al inicio de sesión...",
+  goToLogin: "Ir al Inicio de Sesión",
+
   // Errors
   loginError: "Error al iniciar sesión. Verifica tus credenciales.",
   biometricLoginError: "Error al iniciar sesión con biometría. Intenta nuevamente.",

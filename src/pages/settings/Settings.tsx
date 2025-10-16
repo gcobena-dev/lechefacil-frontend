@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Settings as SettingsIcon, Users, KeyRound, Building2, Layers3 } from "lucide-react";
+import { Settings as SettingsIcon, Users, Building2, Layers3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsUsers from "./SettingsUsers";
-import ChangePasswordForm from "@/components/settings/ChangePasswordForm";
 import TenantSettings from "@/components/settings/TenantSettings";
 import Catalogs from "@/components/settings/Catalogs";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -17,7 +16,7 @@ export default function Settings() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && ["users", "password", "tenant", "catalogs"].includes(tab)) {
+    if (tab && ["users", "tenant", "catalogs"].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -33,16 +32,11 @@ export default function Settings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
             <Users className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("common.usersTitle")}</span>
             <span className="sm:hidden text-xs">{t("animals.usersShort")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="password" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
-            <KeyRound className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline">{t("auth.changePasswordTitle")}</span>
-            <span className="sm:hidden text-xs">{t("animals.passwordShort")}</span>
           </TabsTrigger>
           <TabsTrigger value="tenant" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
             <Building2 className="h-4 w-4 flex-shrink-0" />
@@ -58,11 +52,6 @@ export default function Settings() {
 
         <TabsContent value="users" className="mt-6">
           <SettingsUsers />
-        </TabsContent>
-        <TabsContent value="password" className="mt-6">
-          <div className="max-w-md mx-auto">
-            <ChangePasswordForm />
-          </div>
         </TabsContent>
         <TabsContent value="tenant" className="mt-6">
           <TenantSettings />

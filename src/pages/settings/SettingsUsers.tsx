@@ -105,8 +105,16 @@ export default function SettingsUsers() {
     }
     try {
       const res = await doAdd();
-      const pwdNote = res.generated_password ? ` ${t("common.tempPassword")}: ${res.generated_password}` : "";
-      toast({ title: t("common.userAdded"), description: `${t("common.userAddedDescription")} ${res.role} a ${res.email}.${pwdNote}` });
+      // Ya no se devuelve generated_password, en su lugar se envía un email
+      const message = res.created_user
+        ? `${t("common.userCreatedEmailSent") || "Usuario creado. Se ha enviado un email a"} ${res.email} ${t("common.withInstructions") || "con instrucciones para establecer su contraseña."}`
+        : `${t("common.userAddedDescription")} ${res.role} ${t("common.to") || "a"} ${res.email}.`;
+
+      toast({
+        title: t("common.userAdded"),
+        description: message,
+        duration: 5000, // Mostrar por más tiempo para que puedan leer
+      });
       setFormData({ email: "", role: formData.role });
     } catch (err) {
       console.error(err);

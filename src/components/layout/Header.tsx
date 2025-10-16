@@ -1,6 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { User, Settings } from "lucide-react";
+import { User, UserCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   DropdownMenu,
@@ -49,10 +49,10 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => navigate("/settings")}
+                onClick={() => navigate("/account")}
               >
-                <Settings className="mr-2 h-4 w-4" />
-                {t("common.settings")}
+                <UserCircle className="mr-2 h-4 w-4" />
+                {t("common.myAccount")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive cursor-pointer"

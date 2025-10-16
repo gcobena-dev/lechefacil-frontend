@@ -66,8 +66,6 @@ export default function Profile() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t("common.profileConfigTitle")}</h1>
-
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Personal Information */}
         <Card className="xl:col-span-2">

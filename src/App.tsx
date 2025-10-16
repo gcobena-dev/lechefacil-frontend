@@ -18,6 +18,7 @@ import NoAccess from "./pages/auth/NoAccess";
 import ChangePassword from "./pages/auth/ChangePassword";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import SetPassword from "./pages/auth/SetPassword";
 
 // Dashboard pages
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -39,7 +40,7 @@ import Health from "./pages/health/Health";
 import HealthEventForm from "./pages/health/HealthEventForm";
 
 // Settings pages
-import Profile from "./pages/settings/Profile";
+import Account from "./pages/account/Account";
 import Settings from "./pages/settings/Settings";
 import NotificationsPage from "./pages/notifications/Notifications";
 
@@ -75,13 +76,14 @@ const App = () => (
             <Route path="health/new" element={<HealthEventForm />} />
             <Route path="reports" element={<Reports />} />
             <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="account" element={<Account />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/set-password" element={<SetPassword />} />
           <Route path="/request-access" element={<RequestAccess />} />
           <Route path="/select-farm" element={<SelectFarm />} />
           <Route path="/force-change-password" element={<ChangePassword />} />

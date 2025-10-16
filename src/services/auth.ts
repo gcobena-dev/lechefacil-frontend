@@ -112,11 +112,18 @@ export interface AddMembershipPayload {
   email?: string | null;
   user_id?: string | null;
   create_if_missing?: boolean;
-  initial_password?: string | null;
+  initial_password?: string | null; // Ya no se usa, se genera token one-time
 }
 
 export async function addMembership(payload: AddMembershipPayload) {
-  return apiFetch<{ user_id: string; email: string; tenant_id: string; role: string; created_user: boolean; generated_password?: string | null }>(
+  return apiFetch<{
+    user_id: string;
+    email: string;
+    tenant_id: string;
+    role: string;
+    created_user: boolean;
+    generated_password?: string | null; // Ahora siempre null, se usa token en su lugar
+  }>(
     "/api/v1/auth/memberships",
     {
       method: "POST",
@@ -145,6 +152,13 @@ export async function requestPasswordReset(payload: { email: string }) {
 
 export async function resetPassword(payload: { token: string; new_password: string }) {
   return apiFetch<{ status: string }>("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function setPassword(payload: { token: string; new_password: string }) {
+  return apiFetch<{ status: string; message: string }>("/api/v1/auth/set-password", {
     method: "POST",
     body: payload,
   });

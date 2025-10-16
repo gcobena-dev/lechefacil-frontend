@@ -41,6 +41,7 @@ export default {
   settings: "Configuración",
   logout: "Cerrar Sesión",
   myAccount: "Mi Cuenta",
+  manageAccountSettings: "Gestionar la información personal y configuración de tu cuenta",
   user: "Usuario",
   milkManagementSystem: "Sistema de Gestión Lechera",
 

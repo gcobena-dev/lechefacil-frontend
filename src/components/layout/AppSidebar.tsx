@@ -17,7 +17,7 @@ import {
   DollarSign,
   FileText,
   Plus,
-  User,
+  Settings,
   Beef
 } from "lucide-react";
 import { VersionLabel } from "@/components/updates/VersionLabel";
@@ -32,7 +32,7 @@ export function AppSidebar() {
     { titleKey: "milk.title", url: "/milk/collect", icon: Plus },
     { titleKey: "milk.milkPricesTitle", url: "/milk/prices", icon: DollarSign },
     { titleKey: "dashboard.reports", url: "/reports", icon: FileText },
-    { titleKey: "common.profile", url: "/profile", icon: User },
+    { titleKey: "common.settings", url: "/settings", icon: Settings },
   ];
   const collapsed = state === "collapsed";
 
