@@ -189,51 +189,49 @@ export default function SettingsUsers() {
   return (
     <div className="space-y-6">
       {/* Add User Form */}
-      <div className="flex justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-center gap-2 text-center">
-              <Plus className="h-5 w-5" />
-              {t("common.addUserToTenant")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">{t("common.email")}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="h-10"
-                />
-              </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            {t("common.addUserToTenant")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">{t("common.email")}</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="usuario@ejemplo.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                className="h-10"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-sm font-medium">{t("common.role")}</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLE_OPTIONS.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="w-full sm:w-48 space-y-2">
+              <Label htmlFor="role" className="text-sm font-medium">{t("common.role")}</Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="pt-2 flex justify-center">
-                <Button type="submit" disabled={isPending} className="w-full">
-                  {isPending ? t("common.loading") : t("common.addUser")}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            <Button type="submit" disabled={isPending} className="w-full sm:w-auto h-10">
+              <Plus className="h-4 w-4 mr-2" />
+              {isPending ? t("common.loading") : t("common.addUser")}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Users Management - Admin Only */}
       <AdminOnly hideOnForbidden>

@@ -13,7 +13,7 @@ const ROUTES = {
 
   // Milk
   MILK_COLLECTION: '/milk/collect',
-  MILK_PRICES: '/milk/prices',
+  MILK_PRICES: '/settings?tab=prices',
   MILK_DELIVERIES: '/milk/deliveries', // Nota: parece que no existe en rutas, usar collect
 
   // Health

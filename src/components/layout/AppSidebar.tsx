@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
-  DollarSign,
   FileText,
   Plus,
   Settings,
@@ -30,7 +29,6 @@ export function AppSidebar() {
     { titleKey: "common.dashboard", url: "/dashboard", icon: LayoutDashboard },
     { titleKey: "animals.title", url: "/animals", icon: Beef },
     { titleKey: "milk.title", url: "/milk/collect", icon: Plus },
-    { titleKey: "milk.milkPricesTitle", url: "/milk/prices", icon: DollarSign },
     { titleKey: "dashboard.reports", url: "/reports", icon: FileText },
     { titleKey: "common.settings", url: "/settings", icon: Settings },
   ];

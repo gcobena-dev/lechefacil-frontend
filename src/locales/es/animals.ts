@@ -344,6 +344,9 @@ export default {
   selectEventType: "Seleccionar tipo de evento",
   registering: "Registrando...",
   registerEvent: "Registrar Evento",
+  noEventsRegistered: "No hay eventos registrados",
+  startRegisteringEvents: "Comienza a registrar eventos del animal para llevar un historial completo",
+  registerFirstEvent: "Registrar Primer Evento",
 
   // Event type labels
   event: {

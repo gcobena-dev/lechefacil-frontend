@@ -196,7 +196,7 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/milk/prices">
+              <Link to="/settings?tab=prices">
                 <DollarSign className="w-4 h-4 mr-2" />
                 {t("dashboard.prices")}
               </Link>

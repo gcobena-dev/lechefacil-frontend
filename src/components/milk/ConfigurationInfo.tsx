@@ -24,10 +24,10 @@ export default function ConfigurationInfo() {
             <p>
               {t("milk.configurationChangePrices")}{" "}
               <Link
-                to="/milk/prices"
+                to="/settings?tab=prices"
                 className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
               >
-                {t("milk.milkPricesTitle")}
+                {t("milk.configurationChangePricesLink")}
               </Link>
             </p>
           </div>

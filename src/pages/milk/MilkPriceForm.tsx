@@ -56,7 +56,7 @@ export default function MilkPriceForm() {
     try {
       await doCreate(formData);
       toast({ title: t('milk.priceRegistered'), description: t('milk.priceSavedCorrectly') });
-      navigate("/milk/prices");
+      navigate("/settings?tab=prices");
     } catch (err) {
       console.error(err);
       toast({ title: t('common.error'), description: t('milk.couldNotRegisterPrice'), variant: "destructive" });
@@ -71,7 +71,7 @@ export default function MilkPriceForm() {
     <>
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/milk/prices")}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/settings?tab=prices")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">{t('milk.newMilkPrice')}</h1>
@@ -136,7 +136,7 @@ export default function MilkPriceForm() {
               <Button type="submit" className="flex-1" disabled={isPending}>
                 {t('milk.savePriceLabel')}
               </Button>
-              <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/milk/prices")}>
+              <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/settings?tab=prices")}>
                 {t('milk.cancelLabel')}
               </Button>
             </div>
@@ -154,7 +154,7 @@ export default function MilkPriceForm() {
         </DialogHeader>
         <DialogFooter>
           <Button onClick={() => navigate('/buyers/new')}>{t('milk.createBuyerCta')}</Button>
-          <Button variant="outline" onClick={() => navigate('/milk/prices')}>{t('milk.cancelLabel')}</Button>
+          <Button variant="outline" onClick={() => navigate('/settings?tab=prices')}>{t('milk.cancelLabel')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

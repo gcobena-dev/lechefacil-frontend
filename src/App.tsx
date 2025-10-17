@@ -28,6 +28,8 @@ import Reports from "./pages/dashboard/Reports";
 import Animals from "./pages/animals/Animals";
 import AnimalDetail from "./pages/animals/AnimalDetail";
 import AnimalForm from "./pages/animals/AnimalForm";
+import RegisterHealthEvent from "./pages/animals/RegisterHealthEvent";
+import EditHealthEvent from "./pages/animals/EditHealthEvent";
 
 // Milk pages
 import MilkCollect from "./pages/milk/MilkCollect";
@@ -68,6 +70,8 @@ const App = () => (
             <Route path="animals/new" element={<AnimalForm />} />
             <Route path="animals/:id" element={<AnimalDetail />} />
             <Route path="animals/:id/edit" element={<AnimalForm />} />
+            <Route path="animals/:id/health/new" element={<RegisterHealthEvent />} />
+            <Route path="animals/:id/health/:healthRecordId/edit" element={<EditHealthEvent />} />
             <Route path="milk/collect" element={<MilkCollect />} />
             <Route path="milk/prices" element={<MilkPrices />} />
             <Route path="milk/prices/new" element={<MilkPriceForm />} />

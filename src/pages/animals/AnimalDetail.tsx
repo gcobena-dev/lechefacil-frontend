@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,10 +65,14 @@ import EventTimelineCard from "@/components/animals/EventTimelineCard";
 import LactationCard from "@/components/animals/LactationCard";
 import { getAnimalCertificate } from "@/services/animalCertificates";
 import RegisterEventDialog from "@/components/animals/RegisterEventDialog";
+import HealthSummaryCards from "@/components/health/HealthSummaryCards";
+import WithdrawalAlert from "@/components/health/WithdrawalAlert";
+import HealthEventsList from "@/components/health/HealthEventsList";
 
 export default function AnimalDetail() {
   const { id } = useParams();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const { data: tenantSettings } = useTenantSettings();
   const { data: animalData, isLoading, error } = useAnimalDetail(id as string);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -79,6 +83,9 @@ export default function AnimalDetail() {
   // Events pagination
   const [eventsPageSize, setEventsPageSize] = useState<number>(10);
   const [eventsPage, setEventsPage] = useState<number>(1);
+
+  // Get initial tab from URL
+  const initialTab = searchParams.get("tab") || "production";
 
   // Fetch events and lactations
   const { data: eventsResp } = useAnimalEvents(id, eventsPage, eventsPageSize);
@@ -502,7 +509,7 @@ export default function AnimalDetail() {
 
       {/* Tabs */}
       <Card>
-        <Tabs defaultValue="production" className="w-full">
+        <Tabs defaultValue={initialTab} className="w-full">
           <CardHeader>
             <TabsList className="w-full overflow-x-auto whitespace-nowrap">
               <TabsTrigger value="production" className="flex items-center gap-1.5">
@@ -765,14 +772,29 @@ export default function AnimalDetail() {
 
             <TabsContent value="health" className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold mb-4">{t('animals.healthEvents')}</h3>
-                <div className="text-center py-12">
-                  <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-2">{t('animals.noHealthEvents')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('animals.featureComingSoon')}
-                  </p>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">{t('animals.healthEvents')}</h3>
+                  <Button asChild size="sm">
+                    <Link to={`/animals/${id}/health/new`}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Registrar evento
+                    </Link>
+                  </Button>
                 </div>
+
+                {/* Withdrawal Alert */}
+                {animal.in_milk_withdrawal && animal.withdrawal_until && (
+                  <WithdrawalAlert withdrawalUntil={animal.withdrawal_until} />
+                )}
+
+                {/* Health Summary Cards */}
+                <HealthSummaryCards
+                  inWithdrawal={animal.in_milk_withdrawal || false}
+                  withdrawalUntil={animal.withdrawal_until}
+                />
+
+                {/* Health Events List */}
+                <HealthEventsList animalId={id!} />
               </div>
             </TabsContent>
             

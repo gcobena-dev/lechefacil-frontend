@@ -36,7 +36,7 @@ export default function BuyerForm() {
       await doCreate(formData);
       await queryClient.invalidateQueries({ queryKey: ["buyers"] });
       toast({ title: t('milk.buyerCreated'), description: t('milk.buyerSavedCorrectly') });
-      navigate("/milk/prices");
+      navigate("/settings?tab=prices");
     } catch (err) {
       console.error(err);
       toast({ title: t('common.error'), description: t('milk.couldNotCreateBuyer'), variant: "destructive" });
@@ -50,7 +50,7 @@ export default function BuyerForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/milk/prices")}> 
+        <Button variant="ghost" size="sm" onClick={() => navigate("/settings?tab=prices")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-2xl font-bold">{t('milk.newBuyerLabel')}</h1>
@@ -80,7 +80,7 @@ export default function BuyerForm() {
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button type="submit" className="flex-1" disabled={isPending}>{t('milk.saveBuyerLabel')}</Button>
-              <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/milk/prices")}>
+              <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => navigate("/settings?tab=prices")}>
                 {t('milk.cancelLabel')}
               </Button>
             </div>

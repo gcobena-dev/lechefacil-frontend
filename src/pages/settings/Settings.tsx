@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Settings as SettingsIcon, Users, Building2, Layers3 } from "lucide-react";
+import { Settings as SettingsIcon, Users, Building2, Layers3, DollarSign } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsUsers from "./SettingsUsers";
 import TenantSettings from "@/components/settings/TenantSettings";
 import Catalogs from "@/components/settings/Catalogs";
+import MilkPrices from "@/pages/milk/MilkPrices";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { requestPushPermissionsManually } from "@/services/push";
@@ -16,7 +17,7 @@ export default function Settings() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && ["users", "tenant", "catalogs"].includes(tab)) {
+    if (tab && ["users", "prices", "tenant", "catalogs"].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -32,26 +33,34 @@ export default function Settings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="users" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto p-1">
+          <TabsTrigger value="users" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
             <Users className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("common.usersTitle")}</span>
-            <span className="sm:hidden text-xs">{t("animals.usersShort")}</span>
+            <span className="sm:hidden text-xs truncate">{t("animals.usersShort")}</span>
           </TabsTrigger>
-          <TabsTrigger value="tenant" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+          <TabsTrigger value="prices" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
+            <DollarSign className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">{t("milk.milkPricesTitle")}</span>
+            <span className="sm:hidden text-xs truncate">{t("milk.pricesTitle")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="tenant" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
             <Building2 className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("common.tenantSettings")}</span>
-            <span className="sm:hidden text-xs">{t("animals.configShort")}</span>
+            <span className="sm:hidden text-xs truncate">{t("animals.configShort")}</span>
           </TabsTrigger>
-          <TabsTrigger value="catalogs" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
+          <TabsTrigger value="catalogs" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
             <Layers3 className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("animals.catalogs")}</span>
-            <span className="sm:hidden text-xs">{t("animals.catalogsShort")}</span>
+            <span className="sm:hidden text-xs truncate">{t("animals.catalogsShort")}</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="mt-6">
           <SettingsUsers />
+        </TabsContent>
+        <TabsContent value="prices" className="mt-6">
+          <MilkPrices />
         </TabsContent>
         <TabsContent value="tenant" className="mt-6">
           <TenantSettings />

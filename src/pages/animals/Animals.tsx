@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +16,6 @@ import {
 import {
   Plus,
   Search,
-  Filter,
-  Eye,
   Edit,
   Milk,
   ChevronLeft,
@@ -31,6 +29,7 @@ import { getStatusKeyFromCode } from "@/utils/animals";
 
 export default function Animals() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [lotFilter, setLotFilter] = useState<string>("");
@@ -266,7 +265,11 @@ export default function Animals() {
               </TableHeader>
               <TableBody>
                 {filteredAnimals.map((animal) => (
-                  <TableRow key={animal.id}>
+                  <TableRow
+                    key={animal.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/animals/${animal.id}`)}
+                  >
                     <TableCell className="font-medium">{animal.tag}</TableCell>
                     <TableCell>{animal.name}</TableCell>
                     <TableCell>{animal.breed}</TableCell>
@@ -275,12 +278,12 @@ export default function Animals() {
                     <TableCell>{getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/animals/${animal.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Link to={`/animals/${animal.id}/edit`}>
                             <Edit className="h-4 w-4" />
                           </Link>
