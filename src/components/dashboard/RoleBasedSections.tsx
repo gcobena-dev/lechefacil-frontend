@@ -10,8 +10,10 @@ import {
   AlertTriangle,
   FileText,
   DollarSign,
-  Clock
+  Clock,
+  Info
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link } from "react-router-dom";
 import { useWorkerProgress, useVetAlerts, useAdminOverview } from "@/hooks/useDashboard";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -214,7 +216,9 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
       {/* Management Overview for Admin */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("dashboard.managementOverview")}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            {t("dashboard.managementOverview")}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {adminOverview.data ? (
@@ -233,7 +237,23 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">{t("dashboard.productionVsGoal")}</span>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  {t("dashboard.productionVsGoal")}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t('dashboard.goalInfoMTD')}
+                        className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-muted-foreground hover:bg-accent"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 text-sm" side="top" align="start">
+                      {t('dashboard.goalInfoMTD')}
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <span className="font-medium">{adminOverview.data.management_overview.production_vs_goal}</span>
               </div>
               <div className="flex justify-between items-center">

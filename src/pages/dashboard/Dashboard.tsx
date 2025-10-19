@@ -14,8 +14,10 @@ import {
   AlertTriangle,
   Plus,
   RefreshCw,
-  Bell
+  Bell,
+  Info
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatCurrency } from "@/lib/mock-data";
 import { RoleBasedSections } from "@/components/dashboard/RoleBasedSections";
 import { Link } from "react-router-dom";
@@ -396,8 +398,12 @@ export default function Dashboard() {
       {/* Production Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("dashboard.dailyProgressTitle")}</CardTitle>
-          <CardDescription>{t("dashboard.dailyProgressDescription")}</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            {t("dashboard.dailyProgressTitle")}
+          </CardTitle>
+          <CardDescription className="flex items-center gap-2">
+            {t("dashboard.dailyProgressDescription")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {dailyProgress.data ? (
@@ -415,7 +421,23 @@ export default function Dashboard() {
               <Progress value={morningStatus === 'completed' ? 100 : 0} className="h-2" />
 
               <div className="flex justify-between text-sm">
-                <span>{t("dashboard.dailyGoal")} ({dailyGoalTarget}{t("dashboard.liters")})</span>
+                <span className="flex items-center gap-2">
+                  {t("dashboard.dailyGoal")} ({dailyGoalTarget.toFixed(2)}{t("dashboard.liters")})
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t('dashboard.goalInfoDaily')}
+                        className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-muted-foreground hover:bg-accent"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 text-sm" side="top" align="start">
+                      {t('dashboard.goalInfoDaily')}
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <span className="font-medium">{completionPct.toFixed(0)}{t("dashboard.percentage")}</span>
               </div>
               <Progress value={completionPct} className="h-2" />

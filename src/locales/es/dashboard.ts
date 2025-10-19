@@ -34,6 +34,7 @@ export default {
   // Daily Progress
   dailyProgressTitle: "Progreso del Día",
   dailyProgressDescription: "Meta diaria vs. producción actual",
+  goalInfoDaily: "Meta diaria calculada como el promedio de producción de los últimos 30 días.",
   morningMilking: "Ordeño Matutino",
   eveningMilking: "Ordeño Vespertino",
   dailyGoal: "Meta Diaria",
@@ -69,6 +70,7 @@ export default {
   managementOverview: "Vista General",
   monthlyProfitability: "Rentabilidad mes",
   productionVsGoal: "Producción vs meta",
+  goalInfoMTD: "Meta MTD = (promedio diario últimos 30 días) × días transcurridos del mes.",
   pendingAlerts: "Alertas pendientes",
   upcomingTasks: "Próximas tareas",
 
