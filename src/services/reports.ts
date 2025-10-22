@@ -1,6 +1,7 @@
 import { apiFetch } from './client';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { toast } from 'sonner';
 
 // Types for Reports API responses
 export interface ReportParameter {
@@ -190,18 +191,48 @@ export function downloadPDFReport(report: ReportResponse): void {
           ? report.file_name
           : `${report.file_name || 'reporte'}.pdf`;
 
-        // Write base64 directly using Capacitor Filesystem
-        await Filesystem.writeFile({
-          path: fileName,
-          data: report.content,
-          directory: Directory.Documents,
-        });
+        // Normalize base64 (remove potential data URL prefix)
+        const base64 = report.content.includes(',') ? report.content.split(',')[1] : report.content;
 
-        // Get a URI we can open
-        const { uri } = await Filesystem.getUri({
-          path: fileName,
-          directory: Directory.Documents,
-        });
+        const platform = Capacitor.getPlatform();
+
+        let uri: string | undefined;
+
+        if (platform === 'android') {
+          try {
+            // Request or confirm permissions, then write to public Downloads
+            await Filesystem.requestPermissions();
+            const externalPath = `Download/${fileName}`;
+            await Filesystem.writeFile({
+              path: externalPath,
+              data: base64,
+              directory: Directory.External,
+            });
+            const res = await Filesystem.getUri({
+              path: externalPath,
+              directory: Directory.External,
+            });
+            uri = res.uri;
+          } catch (e) {
+            console.error('Saving to External/Download failed:', e);
+            toast.error('No se pudo guardar en Descargas. Revisa los permisos de almacenamiento y vuelve a intentar.');
+            return; // Do not fallback silently; require user action
+          }
+        } else {
+          // iOS and others: use Documents (app sandbox)
+          await Filesystem.writeFile({
+            path: fileName,
+            data: base64,
+            directory: Directory.Documents,
+          });
+          const res = await Filesystem.getUri({
+            path: fileName,
+            directory: Directory.Documents,
+          });
+          uri = res.uri;
+        }
+
+        if (!uri) throw new Error('No file URI obtained after write');
 
         const fileUrl = Capacitor.convertFileSrc(uri);
 
