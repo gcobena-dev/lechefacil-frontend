@@ -156,8 +156,8 @@ export default function Login() {
           ? await biometricService.hasCredentials(SERVER_ID)
           : false;
         setHasSavedCredentials(saved);
-        // Mostrar SIEMPRE después de cada login exitoso cuando no hay credenciales guardadas
-        canPrompt = !saved;
+        // Mostrar solo en dispositivos que lo soporten y no tienen credenciales guardadas
+        canPrompt = avail.isAvailable && !saved;
         // state ready for prompt decision
       } catch {
         canPrompt = false;
@@ -378,7 +378,7 @@ export default function Login() {
 
       {/* Biometric Prompt Dialog */}
       <Dialog open={biometricPromptDialog} onOpenChange={setBiometricPromptDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md mx-4">
           <DialogHeader>
             <div className="flex justify-center mb-4">
               <Fingerprint className="h-12 w-12 text-primary" />

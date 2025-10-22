@@ -103,7 +103,7 @@ export default function BulkAnimalSelection({
               <div className="flex items-center gap-2 mt-2">
                 <Input
                   type="number"
-                  step="0.1"
+                  step="0.01"
                   min={0}
                   placeholder={t("common.quantity")}
                   value={animalQuantities[animal.id] || ''}
@@ -122,7 +122,7 @@ export default function BulkAnimalSelection({
                         parseFloat(animalQuantities[animal.id]),
                         inputUnit as any,
                         parseFloat(density)
-                      ).toFixed(1)}L
+                      ).toFixed(2)}L
                     </>
                   ) : (
                     '0L'
