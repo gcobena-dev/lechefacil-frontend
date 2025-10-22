@@ -88,11 +88,13 @@ export default function Login() {
     }
   };
 
-  // ✅ Return temprano DESPUÉS de todos los hooks
-  // Evitar redirección automática si estamos mostrando el popup de biometría
-  if (isAuthenticated && !biometricPromptDialog && !pendingNavigation) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // ✅ Redirección controlada: evita race conditions con el popup
+  useEffect(() => {
+    if (isAuthenticated && !biometricPromptDialog && !pendingNavigation) {
+      console.debug('[BIO] Auto-redirect to /dashboard (no prompt/pending nav)');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, biometricPromptDialog, pendingNavigation, navigate]);
 
   const handleBiometricLogin = async () => {
     setLoading(true);
@@ -158,12 +160,12 @@ export default function Login() {
         setHasSavedCredentials(saved);
         // Mostrar SIEMPRE después de cada login exitoso cuando no hay credenciales guardadas
         canPrompt = !saved;
-        console.debug('[BIO] post-login state →', {
+        console.debug('[BIO] post-login state → ' + JSON.stringify({
           isAvailable: avail.isAvailable,
           biometryType: avail.biometryType,
           hasSavedCredentials: saved,
           canPrompt,
-        });
+        }));
       } catch {
         canPrompt = false;
         console.debug('[BIO] post-login state check failed');
