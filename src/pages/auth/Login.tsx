@@ -50,11 +50,25 @@ export default function Login() {
       const sub = App.addListener('resume', () => {
         checkBiometric();
       });
+      // Also refresh when tab gains visibility (webview comes to foreground)
+      const onVisibility = () => {
+        if (document.visibilityState === 'visible') {
+          checkBiometric();
+        }
+      };
+      document.addEventListener('visibilitychange', onVisibility);
+
       return () => {
         try {
           // Capacitor v6 listeners return an object with remove()
-          sub && typeof sub.remove === 'function' && sub.remove();
-        } catch {}
+          if (sub && typeof sub.remove === 'function') {
+            sub.remove();
+          }
+        } catch (err) {
+          // Swallow cleanup errors (best-effort)
+          console.debug('Listener cleanup error', err);
+        }
+        document.removeEventListener('visibilitychange', onVisibility);
       };
     }
   }, []);
@@ -128,8 +142,23 @@ export default function Login() {
         targetRoute = "/select-farm";
       }
 
+      // Re-evaluar biometría justo después del login por si cambió en SO
+      let canPrompt = false;
+      try {
+        const avail = await biometricService.isAvailable();
+        setBiometricAvailable(avail.isAvailable);
+        setBiometryType(avail.biometryType);
+        const saved = avail.isAvailable
+          ? await biometricService.hasCredentials(SERVER_ID)
+          : false;
+        setHasSavedCredentials(saved);
+        canPrompt = avail.isAvailable && !saved;
+      } catch {
+        canPrompt = false;
+      }
+
       // Si el login fue exitoso y la biometría está disponible, preguntar ANTES de navegar
-      if (biometricAvailable && !hasSavedCredentials) {
+      if (canPrompt) {
         setPendingNavigation(targetRoute);
         setBiometricPromptDialog(true);
       } else {
