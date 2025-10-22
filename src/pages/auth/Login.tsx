@@ -86,7 +86,8 @@ export default function Login() {
   };
 
   // ✅ Return temprano DESPUÉS de todos los hooks
-  if (isAuthenticated) {
+  // Evitar redirección automática si estamos mostrando el popup de biometría
+  if (isAuthenticated && !biometricPromptDialog && !pendingNavigation) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -152,7 +153,9 @@ export default function Login() {
           ? await biometricService.hasCredentials(SERVER_ID)
           : false;
         setHasSavedCredentials(saved);
-        canPrompt = avail.isAvailable && !saved && !suppressBioPrompt;
+        // Mostrar SIEMPRE después de cada login exitoso cuando no hay credenciales guardadas,
+        // salvo que el usuario la haya declinado en esta sesión
+        canPrompt = !saved && !suppressBioPrompt;
       } catch {
         canPrompt = false;
       }
