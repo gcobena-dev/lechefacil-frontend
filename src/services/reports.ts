@@ -1,4 +1,6 @@
 import { apiFetch } from './client';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 // Types for Reports API responses
 export interface ReportParameter {
@@ -180,29 +182,60 @@ export function downloadPDFReport(report: ReportResponse): void {
     throw new Error('No content available for download');
   }
 
-  // Convert base64 to blob
-  const byteCharacters = atob(report.content);
-  const byteNumbers = new Array(byteCharacters.length);
+  // Handle native (Capacitor) mobile environment
+  if (Capacitor.isNativePlatform()) {
+    (async () => {
+      try {
+        const fileName = report.file_name?.endsWith('.pdf')
+          ? report.file_name
+          : `${report.file_name || 'reporte'}.pdf`;
 
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
+        // Write base64 directly using Capacitor Filesystem
+        await Filesystem.writeFile({
+          path: fileName,
+          data: report.content,
+          directory: Directory.Documents,
+        });
+
+        // Get a URI we can open
+        const { uri } = await Filesystem.getUri({
+          path: fileName,
+          directory: Directory.Documents,
+        });
+
+        const fileUrl = Capacitor.convertFileSrc(uri);
+
+        // Try to open using window.open; fallback to anchor click
+        const opened = window.open?.(fileUrl, '_blank');
+        if (!opened) {
+          const a = document.createElement('a');
+          a.href = fileUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } catch (err) {
+        console.error('Failed to save/open PDF on mobile:', err);
+      }
+    })();
+    return;
   }
 
+  // Web: convert base64 to Blob and trigger browser download
+  const byteCharacters = atob(report.content);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: 'application/pdf' });
-
-  // Create download link
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = report.file_name;
-
-  // Trigger download
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-
-  // Clean up
   URL.revokeObjectURL(url);
 }
 
