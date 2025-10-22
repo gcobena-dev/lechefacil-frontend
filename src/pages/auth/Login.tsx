@@ -13,6 +13,7 @@ import { setToken, setMustChangePassword } from "@/services/config";
 import { biometricService } from "@/services/biometricService";
 import { BiometryType } from "@capgo/capacitor-native-biometric";
 import { VersionLabel } from "@/components/updates/VersionLabel";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -29,6 +30,8 @@ export default function Login() {
   const { t } = useTranslation();
 
   const SERVER_ID = 'com.lechefacil.app';
+  // Register App plugin on native only
+  const App = Capacitor.isNativePlatform() ? registerPlugin<any>('App') : null;
 
   // Simple check: token presence
   const isAuthenticated = Boolean(localStorage.getItem('lf_token'));
@@ -41,6 +44,19 @@ export default function Login() {
 
   useEffect(() => {
     checkBiometric();
+
+    // When app resumes from background, re-check biometric availability/credentials
+    if (App && App.addListener) {
+      const sub = App.addListener('resume', () => {
+        checkBiometric();
+      });
+      return () => {
+        try {
+          // Capacitor v6 listeners return an object with remove()
+          sub && typeof sub.remove === 'function' && sub.remove();
+        } catch {}
+      };
+    }
   }, []);
 
   const checkBiometric = async () => {
