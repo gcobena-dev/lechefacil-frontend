@@ -23,6 +23,7 @@ export default function Login() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometryType, setBiometryType] = useState<BiometryType>();
   const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
+  const [blockRedirect, setBlockRedirect] = useState(false);
   const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
   const [biometricPromptDialog, setBiometricPromptDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
@@ -90,11 +91,13 @@ export default function Login() {
 
   // ✅ Redirección controlada: evita race conditions con el popup
   useEffect(() => {
-    if (isAuthenticated && !biometricPromptDialog && !pendingNavigation) {
-      console.debug('[BIO] Auto-redirect to /dashboard (no prompt/pending nav)');
+    if (isAuthenticated && !biometricPromptDialog && !pendingNavigation && !blockRedirect) {
+      console.debug('[BIO] Auto-redirect to /dashboard (no prompt/pending nav, not blocked)');
       navigate('/dashboard', { replace: true });
+    } else if (isAuthenticated && blockRedirect) {
+      console.debug('[BIO] Auto-redirect blocked (login flow handling)');
     }
-  }, [isAuthenticated, biometricPromptDialog, pendingNavigation, navigate]);
+  }, [isAuthenticated, biometricPromptDialog, pendingNavigation, blockRedirect, navigate]);
 
   const handleBiometricLogin = async () => {
     setLoading(true);
@@ -132,6 +135,7 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setBlockRedirect(true);
     try {
       const res = await doLogin({ email, password });
       setToken(res.access_token);
@@ -180,6 +184,7 @@ export default function Login() {
         // Navegar directamente si no hay biometría disponible
         console.debug('[BIO] Skipping prompt, navigating →', targetRoute);
         navigate(targetRoute);
+        setBlockRedirect(false);
       }
     } catch (err: any) {
       console.error(err);
@@ -217,6 +222,7 @@ export default function Login() {
       if (pendingNavigation) {
         navigate(pendingNavigation);
         setPendingNavigation(null);
+        setBlockRedirect(false);
       }
     }
   };
@@ -227,6 +233,7 @@ export default function Login() {
     if (pendingNavigation) {
       navigate(pendingNavigation);
       setPendingNavigation(null);
+      setBlockRedirect(false);
     }
   };
 

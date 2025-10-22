@@ -19,7 +19,10 @@ import {
   Edit,
   Milk,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
@@ -35,18 +38,58 @@ export default function Animals() {
   const [lotFilter, setLotFilter] = useState<string>("");
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(0);
+  const [sortBy, setSortBy] = useState<string>("tag");
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const { data } = useQuery({
-    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize }],
+    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir }],
     queryFn: () => listAnimals({
       q: searchTerm || undefined,
       limit: pageSize,
-      offset: page * pageSize
+      offset: page * pageSize,
+      sort_by: sortBy,
+      sort_dir: sortDir,
     }),
   });
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
+  
+  const onSort = (key: string) => {
+    setPage(0);
+    setSortBy((prev) => {
+      if (prev === key) {
+        // toggle direction
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      // change key, keep asc by default
+      setSortDir('asc');
+      return key;
+    });
+  };
+
+  const renderHeader = (label: string, key: string) => {
+    const isActive = sortBy === key;
+    const icon = !isActive ? (
+      <ArrowUpDown className="ml-1 h-3.5 w-3.5 opacity-50" />
+    ) : sortDir === 'asc' ? (
+      <ChevronUp className="ml-1 h-3.5 w-3.5" />
+    ) : (
+      <ChevronDown className="ml-1 h-3.5 w-3.5" />
+    );
+    return (
+      <button
+        type="button"
+        className={`inline-flex items-center hover:text-foreground ${isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}
+        onClick={() => onSort(key)}
+        title={`Ordenar por ${label}`}
+      >
+        <span>{label}</span>
+        {icon}
+      </button>
+    );
+  };
   const { data: lots = [] } = useQuery({
     queryKey: ["lots", { active: true }],
     queryFn: () => getLots({ active: true }),
@@ -186,6 +229,28 @@ export default function Animals() {
               />
             </div>
             <select
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setPage(0); }}
+              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+              title="Ordenar por"
+            >
+              <option value="tag">Código</option>
+              <option value="name">Nombre</option>
+              <option value="breed">Raza</option>
+              <option value="age">Edad</option>
+              <option value="lot">Lote</option>
+              <option value="classification">Clasificación</option>
+            </select>
+            <select
+              value={sortDir}
+              onChange={(e) => { setSortDir(e.target.value as 'asc' | 'desc'); setPage(0); }}
+              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+              title="Dirección"
+            >
+              <option value="asc">Asc</option>
+              <option value="desc">Desc</option>
+            </select>
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
@@ -254,12 +319,12 @@ export default function Animals() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tag</TableHead>
-                  <TableHead>{t('common.name')}</TableHead>
-                  <TableHead>{t('animals.breed')}</TableHead>
-                  <TableHead>{t('animals.age')}</TableHead>
-                  <TableHead>{t('animals.lot')}</TableHead>
-                  <TableHead>{t('animals.status')}</TableHead>
+                  <TableHead>{renderHeader('Tag', 'tag')}</TableHead>
+                  <TableHead>{renderHeader(t('common.name'), 'name')}</TableHead>
+                  <TableHead>{renderHeader(t('animals.breed'), 'breed')}</TableHead>
+                  <TableHead>{renderHeader(t('animals.age'), 'age')}</TableHead>
+                  <TableHead>{renderHeader(t('animals.lot'), 'lot')}</TableHead>
+                  <TableHead>{renderHeader(t('animals.status'), 'classification')}</TableHead>
                   <TableHead>{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
