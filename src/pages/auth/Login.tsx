@@ -23,6 +23,7 @@ export default function Login() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometryType, setBiometryType] = useState<BiometryType>();
   const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
+  const [suppressBioPrompt, setSuppressBioPrompt] = useState(false);
   const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
   const [biometricPromptDialog, setBiometricPromptDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
@@ -142,21 +143,16 @@ export default function Login() {
         targetRoute = "/select-farm";
       }
 
-      // Re-evaluar biometría justo después del login por si cambió en SO
       let canPrompt = false;
-      let latestIsAvailable = false;
       try {
         const avail = await biometricService.isAvailable();
         setBiometricAvailable(avail.isAvailable);
         setBiometryType(avail.biometryType);
-        latestIsAvailable = !!avail.isAvailable;
         const saved = avail.isAvailable
           ? await biometricService.hasCredentials(SERVER_ID)
           : false;
         setHasSavedCredentials(saved);
-        // Mostrar prompt si hay biometría disponible y no hay credenciales
-        // o si el dispositivo reporta un error conocido (p.ej., no enrolado)
-        canPrompt = (!saved) && (avail.isAvailable || typeof avail.errorCode !== 'undefined');
+        canPrompt = avail.isAvailable && !saved && !suppressBioPrompt;
       } catch {
         canPrompt = false;
       }
@@ -205,6 +201,7 @@ export default function Login() {
 
   const handleBiometricPromptDecline = () => {
     setBiometricPromptDialog(false);
+    setSuppressBioPrompt(true);
     if (pendingNavigation) {
       navigate(pendingNavigation);
       setPendingNavigation(null);
@@ -234,7 +231,7 @@ export default function Login() {
         </CardHeader>
         
         <CardContent>
-          {/* Botón de autenticación biométrica */}
+          {/* Botón de autenticación biométrica cuando hay credenciales guardadas */}
           {biometricAvailable && hasSavedCredentials && (
             <div className="mb-4">
               <Button
