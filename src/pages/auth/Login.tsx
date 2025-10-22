@@ -49,13 +49,11 @@ export default function Login() {
     // When app resumes from background, re-check biometric availability/credentials
     if (App && App.addListener) {
       const sub = App.addListener('resume', () => {
-        console.debug('[BIO] App resume → re-check biometric');
         checkBiometric();
       });
       // Also refresh when tab gains visibility (webview comes to foreground)
       const onVisibility = () => {
         if (document.visibilityState === 'visible') {
-          console.debug('[BIO] Visibility change → re-check biometric');
           checkBiometric();
         }
       };
@@ -80,19 +78,15 @@ export default function Login() {
     const { isAvailable, biometryType } = await biometricService.isAvailable();
     setBiometricAvailable(isAvailable);
     setBiometryType(biometryType);
-    console.debug('[BIO] checkBiometric →', { isAvailable, biometryType });
-
     if (isAvailable) {
       const hasCredentials = await biometricService.hasCredentials(SERVER_ID);
       setHasSavedCredentials(hasCredentials);
-      console.debug('[BIO] hasCredentials →', hasCredentials);
     }
   };
 
   // ✅ Redirección controlada: evita race conditions con el popup
   useEffect(() => {
     if (isAuthenticated && !biometricPromptDialog && !pendingNavigation && !blockRedirect) {
-      console.debug('[BIO] Auto-redirect to /dashboard (no prompt/pending nav, not blocked)');
       navigate('/dashboard', { replace: true });
     } else if (isAuthenticated && blockRedirect) {
       console.debug('[BIO] Auto-redirect blocked (login flow handling)');
@@ -164,12 +158,7 @@ export default function Login() {
         setHasSavedCredentials(saved);
         // Mostrar SIEMPRE después de cada login exitoso cuando no hay credenciales guardadas
         canPrompt = !saved;
-        console.debug('[BIO] post-login state → ' + JSON.stringify({
-          isAvailable: avail.isAvailable,
-          biometryType: avail.biometryType,
-          hasSavedCredentials: saved,
-          canPrompt,
-        }));
+        // state ready for prompt decision
       } catch {
         canPrompt = false;
         console.debug('[BIO] post-login state check failed');
@@ -177,12 +166,10 @@ export default function Login() {
 
       // Si el login fue exitoso y la biometría está disponible, preguntar ANTES de navegar
       if (canPrompt) {
-        console.debug('[BIO] Opening biometric enable prompt');
         setPendingNavigation(targetRoute);
         setBiometricPromptDialog(true);
       } else {
         // Navegar directamente si no hay biometría disponible
-        console.debug('[BIO] Skipping prompt, navigating →', targetRoute);
         navigate(targetRoute);
         setBlockRedirect(false);
       }
@@ -198,7 +185,6 @@ export default function Login() {
   };
 
   const handleDisableBiometric = async () => {
-    console.debug('[BIO] Disabling biometric login → deleting credentials');
     await biometricService.deleteCredentials(SERVER_ID);
     setHasSavedCredentials(false);
   };
@@ -207,7 +193,6 @@ export default function Login() {
     try {
       // Si la biometría no está disponible (p.ej., no enrolada), no intentamos guardar
       if (biometricAvailable) {
-        console.debug('[BIO] User accepted → saving credentials');
         await biometricService.saveCredentials(SERVER_ID, email, password);
         setHasSavedCredentials(true);
       } else {
@@ -215,9 +200,7 @@ export default function Login() {
       }
     } catch (bioErr) {
       // No bloquear el login si falla guardar biometría
-      console.debug('[BIO] Error saving credentials', bioErr);
     } finally {
-      console.debug('[BIO] Closing prompt and navigating');
       setBiometricPromptDialog(false);
       if (pendingNavigation) {
         navigate(pendingNavigation);

@@ -67,6 +67,7 @@ export default {
   biometricLoginWith: "Iniciar sesión con",
   biometricContinueWithEmail: "O continúa con email",
   biometricDisable: "Desactivar inicio de sesión biométrico",
+  biometricEnableTitle: "Habilitar autenticación biométrica",
   biometricEnablePrompt: "¿Deseas habilitar el inicio de sesión con",
   biometricVerifyReason: "Inicia sesión con tu huella dactilar",
   biometricVerifyTitle: "Autenticación biométrica",
