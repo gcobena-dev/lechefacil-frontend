@@ -200,41 +200,17 @@ export function downloadPDFReport(report: ReportResponse): void {
         let uri: string | undefined;
 
         if (platform === 'android') {
-          try {
-            // Request or confirm permissions, then write to public Downloads
-            await Filesystem.requestPermissions();
-            // Prefer ExternalStorage (public) if available, else External
-            const androidPublicDir = (Directory as any).ExternalStorage ?? Directory.External;
-            const downloadsFolder = 'Download';
-
-            // Ensure Downloads folder exists (recursive create)
-            try {
-              await Filesystem.mkdir({
-                path: downloadsFolder,
-                directory: androidPublicDir,
-                recursive: true,
-              });
-            } catch (_) {
-              // ignore if exists or cannot be created (MediaStore may handle it)
-            }
-
-            const externalPath = `${downloadsFolder}/${fileName}`;
-            await Filesystem.writeFile({
-              path: externalPath,
-              data: base64,
-              directory: androidPublicDir,
-              recursive: true,
-            });
-            const res = await Filesystem.getUri({
-              path: externalPath,
-              directory: androidPublicDir,
-            });
-            uri = res.uri;
-          } catch (e) {
-            console.error('Saving to External/Download failed:', e);
-            toast.error('No se pudo guardar en Descargas. Revisa los permisos de almacenamiento y vuelve a intentar.');
-            return; // Do not fallback silently; require user action
-          }
+          // Use app-internal storage to avoid scoped storage permission issues
+          await Filesystem.writeFile({
+            path: fileName,
+            data: base64,
+            directory: Directory.Data,
+          });
+          const res = await Filesystem.getUri({
+            path: fileName,
+            directory: Directory.Data,
+          });
+          uri = res.uri;
         } else {
           // iOS and others: use Documents (app sandbox)
           await Filesystem.writeFile({
