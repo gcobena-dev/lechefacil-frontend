@@ -228,7 +228,22 @@ export function downloadPDFReport(report: ReportResponse): void {
         if (!uri) throw new Error('No file URI obtained after write');
 
         const fileUrl = Capacitor.convertFileSrc(uri);
-        await Browser.open({ url: fileUrl, presentationStyle: 'fullscreen' });
+        try {
+          await Browser.open({ url: fileUrl, presentationStyle: 'fullscreen' });
+        } catch (e) {
+          console.warn('Browser plugin not available, falling back to window.open', e);
+          const opened = window.open?.(fileUrl, '_blank');
+          if (!opened) {
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+          toast.info('Abriendo el PDF con el visor del sistema. Si no se abre, sincroniza plugins nativos (npx cap sync).');
+        }
       } catch (err) {
         console.error('Failed to save/open PDF on mobile:', err);
       }
