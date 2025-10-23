@@ -2,6 +2,7 @@ import { apiFetch } from './client';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
+import { Share } from '@capacitor/share';
 import { toast } from 'sonner';
 
 // Types for Reports API responses
@@ -197,52 +198,60 @@ export function downloadPDFReport(report: ReportResponse): void {
 
         const platform = Capacitor.getPlatform();
 
-        let uri: string | undefined;
-
         if (platform === 'android') {
-          // Use app-internal storage to avoid scoped storage permission issues
-          await Filesystem.writeFile({
-            path: fileName,
-            data: base64,
-            directory: Directory.Data,
-          });
-          const res = await Filesystem.getUri({
-            path: fileName,
-            directory: Directory.Data,
-          });
-          uri = res.uri;
-        } else {
-          // iOS and others: use Documents (app sandbox)
-          await Filesystem.writeFile({
-            path: fileName,
-            data: base64,
-            directory: Directory.Documents,
-          });
-          const res = await Filesystem.getUri({
-            path: fileName,
-            directory: Directory.Documents,
-          });
-          uri = res.uri;
-        }
-
-        if (!uri) throw new Error('No file URI obtained after write');
-
-        const fileUrl = Capacitor.convertFileSrc(uri);
-        try {
-          await Browser.open({ url: fileUrl, presentationStyle: 'fullscreen' });
-        } catch (e) {
-          console.warn('Browser plugin not available, falling back to window.open', e);
-          const opened = window.open?.(fileUrl, '_blank');
-          if (!opened) {
-            const a = document.createElement('a');
-            a.href = fileUrl;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+          // Save internally and share to open with external viewer (grants access)
+          await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Data });
+          try {
+            const sharePayload: any = {
+              title: fileName,
+              text: 'Abrir/guardar PDF',
+              files: [{ path: fileName, mimeType: 'application/pdf' }],
+            };
+            await (Share as any).share(sharePayload);
+            return;
+          } catch (e) {
+            console.warn('Share failed, will try in-app open', e);
+            const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Data });
+            const fileUrl = Capacitor.convertFileSrc(uri);
+            const opened = window.open?.(fileUrl, '_blank');
+            if (!opened) {
+              const a = document.createElement('a');
+              a.href = fileUrl;
+              a.target = '_blank';
+              a.rel = 'noopener';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }
+            return;
           }
-          toast.info('Abriendo el PDF con el visor del sistema. Si no se abre, sincroniza plugins nativos (npx cap sync).');
+        } else {
+          // iOS and others: use Documents and share
+          await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Documents });
+          try {
+            const sharePayload: any = {
+              title: fileName,
+              text: 'Abrir/guardar PDF',
+              files: [{ path: fileName, mimeType: 'application/pdf' }],
+            };
+            await (Share as any).share(sharePayload);
+            return;
+          } catch (e) {
+            console.warn('Share failed on iOS/others, trying browser open', e);
+            const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Documents });
+            const fileUrl = Capacitor.convertFileSrc(uri);
+            const opened = window.open?.(fileUrl, '_blank');
+            if (!opened) {
+              const a = document.createElement('a');
+              a.href = fileUrl;
+              a.target = '_blank';
+              a.rel = 'noopener';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }
+            return;
+          }
         }
       } catch (err) {
         console.error('Failed to save/open PDF on mobile:', err);
