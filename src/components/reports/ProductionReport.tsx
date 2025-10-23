@@ -814,11 +814,21 @@ export default function ProductionReport() {
                           yAxisId="litros"
                           orientation="left"
                           tick={{ fontSize: 12 }}
+                          // Add padding so low values (e.g., today) are visible
+                          domain={[
+                            (dataMin: number) => Math.max(0, Math.floor(dataMin - 10)),
+                            (dataMax: number) => Math.ceil(dataMax + 10),
+                          ]}
                         />
                         <YAxis
                           yAxisId="ingresos"
                           orientation="right"
                           tick={{ fontSize: 12 }}
+                          // Add ~10% headroom and floor at zero
+                          domain={[
+                            (dataMin: number) => Math.max(0, Math.floor(dataMin * 0.9)),
+                            (dataMax: number) => Math.ceil(dataMax * 1.1),
+                          ]}
                         />
                         <Tooltip
                           formatter={(value: number, name: string) => {

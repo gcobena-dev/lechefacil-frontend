@@ -199,55 +199,46 @@ export function downloadPDFReport(report: ReportResponse): void {
         const platform = Capacitor.getPlatform();
 
         if (platform === 'android') {
-          // Save internally and share via content URI (urls) to grant access
+          // Save internally then try to open; if it fails, share the file
           await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Data });
           const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Data });
+          const fileUrl = Capacitor.convertFileSrc(uri);
+          const opened = window.open?.(fileUrl, '_blank');
+          if (opened) return;
           try {
-            await Share.share({
-              title: fileName,
-              text: 'Abrir/guardar PDF',
-              urls: [uri],
-            } as any);
+            await Share.share({ title: fileName, files: [uri] } as any);
             return;
           } catch (e) {
-            console.warn('Share failed, will try in-app open', e);
-            const fileUrl = Capacitor.convertFileSrc(uri);
-            const opened = window.open?.(fileUrl, '_blank');
-            if (!opened) {
-              const a = document.createElement('a');
-              a.href = fileUrl;
-              a.target = '_blank';
-              a.rel = 'noopener';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            }
+            console.warn('Share failed after open attempt', e);
+            // Final fallback: anchor open
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             return;
           }
         } else {
-          // iOS and others: use Documents and share via file URI
+          // iOS and others: save then try to open; fallback to share
           await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Documents });
           const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Documents });
+          const fileUrl = Capacitor.convertFileSrc(uri);
+          const opened = window.open?.(fileUrl, '_blank');
+          if (opened) return;
           try {
-            await Share.share({
-              title: fileName,
-              text: 'Abrir/guardar PDF',
-              urls: [uri],
-            } as any);
+            await Share.share({ title: fileName, files: [uri] } as any);
             return;
           } catch (e) {
-            console.warn('Share failed on iOS/others, trying browser open', e);
-            const fileUrl = Capacitor.convertFileSrc(uri);
-            const opened = window.open?.(fileUrl, '_blank');
-            if (!opened) {
-              const a = document.createElement('a');
-              a.href = fileUrl;
-              a.target = '_blank';
-              a.rel = 'noopener';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            }
+            console.warn('Share failed after open attempt (iOS/others)', e);
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
             return;
           }
         }
