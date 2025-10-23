@@ -1,6 +1,7 @@
 import { apiFetch } from './client';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Browser } from '@capacitor/browser';
 import { toast } from 'sonner';
 
 // Types for Reports API responses
@@ -202,15 +203,31 @@ export function downloadPDFReport(report: ReportResponse): void {
           try {
             // Request or confirm permissions, then write to public Downloads
             await Filesystem.requestPermissions();
-            const externalPath = `Download/${fileName}`;
+            // Prefer ExternalStorage (public) if available, else External
+            const androidPublicDir = (Directory as any).ExternalStorage ?? Directory.External;
+            const downloadsFolder = 'Download';
+
+            // Ensure Downloads folder exists (recursive create)
+            try {
+              await Filesystem.mkdir({
+                path: downloadsFolder,
+                directory: androidPublicDir,
+                recursive: true,
+              });
+            } catch (_) {
+              // ignore if exists or cannot be created (MediaStore may handle it)
+            }
+
+            const externalPath = `${downloadsFolder}/${fileName}`;
             await Filesystem.writeFile({
               path: externalPath,
               data: base64,
-              directory: Directory.External,
+              directory: androidPublicDir,
+              recursive: true,
             });
             const res = await Filesystem.getUri({
               path: externalPath,
-              directory: Directory.External,
+              directory: androidPublicDir,
             });
             uri = res.uri;
           } catch (e) {
@@ -235,18 +252,7 @@ export function downloadPDFReport(report: ReportResponse): void {
         if (!uri) throw new Error('No file URI obtained after write');
 
         const fileUrl = Capacitor.convertFileSrc(uri);
-
-        // Try to open using window.open; fallback to anchor click
-        const opened = window.open?.(fileUrl, '_blank');
-        if (!opened) {
-          const a = document.createElement('a');
-          a.href = fileUrl;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
+        await Browser.open({ url: fileUrl, presentationStyle: 'fullscreen' });
       } catch (err) {
         console.error('Failed to save/open PDF on mobile:', err);
       }
