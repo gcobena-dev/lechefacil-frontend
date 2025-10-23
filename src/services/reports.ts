@@ -199,19 +199,18 @@ export function downloadPDFReport(report: ReportResponse): void {
         const platform = Capacitor.getPlatform();
 
         if (platform === 'android') {
-          // Save internally and share to open with external viewer (grants access)
+          // Save internally and share via content URI (urls) to grant access
           await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Data });
+          const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Data });
           try {
-            const sharePayload: any = {
+            await Share.share({
               title: fileName,
               text: 'Abrir/guardar PDF',
-              files: [{ path: fileName, mimeType: 'application/pdf' }],
-            };
-            await (Share as any).share(sharePayload);
+              urls: [uri],
+            } as any);
             return;
           } catch (e) {
             console.warn('Share failed, will try in-app open', e);
-            const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Data });
             const fileUrl = Capacitor.convertFileSrc(uri);
             const opened = window.open?.(fileUrl, '_blank');
             if (!opened) {
@@ -226,19 +225,18 @@ export function downloadPDFReport(report: ReportResponse): void {
             return;
           }
         } else {
-          // iOS and others: use Documents and share
+          // iOS and others: use Documents and share via file URI
           await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Documents });
+          const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Documents });
           try {
-            const sharePayload: any = {
+            await Share.share({
               title: fileName,
               text: 'Abrir/guardar PDF',
-              files: [{ path: fileName, mimeType: 'application/pdf' }],
-            };
-            await (Share as any).share(sharePayload);
+              urls: [uri],
+            } as any);
             return;
           } catch (e) {
             console.warn('Share failed on iOS/others, trying browser open', e);
-            const { uri } = await Filesystem.getUri({ path: fileName, directory: Directory.Documents });
             const fileUrl = Capacitor.convertFileSrc(uri);
             const opened = window.open?.(fileUrl, '_blank');
             if (!opened) {
