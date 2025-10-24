@@ -44,13 +44,13 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   };
 
   const daily = reportData.daily_by_animal || {};
-  // Use report period year (or current year) and local Date constructor to avoid timezone shifts
+  // Use report period year (or current year). Avoid Date parsing of YYYY-MM-DD to prevent platform quirks.
   const getReportYear = () => {
-    try {
-      if (reportData?.summary?.period_from) {
-        return new Date(reportData.summary.period_from).getFullYear();
-      }
-    } catch {}
+    const pf = reportData?.summary?.period_from;
+    if (typeof pf === 'string') {
+      const m = pf.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return parseInt(m[1], 10);
+    }
     return new Date().getFullYear();
   };
 
@@ -88,7 +88,7 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   // Format date helper
   const formatDate = (dateKey: string) => {
     const date = parseDateKey(dateKey);
-    const [day] = dateKey.split('/');
+    const day = String(date.getDate());
     const weekday = date.toLocaleDateString(i18n.language || 'es-EC', { weekday: 'short' });
     const monthShort = date.toLocaleDateString(i18n.language || 'es-EC', { month: 'short' });
     return `${weekday} ${day}/${monthShort}`;
