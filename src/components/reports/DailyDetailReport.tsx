@@ -44,10 +44,25 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   };
 
   const daily = reportData.daily_by_animal || {};
+  // Use report period year (or current year) and local Date constructor to avoid timezone shifts
+  const getReportYear = () => {
+    try {
+      if (reportData?.summary?.period_from) {
+        return new Date(reportData.summary.period_from).getFullYear();
+      }
+    } catch {}
+    return new Date().getFullYear();
+  };
+
+  const parseDateKey = (key: string) => {
+    const [dayStr, monthStr] = key.split('/') as [string, string];
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    return new Date(getReportYear(), (month || 1) - 1, day || 1);
+  };
+
   const dates = Object.keys(daily).sort((a, b) => {
-    const [dayA, monthA] = a.split('/');
-    const [dayB, monthB] = b.split('/');
-    return new Date(`2024-${monthA}-${dayA}`).getTime() - new Date(`2024-${monthB}-${dayB}`).getTime();
+    return parseDateKey(a).getTime() - parseDateKey(b).getTime();
   });
 
   // Paginate animals
@@ -72,8 +87,8 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
 
   // Format date helper
   const formatDate = (dateKey: string) => {
-    const [day, month] = dateKey.split('/');
-    const date = new Date(`2024-${month}-${day}`);
+    const date = parseDateKey(dateKey);
+    const [day] = dateKey.split('/');
     const weekday = date.toLocaleDateString(i18n.language || 'es-EC', { weekday: 'short' });
     const monthShort = date.toLocaleDateString(i18n.language || 'es-EC', { month: 'short' });
     return `${weekday} ${day}/${monthShort}`;
