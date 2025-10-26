@@ -12,13 +12,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  LayoutDashboard,
-  FileText,
-  Plus,
-  Settings,
-  Beef
-} from "lucide-react";
+import { Home, FileText, Milk, Settings, createLucideIcon } from "lucide-react";
+import { bullHead } from "@lucide/lab";
+const CowHead = createLucideIcon("CowHead", bullHead as any);
 import { VersionLabel } from "@/components/updates/VersionLabel";
 
 export function AppSidebar() {
@@ -26,9 +22,9 @@ export function AppSidebar() {
   const { t } = useTranslation();
 
   const navigationItems = [
-    { titleKey: "common.dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { titleKey: "animals.title", url: "/animals", icon: Beef },
-    { titleKey: "milk.title", url: "/milk/collect", icon: Plus },
+    { titleKey: "common.dashboard", url: "/dashboard", icon: Home },
+    { titleKey: "animals.title", url: "/animals", icon: CowHead },
+    { titleKey: "milk.title", url: "/milk/collect", icon: Milk },
     { titleKey: "dashboard.reports", url: "/reports", icon: FileText },
     { titleKey: "common.settings", url: "/settings", icon: Settings },
   ];

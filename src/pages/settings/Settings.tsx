@@ -68,11 +68,7 @@ export default function Settings() {
         <TabsContent value="catalogs" className="mt-6">
           <Catalogs />
         </TabsContent>
-        <div className="mt-6 flex justify-end">
-          <Button variant="outline" onClick={() => requestPushPermissionsManually()}>
-            {t('notifications.requestPermissions')}
-          </Button>
-        </div>
+        {/* Removed manual push permission button for mobile UX */}
       </Tabs>
     </div>
   );

@@ -13,9 +13,10 @@ export function FloatingActionButton({ to, className, children }: FloatingAction
   return (
     <Button 
       asChild 
-      size="lg"
+      size="icon"
       className={cn(
-        "fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg",
+        // Lift above BottomNav (h-14) and safe area className=
+        "fixed bottom-16 right-6 h-14 w-14 rounded-full shadow-lg",
         "md:hidden", // Only show on mobile
         "hover:scale-110 transition-transform",
         className

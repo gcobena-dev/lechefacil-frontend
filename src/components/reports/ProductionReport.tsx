@@ -192,7 +192,8 @@ export default function ProductionReport() {
         const { formatted: formattedDate, dayName } = formatDate(date);
         const producedLiters = reportData.period_production_data?.[date] || 0;
         const deliveredLiters = reportData.period_delivery_data?.[date] || 0;
-        const revenue = calculateRevenue(deliveredLiters); // Revenue based on delivered liters
+        const revenueDelivered = calculateRevenue(deliveredLiters);
+        const revenueProduced = calculateRevenue(producedLiters);
 
         return {
           date: formattedDate,
@@ -200,7 +201,8 @@ export default function ProductionReport() {
           originalDate: date,
           producidos: Number(producedLiters),
           entregados: Number(deliveredLiters),
-          ingresos: Number(revenue.toFixed(2))
+          ingresos: Number(revenueDelivered.toFixed(2)),
+          ingresos_producidos: Number(revenueProduced.toFixed(2)),
         };
       })
       .sort((a, b) => {
@@ -227,6 +229,7 @@ export default function ProductionReport() {
       totalProduced: data.reduce((sum, row) => sum + row.producidos, 0),
       totalDelivered: data.reduce((sum, row) => sum + row.entregados, 0),
       totalRevenue: data.reduce((sum, row) => sum + row.ingresos, 0),
+      totalRevenueProduced: data.reduce((sum, row) => sum + (row as any).ingresos_producidos, 0),
       recordCount: data.length
     };
   };
@@ -888,7 +891,8 @@ export default function ProductionReport() {
                           <th className="border border-border p-2 text-left">{t("reports.dayOfWeek")}</th>
                           <th className="border border-border p-2 text-right">{t("reports.produced")} (L)</th>
                           <th className="border border-border p-2 text-right">{t("reports.delivered")} (L)</th>
-                          <th className="border border-border p-2 text-right">Total ({tenantSettings?.default_currency || 'USD'})</th>
+                          <th className="border border-border p-2 text-right">{t("reports.produced")} ({tenantSettings?.default_currency || 'USD'})</th>
+                          <th className="border border-border p-2 text-right">{t("reports.delivered")} ({tenantSettings?.default_currency || 'USD'})</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -917,11 +921,14 @@ export default function ProductionReport() {
                               <td className="border border-border p-2 text-right font-medium text-green-600">
                                 {row.entregados > 0 ? `${row.entregados.toLocaleString()}L` : '-'}
                               </td>
+                              <td className="border border-border p-2 text-right font-medium text-blue-700">
+                                {row.producidos > 0 ? formatCurrency((row as any).ingresos_producidos) : '-'}
+                              </td>
                               <td className="border border-border p-2 text-right font-medium text-green-700">
                                 {row.entregados > 0 ? formatCurrency(row.ingresos) : '-'}
                               </td>
-                            </tr>
-                          ))}
+                          </tr>
+                        ))}
                       </tbody>
                       <tfoot>
                         <tr className="bg-muted/70 border-t-2 border-primary font-semibold">
@@ -934,6 +941,9 @@ export default function ProductionReport() {
                           </td>
                           <td className="border border-border p-2 text-right font-bold text-green-600">
                             {calculateTableTotals().totalDelivered > 0 ? `${calculateTableTotals().totalDelivered.toLocaleString()}L` : '-'}
+                          </td>
+                          <td className="border border-border p-2 text-right font-bold text-blue-700">
+                            {calculateTableTotals().totalRevenueProduced > 0 ? formatCurrency(calculateTableTotals().totalRevenueProduced) : '-'}
                           </td>
                           <td className="border border-border p-2 text-right font-bold text-green-700">
                             {calculateTableTotals().totalRevenue > 0 ? formatCurrency(calculateTableTotals().totalRevenue) : '-'}
@@ -968,25 +978,19 @@ export default function ProductionReport() {
                             <div className="text-sm text-muted-foreground capitalize">{row.dayName}</div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="grid grid-cols-1 gap-3 text-sm">
                           <div className="space-y-2">
                             <div>
                               <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
                               <span className="font-medium text-blue-600">
-                                {row.producidos > 0 ? `${row.producidos.toLocaleString()}L` : '-'}
+                                {row.producidos > 0 ? `(${row.producidos.toLocaleString()}L) ${formatCurrency((row as any).ingresos_producidos)}` : '-'}
                               </span>
                             </div>
                             <div>
                               <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
                               <span className="font-medium text-green-600">
-                                {row.entregados > 0 ? `${row.entregados.toLocaleString()}L` : '-'}
+                                {row.entregados > 0 ? `(${row.entregados.toLocaleString()}L) ${formatCurrency(row.ingresos)}` : '-'}
                               </span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xs text-muted-foreground">{t('reports.total')}</div>
-                            <div className="font-medium text-green-700">
-                              {row.entregados > 0 ? formatCurrency(row.ingresos) : '-'}
                             </div>
                           </div>
                         </div>
@@ -1001,25 +1005,23 @@ export default function ProductionReport() {
                         {calculateTableTotals().recordCount} {t("reports.records")}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-1 gap-3 text-sm">
                       <div className="space-y-2">
                         <div>
                           <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
                           <span className="font-bold text-blue-600">
-                            {calculateTableTotals().totalProduced > 0 ? `${calculateTableTotals().totalProduced.toLocaleString()}L` : '-'}
+                            {calculateTableTotals().totalProduced > 0
+                              ? `(${calculateTableTotals().totalProduced.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenueProduced)}`
+                              : '-'}
                           </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
                           <span className="font-bold text-green-600">
-                            {calculateTableTotals().totalDelivered > 0 ? `${calculateTableTotals().totalDelivered.toLocaleString()}L` : '-'}
+                            {calculateTableTotals().totalDelivered > 0
+                              ? `(${calculateTableTotals().totalDelivered.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenue)}`
+                              : '-'}
                           </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">{t('reports.total')}</div>
-                        <div className="font-bold text-lg text-green-700">
-                          {calculateTableTotals().totalRevenue > 0 ? formatCurrency(calculateTableTotals().totalRevenue) : '-'}
                         </div>
                       </div>
                     </div>

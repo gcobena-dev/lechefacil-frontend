@@ -1,4 +1,3 @@
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { User, UserCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -10,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { performLogout } from "@/services/auth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { NotificationBell } from "./NotificationBell";
@@ -22,7 +21,10 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b bg-card/50 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
+          {/* Logo on the left, replaces sidebar trigger */}
+          <Link to="/dashboard" className="flex items-center">
+            <img src="/logo.png" alt="LecheFácil" className="h-8 w-8 object-contain" />
+          </Link>
           <div className="hidden md:block">
             <h1 className="text-lg font-semibold text-foreground">
               Finca Dos Hermanos

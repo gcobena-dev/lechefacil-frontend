@@ -443,7 +443,7 @@ export default function Animals() {
       {/* Mobile FAB */}
       <Button 
         asChild
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg md:hidden"
+        className="fixed bottom-16 right-6 h-14 w-14 rounded-full shadow-lg md:hidden"
         size="icon"
       >
         <Link to="/animals/new">
