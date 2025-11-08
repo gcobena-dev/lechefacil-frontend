@@ -99,10 +99,15 @@ export default {
   viewData: "Ver Datos",
   downloadPDF: "Descargar PDF",
   filters: "Filtros",
+  showFilters: "Mostrar filtros",
+  hideFilters: "Ocultar filtros",
   summary: "Resumen",
   charts: "Gráficos",
   tables: "Tablas",
   dailyDetail: "Detalle Diario",
+  viewMode: "Modo de vista",
+  cards: "Tarjetas",
+  table: "Tabla",
 
   // Production specific
   totalLiters: "Total de Litros",
@@ -149,6 +154,7 @@ export default {
   // Totals
   total: "Total",
   records: "registros",
+  totalOverall: "Total general",
 
   // UI snippets
   showingAnimalsRange: "Mostrando {{start}}-{{end}} de {{total}} animales",

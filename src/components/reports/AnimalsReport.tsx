@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Users, Download, Filter, Activity, CheckCircle, XCircle, CalendarIcon } from "lucide-react";
+import { Users, Download, Filter, Activity, CheckCircle, XCircle, CalendarIcon, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { generateAnimalsReport, downloadPDFReport, type ReportRequest, type AnimalsReportData } from "@/services/reports";
-import { getAnimalStatuses } from "@/services/animals";
+import { getAnimalStatuses, listAnimals, getLabelSuggestions } from "@/services/animals";
+import { getBreeds } from "@/services/breeds";
+import { getLots } from "@/services/lots";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -19,6 +21,11 @@ interface AnimalsFilters {
   date_from: string;
   date_to: string;
   include_inactive: boolean;
+  animal_ids?: string[];
+  labels?: string[];
+  breed_ids?: string[];
+  lot_ids?: string[];
+  status_ids?: string[];
 }
 
 export default function AnimalsReport() {
@@ -26,11 +33,32 @@ export default function AnimalsReport() {
   const [activeTab, setActiveTab] = useState("summary");
   const [reportData, setReportData] = useState<AnimalsReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const { data: animalStatuses = [] } = useQuery({
     queryKey: ["animal-statuses"],
     queryFn: () => getAnimalStatuses('es'),
   });
+  const { data: animalsData } = useQuery({
+    queryKey: ["animals-list-all"],
+    queryFn: () => listAnimals(),
+  });
+  const { data: breedsData } = useQuery({
+    queryKey: ["breeds"],
+    queryFn: () => getBreeds(),
+  });
+  const { data: lotsData } = useQuery({
+    queryKey: ["lots"],
+    queryFn: () => getLots(),
+  });
+  const { data: labelsData } = useQuery({
+    queryKey: ["all-labels"],
+    queryFn: () => getLabelSuggestions(''),
+  });
+  const animals = animalsData?.items || [];
+  const breeds = breedsData || [];
+  const lots = lotsData || [];
+  const allLabels = labelsData || [];
 
   // Helper function to get local date in YYYY-MM-DD format
   const getLocalDateString = (date: Date): string => {
@@ -47,7 +75,12 @@ export default function AnimalsReport() {
     return {
       date_from: getLocalDateString(today),
       date_to: getLocalDateString(today),
-      include_inactive: false
+      include_inactive: false,
+      animal_ids: [],
+      labels: [],
+      breed_ids: [],
+      lot_ids: [],
+      status_ids: [],
     };
   });
 
@@ -55,8 +88,17 @@ export default function AnimalsReport() {
     setIsLoading(true);
     try {
       const params: ReportRequest = {
-        ...filters,
-        format: 'json'
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+        format: 'json',
+        filters: {
+          animal_ids: filters.animal_ids && filters.animal_ids.length > 0 ? filters.animal_ids : undefined,
+          labels: filters.labels && filters.labels.length > 0 ? filters.labels : undefined,
+          breed_ids: filters.breed_ids && filters.breed_ids.length > 0 ? filters.breed_ids : undefined,
+          lot_ids: filters.lot_ids && filters.lot_ids.length > 0 ? filters.lot_ids : undefined,
+          status_ids: filters.status_ids && filters.status_ids.length > 0 ? filters.status_ids : undefined,
+          include_inactive: filters.include_inactive,
+        }
       };
 
       const response = await generateAnimalsReport(params);
@@ -75,8 +117,17 @@ export default function AnimalsReport() {
   const downloadPDF = async () => {
     try {
       const params: ReportRequest = {
-        ...filters,
-        format: 'pdf'
+        date_from: filters.date_from,
+        date_to: filters.date_to,
+        format: 'pdf',
+        filters: {
+          animal_ids: filters.animal_ids && filters.animal_ids.length > 0 ? filters.animal_ids : undefined,
+          labels: filters.labels && filters.labels.length > 0 ? filters.labels : undefined,
+          breed_ids: filters.breed_ids && filters.breed_ids.length > 0 ? filters.breed_ids : undefined,
+          lot_ids: filters.lot_ids && filters.lot_ids.length > 0 ? filters.lot_ids : undefined,
+          status_ids: filters.status_ids && filters.status_ids.length > 0 ? filters.status_ids : undefined,
+          include_inactive: filters.include_inactive,
+        }
       };
 
       const response = await generateAnimalsReport(params);
@@ -164,23 +215,26 @@ export default function AnimalsReport() {
     );
   };
 
-  // Filter animals based on active/inactive status
+  // Filter animals based on active/inactive status and with records in selected period
   const getFilteredAnimals = () => {
     if (!reportData?.animals) return [];
 
-    return reportData.animals.filter(animal => {
-      // Resolve status that may arrive as localized label or backend code
-      const resolved = animalStatuses.find(
-        s => s.code === animal.status || s.name.toLowerCase() === (animal.status ?? '').toLowerCase()
-      );
-      const code = resolved?.code || (animal.status ?? '').toUpperCase();
-      const statusKey = getStatusKeyFromCode(code);
-      const isActive = statusKey === 'active';
+    return reportData.animals
+      .filter(animal => {
+        // Resolve status that may arrive as localized label or backend code
+        const resolved = animalStatuses.find(
+          s => s.code === animal.status || s.name.toLowerCase() === (animal.status ?? '').toLowerCase()
+        );
+        const code = resolved?.code || (animal.status ?? '').toUpperCase();
+        const statusKey = getStatusKeyFromCode(code);
+        const isActive = statusKey === 'active';
 
-      // If include_inactive is false, only show active animals
-      // If include_inactive is true, show all animals
-      return filters.include_inactive || isActive;
-    });
+        // If include_inactive is false, only show active animals
+        // If include_inactive is true, show all animals
+        return filters.include_inactive || isActive;
+      })
+      // Only show animals that have records in the selected period
+      .filter(animal => (animal.records_count ?? 0) > 0 || (animal.total_liters ?? 0) > 0);
   };
 
   // Calculate totals for filtered animals table
@@ -288,6 +342,181 @@ export default function AnimalsReport() {
           </div>
 
           <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="flex items-center gap-2 w-full justify-between md:w-auto md:justify-start"
+            >
+              <Filter className="h-4 w-4" />
+              Filtros Avanzados
+              {((filters.animal_ids?.length || 0) + (filters.labels?.length || 0) + (filters.breed_ids?.length || 0) + (filters.lot_ids?.length || 0) + (filters.status_ids?.length || 0)) > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {(filters.animal_ids?.length || 0) + (filters.labels?.length || 0) + (filters.breed_ids?.length || 0) + (filters.lot_ids?.length || 0) + (filters.status_ids?.length || 0)}
+                </Badge>
+              )}
+              {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('reports.selectAnimals')}</Label>
+                <Select value="" onValueChange={(value) => {
+                  if (!filters.animal_ids?.includes(value)) {
+                    setFilters(prev => ({ ...prev, animal_ids: [...(prev.animal_ids || []), value] }));
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {animals.map((a: any) => (
+                      <SelectItem key={a.id} value={a.id}>{a.tag} {a.name ? `- ${a.name}` : ''}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!!filters.animal_ids?.length && (
+                  <div className="flex flex-wrap gap-1">
+                    {filters.animal_ids.map((id) => {
+                      const a = animals.find((x: any) => x.id === id);
+                      return (
+                        <Badge key={id} variant="outline" className="text-xs gap-1">
+                          {a ? (a.name ? `${a.name} (${a.tag})` : a.tag) : id}
+                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, animal_ids: (prev.animal_ids || []).filter(x => x !== id) }))} />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Etiquetas</Label>
+                <Select value="" onValueChange={(value) => {
+                  if (!filters.labels?.includes(value)) {
+                    setFilters(prev => ({ ...prev, labels: [...(prev.labels || []), value] }));
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allLabels.map((label: string) => (
+                      <SelectItem key={label} value={label}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!!filters.labels?.length && (
+                  <div className="flex flex-wrap gap-1">
+                    {filters.labels.map((label) => (
+                      <Badge key={label} variant="outline" className="text-xs gap-1">
+                        {label}
+                        <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, labels: (prev.labels || []).filter(l => l !== label) }))} />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Razas</Label>
+                <Select value="" onValueChange={(value) => {
+                  if (!filters.breed_ids?.includes(value)) {
+                    setFilters(prev => ({ ...prev, breed_ids: [...(prev.breed_ids || []), value] }));
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {breeds.map((b: any) => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!!filters.breed_ids?.length && (
+                  <div className="flex flex-wrap gap-1">
+                    {filters.breed_ids.map((id) => {
+                      const b = breeds.find((x: any) => x.id === id);
+                      return (
+                        <Badge key={id} variant="outline" className="text-xs gap-1">
+                          {b?.name || id}
+                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, breed_ids: (prev.breed_ids || []).filter(x => x !== id) }))} />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Lotes</Label>
+                <Select value="" onValueChange={(value) => {
+                  if (!filters.lot_ids?.includes(value)) {
+                    setFilters(prev => ({ ...prev, lot_ids: [...(prev.lot_ids || []), value] }));
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {lots.map((l: any) => (
+                      <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!!filters.lot_ids?.length && (
+                  <div className="flex flex-wrap gap-1">
+                    {filters.lot_ids.map((id) => {
+                      const l = lots.find((x: any) => x.id === id);
+                      return (
+                        <Badge key={id} variant="outline" className="text-xs gap-1">
+                          {l?.name || id}
+                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, lot_ids: (prev.lot_ids || []).filter(x => x !== id) }))} />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Estados</Label>
+                <Select value="" onValueChange={(value) => {
+                  if (!filters.status_ids?.includes(value)) {
+                    setFilters(prev => ({ ...prev, status_ids: [...(prev.status_ids || []), value] }));
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {animalStatuses.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!!filters.status_ids?.length && (
+                  <div className="flex flex-wrap gap-1">
+                    {filters.status_ids.map((id) => {
+                      const s = animalStatuses.find((x: any) => x.id === id);
+                      return (
+                        <Badge key={id} variant="outline" className="text-xs gap-1">
+                          {s?.name || id}
+                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, status_ids: (prev.status_ids || []).filter(x => x !== id) }))} />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -298,7 +527,6 @@ export default function AnimalsReport() {
               />
               <Label htmlFor="include_inactive">{t("reports.includeInactiveAnimals")}</Label>
             </div>
-
             <Button onClick={downloadPDF} variant="outline" className="flex items-center gap-2">
               <Download className="h-4 w-4" />
               {t("reports.downloadPDF")}
@@ -576,6 +804,38 @@ export default function AnimalsReport() {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
+                  {/* Mobile Totals Card (moved to top) */}
+                  <div className="border-2 border-primary rounded-lg p-4 bg-muted/50">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="font-bold text-lg">{t("reports.total")}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {calculateAnimalsTotals().totalAnimals} {t("animals.animalsFound")}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-muted-foreground text-xs">{t("reports.totalLiters")}: </span>
+                          <span className="font-bold text-blue-600">
+                            {calculateAnimalsTotals().totalLiters.toLocaleString()}L
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-xs">{t("reports.recordsCount")}: </span>
+                          <span className="font-bold text-green-600">
+                            {calculateAnimalsTotals().totalRecords.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">{t("reports.avgPerRecord")}</div>
+                        <div className="font-bold text-lg text-purple-600">
+                          {calculateAnimalsTotals().avgPerRecord.toFixed(1)}L
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {getFilteredAnimals()
                     .sort((a, b) => b.total_liters - a.total_liters)
                     .map((animal) => (
@@ -613,38 +873,6 @@ export default function AnimalsReport() {
                         </div>
                       </div>
                     ))}
-
-                  {/* Mobile Totals Card */}
-                  <div className="border-2 border-primary rounded-lg p-4 bg-muted/50">
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="font-bold text-lg">{t("reports.total")}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {calculateAnimalsTotals().totalAnimals} {t("animals.animalsFound")}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="space-y-2">
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t("reports.totalLiters")}: </span>
-                          <span className="font-bold text-blue-600">
-                            {calculateAnimalsTotals().totalLiters.toLocaleString()}L
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t("reports.recordsCount")}: </span>
-                          <span className="font-bold text-green-600">
-                            {calculateAnimalsTotals().totalRecords.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs text-muted-foreground">{t("reports.avgPerRecord")}</div>
-                        <div className="font-bold text-lg text-purple-600">
-                          {calculateAnimalsTotals().avgPerRecord.toFixed(1)}L
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>

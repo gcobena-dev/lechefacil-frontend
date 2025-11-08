@@ -956,6 +956,36 @@ export default function ProductionReport() {
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-3">
+                  {/* Mobile Totals Card (moved to top on mobile) */}
+                  <div className="border-2 border-primary rounded-lg p-4 bg-muted/50">
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="font-bold text-lg">{t("reports.total")}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {calculateTableTotals().recordCount} {t("reports.records")}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 text-sm">
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
+                          <span className="font-bold text-blue-600">
+                            {calculateTableTotals().totalProduced > 0
+                              ? `(${calculateTableTotals().totalProduced.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenueProduced)}`
+                              : '-'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
+                          <span className="font-bold text-green-600">
+                            {calculateTableTotals().totalDelivered > 0
+                              ? `(${calculateTableTotals().totalDelivered.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenue)}`
+                              : '-'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {prepareChartData()
                     .sort((a, b) => {
                       const parseDate = (dateStr: string) => {
@@ -996,36 +1026,6 @@ export default function ProductionReport() {
                         </div>
                       </div>
                     ))}
-
-                  {/* Mobile Totals Card */}
-                  <div className="border-2 border-primary rounded-lg p-4 bg-muted/50">
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="font-bold text-lg">{t("reports.total")}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {calculateTableTotals().recordCount} {t("reports.records")}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 text-sm">
-                      <div className="space-y-2">
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
-                          <span className="font-bold text-blue-600">
-                            {calculateTableTotals().totalProduced > 0
-                              ? `(${calculateTableTotals().totalProduced.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenueProduced)}`
-                              : '-'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
-                          <span className="font-bold text-green-600">
-                            {calculateTableTotals().totalDelivered > 0
-                              ? `(${calculateTableTotals().totalDelivered.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenue)}`
-                              : '-'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>

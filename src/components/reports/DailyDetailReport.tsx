@@ -15,6 +15,8 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   const { data: tenantSettings } = useTenantSettings();
   const [animalPage, setAnimalPage] = useState(0);
   const [animalsPerPage, setAnimalsPerPage] = useState(2);
+  const [mobileCards, setMobileCards] = useState(false);
+  const [expandedDateKey, setExpandedDateKey] = useState<string | null>(null);
 
   useEffect(() => {
     const updateAnimalsPerPage = () => {
@@ -64,13 +66,24 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   const dates = Object.keys(daily).sort((a, b) => {
     return parseDateKey(a).getTime() - parseDateKey(b).getTime();
   });
+  // For cards view, we want most recent first (desc)
+  const datesDesc = [...dates].sort((a, b) => parseDateKey(b).getTime() - parseDateKey(a).getTime());
+  // Ensure there is a default expanded card when switching to cards mode
+  useEffect(() => {
+    if (mobileCards) {
+      // Default to the latest date (end of period)
+      const last = dates[dates.length - 1];
+      setExpandedDateKey((prev) => prev ?? last ?? null);
+    }
+  }, [mobileCards, dates.join('|')]);
 
-  // Paginate animals
+  // Paginate animals (table mode only)
   const totalAnimals = reportData.animals?.length || 0;
   const totalPages = Math.ceil(totalAnimals / animalsPerPage);
   const startIndex = animalPage * animalsPerPage;
   const endIndex = startIndex + animalsPerPage;
   const visibleAnimals = reportData.animals?.slice(startIndex, endIndex) || [];
+  const allAnimals = reportData.animals || [];
 
   // Calculate totals per animal
   const animalTotals: Record<string, { liters: number; revenue: number }> = {};
@@ -97,43 +110,149 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   return (
     <Card>
       <CardContent className="p-0">
-        {/* Navigation Controls */}
-        {totalPages > 1 && (
-          <div className="bg-muted/30 px-3 py-2 border-b flex items-center justify-between">
-            <div className="text-xs text-muted-foreground">
-              {t('reports.showingAnimalsRange', {
-                start: startIndex + 1,
-                end: Math.min(endIndex, totalAnimals),
-                total: totalAnimals,
-              })}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAnimalPage(p => Math.max(0, p - 1))}
-                disabled={animalPage === 0}
-                className="h-7 w-7 p-0"
+        {/* Mobile view toggle */}
+        <div className="px-3 py-2 border-b md:hidden flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">{t('reports.viewMode') ?? 'Modo de vista'}</span>
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              className="rounded border-input"
+              checked={mobileCards}
+              onChange={(e) => setMobileCards(e.target.checked)}
+            />
+            {mobileCards ? (t('reports.cards') ?? 'Tarjetas') : (t('reports.table') ?? 'Tabla')}
+          </label>
+        </div>
+        {/* Cards mode on mobile */}
+        {mobileCards && (
+          <div className="md:hidden p-3 space-y-3">
+            {/* Totals across dates per all animals (collapsible, default collapsed) */}
+            <div className="border-2 border-primary rounded-lg bg-muted/50">
+              <button
+                type="button"
+                className="w-full p-3 flex items-center justify-between"
+                onClick={() => setExpandedDateKey((prev) => (prev === 'TOTALS' ? null : 'TOTALS'))}
               >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {animalPage + 1}/{totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAnimalPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={animalPage >= totalPages - 1}
-                className="h-7 w-7 p-0"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+                <div className="font-bold text-sm">{t('reports.total')}</div>
+                <div className="text-right text-xs text-muted-foreground">
+                  {/* Show overall summary numbers in header for quick glance */}
+                  <div className="font-semibold text-primary">{reportData.summary.total_liters_produced.toFixed(1)}L</div>
+                  <div className="text-[10px]">{formatCurrency(reportData.summary.total_liters_produced * (tenantSettings?.default_price_per_l || 1))}</div>
+                </div>
+              </button>
+              {expandedDateKey === 'TOTALS' && (
+                <div className="p-3 pt-0">
+                  <div className="space-y-2 text-xs">
+                    {allAnimals.map((animal) => {
+                      const totals = animalTotals[animal.id];
+                      return (
+                        <div key={animal.id} className="flex items-center justify-between">
+                          <div className="min-w-0 truncate max-w-[180px]">{animal.tag} {animal.name ? `- ${animal.name}` : ''}</div>
+                          <div className="text-right">
+                            <div className="font-bold text-primary">{totals.liters.toFixed(1)}L</div>
+                            <div className="text-[10px] text-muted-foreground">{formatCurrency(totals.revenue)}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 pt-2 border-t flex items-center justify-between text-xs">
+                    <span>{t('reports.totalOverall') ?? 'Total general'}</span>
+                    <div className="text-right">
+                      <div className="font-bold">{reportData.summary.total_liters_produced.toFixed(1)}L</div>
+                      <div className="text-[10px] text-muted-foreground">{formatCurrency(reportData.summary.total_liters_produced * (tenantSettings?.default_price_per_l || 1))}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {datesDesc.map((dateKey) => {
+              const dayData = daily[dateKey];
+              const dayTotal = Object.values(dayData).reduce((sum, d: any) => sum + d.total_liters, 0);
+              const dayRevenue = dayTotal * (tenantSettings?.default_price_per_l || 1);
+              return (
+                <div key={dateKey} className="border border-border rounded-lg bg-card">
+                  <button
+                    type="button"
+                    className="w-full p-3 flex items-baseline justify-between"
+                    onClick={() => setExpandedDateKey((prev) => (prev === dateKey ? null : dateKey))}
+                  >
+                    <div className="font-medium text-sm text-left">{formatDate(dateKey)}</div>
+                    <div className="text-right">
+                      <div className="font-semibold text-primary text-sm">{dayTotal.toFixed(1)}L</div>
+                      <div className="text-[10px] text-muted-foreground">{formatCurrency(dayRevenue)}</div>
+                    </div>
+                  </button>
+                  {expandedDateKey === dateKey && (
+                    <div className="p-3 pt-0 space-y-2">
+                      {allAnimals.map((animal) => {
+                        const data: any = dayData[animal.id];
+                        return (
+                          <div key={animal.id} className="flex items-center justify-between text-xs">
+                            <div className="min-w-0">
+                              <div className="font-medium truncate max-w-[180px]">{animal.tag}</div>
+                              {animal.name && (
+                                <div className="text-[10px] text-muted-foreground truncate max-w-[180px]">{animal.name}</div>
+                              )}
+                            </div>
+                            {data ? (
+                              <div className="text-right">
+                                <div className="text-muted-foreground">({Number(data.weight_lb).toFixed(1)})</div>
+                                <div className="font-semibold text-primary">{Number(data.total_liters).toFixed(1)}L</div>
+                              </div>
+                            ) : (
+                              <div className="text-muted-foreground">-</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
-        <div className="overflow-x-auto">
-          <table className="text-xs md:text-sm md:w-full" style={{ minWidth: '100%' }}>
+        {/* Table mode (default): keep controls and table together so only content switches */}
+        {!mobileCards && (
+          <>
+            {totalPages > 1 && (
+              <div className="bg-muted/30 px-3 py-2 border-b flex items-center justify-between md:hidden">
+                <div className="text-xs text-muted-foreground">
+                  {t('reports.showingAnimalsRange', {
+                    start: startIndex + 1,
+                    end: Math.min(endIndex, totalAnimals),
+                    total: totalAnimals,
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAnimalPage(p => Math.max(0, p - 1))}
+                    disabled={animalPage === 0}
+                    className="h-7 w-7 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {animalPage + 1}/{totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAnimalPage(p => Math.min(totalPages - 1, p + 1))}
+                    disabled={animalPage >= totalPages - 1}
+                    className="h-7 w-7 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className={`overflow-x-auto`}>
+              <table className="text-xs md:text-sm md:w-full" style={{ minWidth: '100%' }}>
             <thead className="bg-muted/50 border-b">
               <tr>
                 <th className="sticky left-0 bg-muted/50 z-10 px-2 md:px-4 py-2 md:py-3 text-left font-semibold w-[80px] md:w-[120px]">
@@ -207,8 +326,10 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
+              </table>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

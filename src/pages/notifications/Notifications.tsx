@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getPref, setPref } from '@/utils/prefs';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,16 @@ export default function NotificationsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, total, markAsRead, markAllAsRead, loading, fetchNotifications } = useNotifications();
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(() => getPref<number>('prefs:notifications:page', 0, { session: true }));
+  const [pageSize, setPageSize] = useState(() => getPref<number>('prefs:notifications:pageSize', 10, { session: true }));
 
   useEffect(() => {
     fetchNotifications(false, pageSize, page * pageSize);
   }, [page, pageSize]);
+
+  // Persist during session
+  useEffect(() => { setPref('prefs:notifications:page', page, { session: true }); }, [page]);
+  useEffect(() => { setPref('prefs:notifications:pageSize', pageSize, { session: true }); }, [pageSize]);
 
   return (
     <div className="space-y-4">

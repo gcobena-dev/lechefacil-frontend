@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,17 +29,27 @@ import { listAnimals } from "@/services/animals";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getStatusKeyFromCode } from "@/utils/animals";
+import { getPref, setPref } from "@/utils/prefs";
 
 export default function Animals() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [lotFilter, setLotFilter] = useState<string>("");
-  const [pageSize, setPageSize] = useState<number>(10);
-  const [page, setPage] = useState<number>(0);
-  const [sortBy, setSortBy] = useState<string>("tag");
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState(() => getPref<string>('prefs:animals:search', '', { session: true }));
+  const [statusFilter, setStatusFilter] = useState<string>(() => getPref<string>('prefs:animals:status', 'all', { session: true }));
+  const [lotFilter, setLotFilter] = useState<string>(() => getPref<string>('prefs:animals:lot', '', { session: true }));
+  const [pageSize, setPageSize] = useState<number>(() => getPref<number>('prefs:animals:pageSize', 10, { session: true }));
+  const [page, setPage] = useState<number>(() => getPref<number>('prefs:animals:page', 0, { session: true }));
+  const [sortBy, setSortBy] = useState<string>(() => getPref<string>('prefs:animals:sortBy', 'tag', { session: true }));
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => getPref<'asc' | 'desc'>('prefs:animals:sortDir', 'asc', { session: true }));
+
+  // Persist changes during the session
+  useEffect(() => { setPref('prefs:animals:search', searchTerm, { session: true }); }, [searchTerm]);
+  useEffect(() => { setPref('prefs:animals:status', statusFilter, { session: true }); }, [statusFilter]);
+  useEffect(() => { setPref('prefs:animals:lot', lotFilter, { session: true }); }, [lotFilter]);
+  useEffect(() => { setPref('prefs:animals:pageSize', pageSize, { session: true }); }, [pageSize]);
+  useEffect(() => { setPref('prefs:animals:page', page, { session: true }); }, [page]);
+  useEffect(() => { setPref('prefs:animals:sortBy', sortBy, { session: true }); }, [sortBy]);
+  useEffect(() => { setPref('prefs:animals:sortDir', sortDir, { session: true }); }, [sortDir]);
 
   const { data } = useQuery({
     queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir }],
