@@ -20,6 +20,13 @@ interface BulkAnimalSelectionProps {
   density: string;
   onToggleSelection: (animalId: string) => void;
   onUpdateQuantity: (animalId: string, quantity: string) => void;
+  // Optional server-side pagination props
+  currentPage?: number;
+  pageSize?: number;
+  totalItems?: number | null;
+  onPageChange?: (page: number) => void;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
 }
 
 export default function BulkAnimalSelection({
@@ -29,32 +36,47 @@ export default function BulkAnimalSelection({
   inputUnit,
   density,
   onToggleSelection,
-  onUpdateQuantity
+  onUpdateQuantity,
+  currentPage,
+  pageSize,
+  totalItems,
+  onPageChange,
+  searchQuery,
+  onSearchChange,
 }: BulkAnimalSelectionProps) {
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [localSearch, setLocalSearch] = useState("");
+  const [localPage, setLocalPage] = useState(1);
+  const itemsPerPage = pageSize ?? 10;
+  const isServerPaginated = typeof onPageChange === 'function';
 
   // Filter animals based on search query
+  const effectiveSearch = isServerPaginated ? (searchQuery ?? "") : localSearch;
   const filteredAnimals = useMemo(() => {
-    if (!searchQuery.trim()) return animals;
-    const query = searchQuery.toLowerCase();
+    if (isServerPaginated) return animals; // server already filtered
+    if (!effectiveSearch.trim()) return animals;
+    const query = effectiveSearch.toLowerCase();
     return animals.filter(animal =>
       animal.name.toLowerCase().includes(query) ||
       animal.tag.toLowerCase().includes(query)
     );
-  }, [animals, searchQuery]);
+  }, [animals, effectiveSearch, isServerPaginated]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredAnimals.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAnimals = filteredAnimals.slice(startIndex, startIndex + itemsPerPage);
+  const totalItemsCount = isServerPaginated ? (totalItems ?? filteredAnimals.length) : filteredAnimals.length;
+  const totalPages = Math.max(1, Math.ceil(totalItemsCount / itemsPerPage));
+  const currentPg = isServerPaginated ? (currentPage ?? 1) : localPage;
+  const startIndex = (currentPg - 1) * itemsPerPage;
+  const paginatedAnimals = isServerPaginated ? animals : filteredAnimals.slice(startIndex, startIndex + itemsPerPage);
 
   // Reset page when search changes
   useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+    if (isServerPaginated) {
+      onPageChange?.(1);
+    } else {
+      setLocalPage(1);
+    }
+  }, [effectiveSearch]);
 
   return (
     <div className="space-y-4">
@@ -65,8 +87,15 @@ export default function BulkAnimalSelection({
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder={t("common.searchByNameOrTag")}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={isServerPaginated ? (searchQuery ?? "") : localSearch}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (isServerPaginated) {
+              onSearchChange?.(v);
+            } else {
+              setLocalSearch(v);
+            }
+          }}
           className="pl-8"
         />
       </div>
@@ -135,7 +164,7 @@ export default function BulkAnimalSelection({
 
         {paginatedAnimals.length === 0 && (
           <div className="text-center py-4 text-muted-foreground">
-            {searchQuery ? t("common.noResults") : t("common.noAnimalsAvailable")}
+            {effectiveSearch ? t("common.noResults") : t("common.noAnimalsAvailable")}
           </div>
         )}
       </div>
@@ -146,27 +175,27 @@ export default function BulkAnimalSelection({
           <div className="text-sm text-muted-foreground">
             {t("common.showingResults", {
               start: startIndex + 1,
-              end: Math.min(startIndex + itemsPerPage, filteredAnimals.length),
-              total: filteredAnimals.length
+              end: Math.min(startIndex + itemsPerPage, totalItemsCount),
+              total: totalItemsCount
             })}
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+              onClick={() => isServerPaginated ? onPageChange?.(Math.max(1, currentPg - 1)) : setLocalPage(p => Math.max(1, p - 1))}
+              disabled={currentPg === 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm text-muted-foreground">
-              {currentPage} / {totalPages}
+              {currentPg} / {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => isServerPaginated ? onPageChange?.(Math.min(totalPages, currentPg + 1)) : setLocalPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPg === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

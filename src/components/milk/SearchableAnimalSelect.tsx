@@ -1,26 +1,20 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
-
-interface Animal {
-  id: string;
-  name: string;
-  tag: string;
-}
+import { listAnimals } from "@/services/animals";
+import type { AnimalResponse } from "@/services/types";
 
 interface SearchableAnimalSelectProps {
-  animals: Animal[];
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
 }
 
 export default function SearchableAnimalSelect({
-  animals,
   value,
   onValueChange,
   placeholder = "Seleccionar animal..."
@@ -28,18 +22,61 @@ export default function SearchableAnimalSelect({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [items, setItems] = useState<AnimalResponse[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter animals based on search query
-  const filteredAnimals = useMemo(() => {
-    if (!searchQuery.trim()) return animals;
-    const query = searchQuery.toLowerCase();
-    return animals.filter(animal =>
-      animal.name.toLowerCase().includes(query) ||
-      animal.tag.toLowerCase().includes(query)
-    );
-  }, [animals, searchQuery]);
+  const selectedAnimal = items.find(animal => animal.id === value);
 
-  const selectedAnimal = animals.find(animal => animal.id === value);
+  const resetAndLoad = async (q: string) => {
+    setLoading(true);
+    try {
+      const res = await listAnimals({ status_codes: "LACTATING", limit: 20, q });
+      setItems(res.items || []);
+      setCursor(res.next_cursor ?? null);
+      setHasMore(Boolean(res.next_cursor));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    try {
+      const res = await listAnimals({ status_codes: "LACTATING", limit: 20, cursor, q: searchQuery });
+      setItems(prev => [...prev, ...(res.items || [])]);
+      setCursor(res.next_cursor ?? null);
+      setHasMore(Boolean(res.next_cursor));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      resetAndLoad(searchQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (open) {
+        resetAndLoad(searchQuery);
+      }
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [searchQuery, open]);
+
+  const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) {
+      loadMore();
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -68,14 +105,14 @@ export default function SearchableAnimalSelect({
             />
           </div>
         </div>
-        <div className="max-h-60 overflow-y-auto">
-          {filteredAnimals.length === 0 ? (
+        <div ref={listRef} className="max-h-60 overflow-y-auto" onScroll={onScroll}>
+          {items.length === 0 && !loading ? (
             <div className="p-4 text-center text-muted-foreground">
               {searchQuery ? t("common.noResults") : t("common.noAnimalsAvailable")}
             </div>
           ) : (
             <div className="space-y-1 p-2">
-              {filteredAnimals.map((animal) => (
+              {items.map((animal) => (
                 <div
                   key={animal.id}
                   className={cn(
@@ -100,6 +137,11 @@ export default function SearchableAnimalSelect({
                   </div>
                 </div>
               ))}
+              {loading && (
+                <div className="p-2 text-center text-muted-foreground text-sm">
+                  {t('common.loading')}...
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -33,6 +33,13 @@ interface MilkProductionFormProps {
   selectedAnimals: string[];
   animalQuantities: Record<string, string>;
   activeAnimals: Animal[];
+  // Server-side animals pagination (optional)
+  animalsTotal?: number | null;
+  animalsPage?: number;
+  animalsPageSize?: number;
+  onAnimalsPageChange?: (page: number) => void;
+  animalsSearch?: string;
+  onAnimalsSearchChange?: (q: string) => void;
   buyers: Buyer[];
   effectivePrice?: number;
   creating: boolean;
@@ -60,6 +67,12 @@ export default function MilkProductionForm({
   selectedAnimals,
   animalQuantities,
   activeAnimals,
+  animalsTotal,
+  animalsPage,
+  animalsPageSize,
+  onAnimalsPageChange,
+  animalsSearch,
+  onAnimalsSearchChange,
   buyers,
   effectivePrice,
   creating,
@@ -154,7 +167,6 @@ export default function MilkProductionForm({
               <div className="space-y-2">
                 <Label htmlFor="animal">{t("milk.animal")}</Label>
                 <SearchableAnimalSelect
-                  animals={activeAnimals}
                   value={formData.animalId}
                   onValueChange={(value) => onFormDataChange({ animalId: value })}
                   placeholder={t("common.selectAnimal")}
@@ -180,6 +192,12 @@ export default function MilkProductionForm({
                   density={formData.density}
                   onToggleSelection={onToggleAnimalSelection}
                   onUpdateQuantity={onUpdateAnimalQuantity}
+                  currentPage={animalsPage}
+                  pageSize={animalsPageSize}
+                  totalItems={animalsTotal}
+                  onPageChange={onAnimalsPageChange}
+                  searchQuery={animalsSearch}
+                  onSearchChange={onAnimalsSearchChange}
                 />
               </div>
             )}

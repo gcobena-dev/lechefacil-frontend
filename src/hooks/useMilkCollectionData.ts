@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
 import { listBuyers } from "@/services/buyers";
@@ -9,13 +9,18 @@ import { listMilkDeliveries } from "@/services/milkDeliveries";
 import { getTodayLocalDateString, getLocalDateString, getLocalDateString as toLocalDate, formatLocalTime, formatLocalDateShort, getTodayPlusDaysLocalDateString } from '@/utils/dateUtils';
 
 export function useMilkCollectionData(formData: { date: string; buyerId: string }) {
-  // Data queries - Only fetch lactating animals for milk collection
+  // Server-side pagination + search for lactating animals
+  const [animalsPage, setAnimalsPage] = useState(1);
+  const [animalsSearch, setAnimalsSearch] = useState("");
+  const animalsPageSize = 10;
   const { data: animalsData } = useQuery({
-    queryKey: ["animals", { status_codes: "LACTATING" }],
-    queryFn: () => listAnimals({ status_codes: "LACTATING" })
+    queryKey: ["animals", { status_codes: "LACTATING", page: animalsPage, q: animalsSearch, limit: animalsPageSize }],
+    queryFn: () => listAnimals({ status_codes: "LACTATING", page: animalsPage, limit: animalsPageSize, q: animalsSearch })
   });
   const animals = animalsData?.items ?? [];
-  const activeAnimals = animals; // All animals are already filtered to lactating
+  const animalsTotal = animalsData?.total ?? null;
+  const animalsTotalPages = animalsTotal ? Math.max(1, Math.ceil(animalsTotal / animalsPageSize)) : 1;
+  const activeAnimals = animals; // Already filtered to lactating
 
   const { data: buyers = [] } = useQuery({
     queryKey: ["buyers"],
@@ -108,6 +113,15 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
 
   return {
     animals,
+    animalsPagination: {
+      page: animalsPage,
+      setPage: setAnimalsPage,
+      pageSize: animalsPageSize,
+      total: animalsTotal,
+      totalPages: animalsTotalPages,
+      search: animalsSearch,
+      setSearch: setAnimalsSearch,
+    },
     activeAnimals,
     buyers,
     billing,

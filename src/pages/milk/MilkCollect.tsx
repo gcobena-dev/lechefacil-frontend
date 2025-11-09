@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { listAnimals } from "@/services/animals";
 import { Milk, Truck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -42,6 +43,7 @@ export default function MilkCollect() {
   const {
     animals,
     activeAnimals,
+    animalsPagination,
     buyers,
     billing,
     productions,
@@ -83,10 +85,26 @@ export default function MilkCollect() {
 
   // Auto-select all active animals when list loads for bulk mode
   useEffect(() => {
-    if (activeAnimals.length > 0 && selectedAnimals.length === 0) {
-      setSelectedAnimals(activeAnimals.map(a => a.id));
-    }
-  }, [activeAnimals, selectedAnimals, setSelectedAnimals]);
+    const autoSelectAll = async () => {
+      if (selectedAnimals.length > 0) return;
+      // If we know the total from server and page size, fetch all pages to collect IDs
+      const total = animalsPagination.total;
+      const pageSize = animalsPagination.pageSize;
+      if (!total || total <= 0) {
+        // Fallback: select whatever is currently loaded
+        if (activeAnimals.length > 0) setSelectedAnimals(activeAnimals.map(a => a.id));
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const ids: string[] = [];
+      for (let p = 1; p <= totalPages; p++) {
+        const res = await listAnimals({ status_codes: "LACTATING", page: p, limit: pageSize });
+        res.items?.forEach(a => ids.push(a.id));
+      }
+      if (ids.length > 0) setSelectedAnimals(ids);
+    };
+    autoSelectAll();
+  }, [activeAnimals, selectedAnimals.length, animalsPagination.total, animalsPagination.pageSize]);
 
   // Handle form data changes
   const handleFormDataChange = (data: Partial<typeof formData>) => {
@@ -137,6 +155,12 @@ export default function MilkCollect() {
                 selectedAnimals={selectedAnimals}
                 animalQuantities={animalQuantities}
                 activeAnimals={activeAnimals}
+                animalsTotal={animalsPagination.total}
+                animalsPage={animalsPagination.page}
+                animalsPageSize={animalsPagination.pageSize}
+                onAnimalsPageChange={animalsPagination.setPage}
+                animalsSearch={animalsPagination.search}
+                onAnimalsSearchChange={animalsPagination.setSearch}
                 buyers={buyers}
                 effectivePrice={effectivePrice}
                 creating={creating}
