@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listAnimals } from "@/services/animals";
+import { listAnimals, getAnimal } from "@/services/animals";
 import { listBuyers } from "@/services/buyers";
 import { getBillingSettings } from "@/services/settings";
 import { listMilkProductions } from "@/services/milkProductions";
@@ -37,6 +37,46 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
     queryKey: ["milk-productions", formData.date],
     queryFn: () => listMilkProductions({ date_from: formData.date, date_to: formData.date }),
   });
+
+  // Build animal ID set from today's productions
+  const productionAnimalIds = useMemo(() => {
+    const ids = new Set<string>();
+    productions.forEach((p: any) => {
+      if (p.animal_id) ids.add(String(p.animal_id));
+    });
+    return Array.from(ids);
+  }, [productions]);
+
+  // Fetch any animals referenced in productions that are missing from current page
+  const animalsById = useMemo(() => {
+    const m = new Map<string, { id: string; name: string | null; tag: string | null }>();
+    animals.forEach(a => m.set(String((a as any).id), { id: String((a as any).id), name: (a as any).name ?? null, tag: (a as any).tag ?? null }));
+    return m;
+  }, [animals]);
+
+  const missingAnimalIds = useMemo(() => {
+    return productionAnimalIds.filter(id => !animalsById.has(String(id)));
+  }, [productionAnimalIds, animalsById]);
+
+  const { data: fetchedAnimals = [] } = useQuery({
+    queryKey: ["animals-by-id", missingAnimalIds],
+    enabled: missingAnimalIds.length > 0,
+    queryFn: async () => {
+      const results = await Promise.allSettled(missingAnimalIds.map((id) => getAnimal(id)));
+      return results
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+        .map(r => r.value);
+    },
+  });
+
+  const animalsEnriched = useMemo(() => {
+    if (!fetchedAnimals || fetchedAnimals.length === 0) return animals;
+    // Merge current page + fetched uniques
+    const map = new Map<string, any>();
+    animals.forEach(a => map.set(String((a as any).id), a));
+    fetchedAnimals.forEach(a => map.set(String((a as any).id), a));
+    return Array.from(map.values());
+  }, [animals, fetchedAnimals]);
 
   // Load deliveries for last 7 days
   const deliveryDateFrom = useMemo(() => {
@@ -82,7 +122,7 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
       .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
       .slice(0, 5)
       .map((p) => {
-        const animal = animals.find(a => a.id === p.animal_id);
+        const animal = animalsEnriched.find(a => (a as any).id === (p as any).animal_id);
         const time = formatLocalTime(p.date_time);
         return {
           animal: `${animal?.name ?? ''} (${animal?.tag ?? ''})`,
@@ -91,7 +131,7 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
         };
       });
     return items;
-  }, [productions, animals, formData.date]);
+  }, [productions, animalsEnriched, formData.date]);
 
   // Calculate recent deliveries
   const recentDeliveries = useMemo(() => {
@@ -112,7 +152,7 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
   }, [deliveries, buyers]);
 
   return {
-    animals,
+    animals: animalsEnriched,
     animalsPagination: {
       page: animalsPage,
       setPage: setAnimalsPage,
