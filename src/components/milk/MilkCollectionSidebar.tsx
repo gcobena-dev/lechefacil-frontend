@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
+import { getLocalDateString as toLocalDate } from "@/utils/dateUtils";
 import { useEffect, useMemo, useState } from "react";
 import type { AnimalResponse } from "@/services/types";
 import { getPref, setPref } from "@/utils/prefs";
@@ -70,10 +71,11 @@ export default function MilkCollectionSidebar({
   useEffect(() => { setPref('prefs:milk:daily:page', page, { session: true }); }, [page]);
   useEffect(() => { setPref('prefs:milk:daily:search', search, { session: true }); }, [search]);
 
-  // Calculate daily statistics (both shifts)
-  const dailyProductions = productions.filter((p) =>
-    new Date(p.date_time).toISOString().startsWith(formData.date)
-  );
+  // Calculate daily statistics (both shifts) using LOCAL date comparison
+  const dailyProductions = productions.filter((p) => {
+    const localDate = toLocalDate(new Date(p.date_time));
+    return localDate === formData.date;
+  });
 
   const amProductions = dailyProductions.filter((p) =>
     p.shift === 'AM'
@@ -232,8 +234,8 @@ export default function MilkCollectionSidebar({
           <CardHeader>
             {/* 1) Título */}
             <CardTitle>{t("milk.dailyRecords")}</CardTitle>
-            {/* 2) Buscador + Orden (responsive) */}
-            <div className="mt-2 flex flex-col md:flex-row md:items-center md:gap-3">
+            {/* 2) Buscador + Orden (siempre en líneas separadas) */}
+            <div className="mt-2 flex flex-col gap-2">
               <Input
                 placeholder={t('animals.searchPlaceholder') ?? 'Buscar animal/código'}
                 value={search}
