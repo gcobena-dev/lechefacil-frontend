@@ -47,6 +47,7 @@ export default function MilkCollect() {
     buyers,
     billing,
     productions,
+    productionsOrder,
     effectivePrice,
     recentEntries,
     recentDeliveries,
@@ -182,6 +183,7 @@ export default function MilkCollect() {
                 animals={animals as any}
                 formData={formData}
                 effectivePrice={effectivePrice}
+                productionsOrder={productionsOrder}
               />
             </div>
           </div>
@@ -207,6 +209,7 @@ export default function MilkCollect() {
                 productions={productions}
                 animals={animals as any}
                 formData={formData}
+                productionsOrder={productionsOrder}
               />
             </div>
           </div>

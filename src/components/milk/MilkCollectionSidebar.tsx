@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Truck, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, Truck, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,6 +41,12 @@ interface MilkCollectionSidebarProps {
     shift: string;
   };
   effectivePrice?: number;
+  productionsOrder?: {
+    order_by: 'recent' | 'volume' | 'name' | 'code';
+    order: 'asc' | 'desc';
+    setOrderBy: (v: 'recent' | 'volume' | 'name' | 'code') => void;
+    setOrder: (v: 'asc' | 'desc') => void;
+  };
 }
 
 export default function MilkCollectionSidebar({
@@ -50,7 +56,8 @@ export default function MilkCollectionSidebar({
   productions,
   animals = [],
   formData,
-  effectivePrice
+  effectivePrice,
+  productionsOrder
 }: MilkCollectionSidebarProps) {
   const { t } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
@@ -106,11 +113,36 @@ export default function MilkCollectionSidebar({
 
   const totalAmount = dailyProductions.reduce((sum, p) => sum + parseFloat(p.volume_l) * priceFor(p), 0);
 
-  const sortedDaily = useMemo(() => (
-    dailyProductions
+  const sortedDaily = useMemo(() => {
+    const ob = productionsOrder?.order_by || 'recent';
+    const od = productionsOrder?.order || 'desc';
+    const dir = od === 'asc' ? 1 : -1;
+    return dailyProductions
       .slice()
-      .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
-  ), [dailyProductions]);
+      .sort((a, b) => {
+        if (ob === 'volume') {
+          const va = parseFloat(a.volume_l);
+          const vb = parseFloat(b.volume_l);
+          return (va - vb) * dir;
+        }
+        if (ob === 'name') {
+          const aa = animals.find(an => (an as any).id === (a as any).animal_id);
+          const ab = animals.find(an => (an as any).id === (b as any).animal_id);
+          const na = (aa?.name || aa?.tag || '').toString().toLowerCase();
+          const nb = (ab?.name || ab?.tag || '').toString().toLowerCase();
+          return na.localeCompare(nb) * dir;
+        }
+        if (ob === 'code') {
+          const aa = animals.find(an => (an as any).id === (a as any).animal_id);
+          const ab = animals.find(an => (an as any).id === (b as any).animal_id);
+          const ta = (aa?.tag || '').toString().toLowerCase();
+          const tb = (ab?.tag || '').toString().toLowerCase();
+          return ta.localeCompare(tb) * dir;
+        }
+        // recent
+        return (new Date(a.date_time).getTime() - new Date(b.date_time).getTime()) * dir;
+      });
+  }, [dailyProductions, animals, productionsOrder?.order_by, productionsOrder?.order]);
 
   const filteredDaily = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -200,14 +232,38 @@ export default function MilkCollectionSidebar({
           <CardHeader>
             {/* 1) Título */}
             <CardTitle>{t("milk.dailyRecords")}</CardTitle>
-            {/* 2) Buscador */}
-            <div className="mt-2">
+            {/* 2) Buscador + Orden (responsive) */}
+            <div className="mt-2 flex flex-col md:flex-row md:items-center md:gap-3">
               <Input
                 placeholder={t('animals.searchPlaceholder') ?? 'Buscar animal/código'}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                className="h-9"
+                className="h-9 w-full md:flex-1"
               />
+              <div className="mt-2 md:mt-0 flex items-center gap-2 md:ml-auto">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{t('milk.sortBy')}</span>
+                <Select
+                  value={productionsOrder?.order_by || 'recent'}
+                  onValueChange={(v) => {
+                    const ob = (v as 'recent' | 'volume' | 'name' | 'code');
+                    productionsOrder?.setOrderBy(ob);
+                    // Defaults: recent/volume -> desc, name -> asc
+                    if (ob === 'name' || ob === 'code') productionsOrder?.setOrder('asc');
+                    else productionsOrder?.setOrder('desc');
+                    setPage(0);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full md:w-[220px] lg:w-[260px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">{t('milk.mostRecent')}</SelectItem>
+                    <SelectItem value="volume">{t('milk.byProduction')}</SelectItem>
+                    <SelectItem value="name">{t('milk.byName')}</SelectItem>
+                    <SelectItem value="code">{t('milk.byCode')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             {/* 3) Controles de paginación */}
             <div className="mt-2 flex items-center justify-between gap-2">

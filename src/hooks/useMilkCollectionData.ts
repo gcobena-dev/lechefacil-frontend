@@ -32,10 +32,19 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
     queryFn: getBillingSettings
   });
 
-  // Load productions for selected date
+  // Sort options for daily productions
+  const [recordsOrderBy, setRecordsOrderBy] = useState<'recent' | 'volume' | 'name' | 'code'>('recent');
+  const [recordsOrder, setRecordsOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Load productions for selected date (server-side ordering)
   const { data: productions = [] } = useQuery({
-    queryKey: ["milk-productions", formData.date],
-    queryFn: () => listMilkProductions({ date_from: formData.date, date_to: formData.date }),
+    queryKey: ["milk-productions", formData.date, { order_by: recordsOrderBy, order: recordsOrder }],
+    queryFn: () => listMilkProductions({
+      date_from: formData.date,
+      date_to: formData.date,
+      order_by: recordsOrderBy,
+      order: recordsOrder,
+    }),
   });
 
   // Build animal ID set from today's productions
@@ -166,6 +175,12 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
     buyers,
     billing,
     productions,
+    productionsOrder: {
+      order_by: recordsOrderBy,
+      order: recordsOrder,
+      setOrderBy: setRecordsOrderBy,
+      setOrder: setRecordsOrder,
+    },
     deliveries,
     prices,
     effectivePrice,

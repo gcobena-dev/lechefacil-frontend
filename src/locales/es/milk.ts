@@ -212,4 +212,10 @@ export default {
   amount: "Monto",
   perPage: "Por página",
   totalAmount: "Monto del día",
+  // Sorting
+  sortBy: "Ordenar por",
+  mostRecent: "Más reciente",
+  byProduction: "Por producción",
+  byName: "Por nombre",
+  byCode: "Por código",
 };

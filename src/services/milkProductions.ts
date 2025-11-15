@@ -22,7 +22,7 @@ export interface MilkProductionListResponse {
   offset: number;
 }
 
-export async function listMilkProductions(params: { date_from?: string; date_to?: string; animal_id?: string; limit?: number; offset?: number }) {
+export async function listMilkProductions(params: { date_from?: string; date_to?: string; animal_id?: string; order_by?: 'recent' | 'volume' | 'name' | 'code'; order?: 'asc' | 'desc'; limit?: number; offset?: number }) {
   // Backward-compatible helper that returns only items
   const resp = await apiFetch<MilkProductionListResponse>("/api/v1/milk-productions/", {
     withAuth: true,
@@ -31,6 +31,8 @@ export async function listMilkProductions(params: { date_from?: string; date_to?
       date_from: params.date_from,
       date_to: params.date_to,
       animal_id: params.animal_id,
+      order_by: params.order_by,
+      order: params.order,
       limit: params.limit,
       offset: params.offset,
     },

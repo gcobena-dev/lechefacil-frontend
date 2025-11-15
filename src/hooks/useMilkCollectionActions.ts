@@ -5,7 +5,7 @@ import { createMilkProduction, createMilkProductionsBulk } from "@/services/milk
 import { createMilkDelivery } from "@/services/milkDeliveries";
 import { convertToLiters } from "@/lib/mock-data";
 import type { MilkCollectionFormData, DeliveryFormData } from "./useMilkCollectionForm";
-import { formatLocalDateShort, formatLocalTime } from "@/utils/dateUtils";
+import { formatLocalDateShort, formatLocalTime, toLocalOffsetISO } from "@/utils/dateUtils";
 
 export function useMilkCollectionActions(
   formData: MilkCollectionFormData,
@@ -67,7 +67,6 @@ export function useMilkCollectionActions(
       await doCreate({
         date: formData.date,
         shift: formData.shift as 'AM' | 'PM',
-        date_time: localDt.toISOString(),
         animal_id: formData.animalId,
         input_unit: unitMap[formData.inputUnit as keyof typeof unitMap] ?? 'l',
         input_quantity: parseFloat(formData.inputValue),
@@ -116,7 +115,6 @@ export function useMilkCollectionActions(
       await doCreateBulk({
         date: formData.date,
         shift: formData.shift as 'AM' | 'PM',
-        date_time: localDt.toISOString(),
         input_unit: unitMap[formData.inputUnit as keyof typeof unitMap] ?? 'l',
         density: parseFloat(formData.density),
         buyer_id: formData.buyerId || null,
@@ -205,7 +203,7 @@ export function useMilkCollectionActions(
 
     try {
       const payload = {
-        date_time: new Date(deliveryFormData.dateTime).toISOString(),
+        date_time: toLocalOffsetISO(new Date(deliveryFormData.dateTime)),
         volume_l: parseFloat(deliveryFormData.volumeL),
         buyer_id: deliveryFormData.buyerId,
         notes: deliveryFormData.notes || undefined

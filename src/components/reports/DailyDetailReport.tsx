@@ -186,27 +186,25 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                   </button>
                   {expandedDateKey === dateKey && (
                     <div className="p-3 pt-0 space-y-2">
-                      {allAnimals.map((animal) => {
-                        const data: any = dayData[animal.id];
-                        return (
-                          <div key={animal.id} className="flex items-center justify-between text-xs">
-                            <div className="min-w-0">
-                              <div className="font-medium truncate max-w-[180px]">{animal.tag}</div>
-                              {animal.name && (
-                                <div className="text-[10px] text-muted-foreground truncate max-w-[180px]">{animal.name}</div>
-                              )}
-                            </div>
-                            {data ? (
+                      {allAnimals
+                        .filter((animal) => !!dayData[animal.id])
+                        .map((animal) => {
+                          const data: any = dayData[animal.id];
+                          return (
+                            <div key={animal.id} className="flex items-center justify-between text-xs">
+                              <div className="min-w-0">
+                                <div className="font-medium truncate max-w-[180px]">{animal.tag}</div>
+                                {animal.name && (
+                                  <div className="text-[10px] text-muted-foreground truncate max-w-[180px]">{animal.name}</div>
+                                )}
+                              </div>
                               <div className="text-right">
                                 <div className="text-muted-foreground">({Number(data.weight_lb).toFixed(1)})</div>
                                 <div className="font-semibold text-primary">{Number(data.total_liters).toFixed(1)}L</div>
                               </div>
-                            ) : (
-                              <div className="text-muted-foreground">-</div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            </div>
+                          );
+                        })}
                     </div>
                   )}
                 </div>
@@ -217,40 +215,38 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
         {/* Table mode (default): keep controls and table together so only content switches */}
         {!mobileCards && (
           <>
-            {totalPages > 1 && (
-              <div className="bg-muted/30 px-3 py-2 border-b flex items-center justify-between md:hidden">
-                <div className="text-xs text-muted-foreground">
-                  {t('reports.showingAnimalsRange', {
-                    start: startIndex + 1,
-                    end: Math.min(endIndex, totalAnimals),
-                    total: totalAnimals,
-                  })}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAnimalPage(p => Math.max(0, p - 1))}
-                    disabled={animalPage === 0}
-                    className="h-7 w-7 p-0"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    {animalPage + 1}/{totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAnimalPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={animalPage >= totalPages - 1}
-                    className="h-7 w-7 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+            <div className="bg-muted/30 px-3 py-2 border-b flex items-center justify-between">
+              <div className="text-xs text-muted-foreground">
+                {t('reports.showingAnimalsRange', {
+                  start: startIndex + 1,
+                  end: Math.min(endIndex, totalAnimals),
+                  total: totalAnimals,
+                })}
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAnimalPage(p => Math.max(0, p - 1))}
+                  disabled={animalPage === 0 || totalPages <= 1}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {totalPages > 0 ? `${animalPage + 1}/${totalPages}` : '0/0'}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAnimalPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={animalPage >= totalPages - 1 || totalPages <= 1}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              </div>
             <div className={`overflow-x-auto`}>
               <table className="text-xs md:text-sm md:w-full" style={{ minWidth: '100%' }}>
             <thead className="bg-muted/50 border-b">
@@ -264,7 +260,7 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                     {animal.name && <div className="text-[9px] md:text-xs text-muted-foreground font-normal whitespace-normal leading-tight">{animal.name}</div>}
                   </th>
                 ))}
-                <th className="sticky right-0 bg-muted/50 z-10 px-2 md:px-4 py-2 md:py-3 text-center font-semibold w-[70px] md:w-[100px] border-l">
+                <th className="sticky right-0 bg-muted/50 z-10 px-2 md:px-4 py-2 md:py-3 text-center font-semibold w-[70px] md:w-[140px] border-l">
                   <div>{t('reports.total')}</div>
                   <div className="text-[9px] md:text-xs font-normal text-muted-foreground">{t('reports.revenue')}</div>
                 </th>

@@ -38,6 +38,28 @@ export function toDate(value: string | Date): Date {
   return value instanceof Date ? value : new Date(value);
 }
 
+/**
+ * Format a Date as ISO 8601 string with the local timezone offset (no trailing 'Z').
+ * Example: 2025-11-14T23:08:00-05:00
+ * Avoids Date.toISOString() which converts to UTC and can shift the calendar date.
+ */
+export function toLocalOffsetISO(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const y = date.getFullYear();
+  const m = pad(date.getMonth() + 1);
+  const d = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  const ss = pad(date.getSeconds());
+
+  const offsetMin = -date.getTimezoneOffset(); // minutes east of UTC
+  const sign = offsetMin >= 0 ? '+' : '-';
+  const offH = pad(Math.floor(Math.abs(offsetMin) / 60));
+  const offM = pad(Math.abs(offsetMin) % 60);
+
+  return `${y}-${m}-${d}T${hh}:${mm}:${ss}${sign}${offH}:${offM}`;
+}
+
 /** Format time as HH:mm in local timezone */
 export function formatLocalTime(value: string | Date, locale: string = DEFAULT_LOCALE, timeZone: string = DEFAULT_TIMEZONE): string {
   const dt = toDate(value);
