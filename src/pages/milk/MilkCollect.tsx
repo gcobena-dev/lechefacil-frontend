@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listAnimals } from "@/services/animals";
 import { Milk, Truck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,11 +10,14 @@ import MilkProductionForm from "@/components/milk/MilkProductionForm";
 import MilkDeliveryForm from "@/components/milk/MilkDeliveryForm";
 import MilkCollectionSidebar from "@/components/milk/MilkCollectionSidebar";
 import { getTodayLocalDateString } from "@/utils/dateUtils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { convertToLiters } from "@/lib/mock-data";
 
 export default function MilkCollect() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("production");
   const [ocrResetKey, setOcrResetKey] = useState<number>(0);
 
@@ -58,6 +61,9 @@ export default function MilkCollect() {
   const [conflictsOpen, setConflictsOpen] = useState(false);
   const [conflictsHeader, setConflictsHeader] = useState("");
   const [conflictsLines, setConflictsLines] = useState<string[]>([]);
+  const [confirmProductionOpen, setConfirmProductionOpen] = useState(false);
+  const [confirmDeliveryOpen, setConfirmDeliveryOpen] = useState(false);
+  const [pendingProductionType, setPendingProductionType] = useState<"single" | "bulk">("single");
   const openConflictsDialog = (payload: { header: string; lines: string[] }) => {
     setConflictsHeader(payload.header);
     setConflictsLines(payload.lines);
@@ -117,12 +123,98 @@ export default function MilkCollect() {
   };
 
   // Handle submissions
+  const animalsWithQuantities = useMemo(
+    () => selectedAnimals.filter(animalId => animalQuantities[animalId]),
+    [selectedAnimals, animalQuantities]
+  );
+
+  const bulkRawTotal = useMemo(
+    () => Object.values(animalQuantities).reduce((sum, quantity) => {
+      const val = quantity ? parseFloat(quantity) : 0;
+      return sum + (isNaN(val) ? 0 : val);
+    }, 0),
+    [animalQuantities]
+  );
+
+  const bulkCalculatedTotal = useMemo(
+    () => Object.values(animalQuantities).reduce((sum, quantity) => {
+      return sum + (quantity ? convertToLiters(parseFloat(quantity), formData.inputUnit as any, parseFloat(formData.density)) : 0);
+    }, 0),
+    [animalQuantities, formData.inputUnit, formData.density]
+  );
+
+  const productionLiters = useMemo(() => {
+    if (!formData.inputValue) return 0;
+    return convertToLiters(parseFloat(formData.inputValue), formData.inputUnit as any, parseFloat(formData.density));
+  }, [formData.inputValue, formData.inputUnit, formData.density]);
+
+  const selectedAnimalLabel = useMemo(() => {
+    if (!formData.animalId) return "";
+    const found = animals?.find((a) => a.id === formData.animalId);
+    const name = found?.name || found?.tag;
+    return name ? `${name}${found?.tag && found?.name ? ` (${found.tag})` : ""}` : formData.animalId;
+  }, [animals, formData.animalId]);
+
   const handleProductionSubmit = () => {
-    if (isBulkMode) {
-      handleBulkSubmit();
-    } else {
-      handleSingleSubmit();
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (formData.date > todayStr) {
+      toast({ title: t("common.error"), description: t("common.futureDateNotAllowed"), variant: "destructive" });
+      return;
     }
+    if (isBulkMode) {
+      if (animalsWithQuantities.length === 0) {
+        toast({
+          title: t("common.error"),
+          description: t("common.enterQuantityAtLeast"),
+          variant: "destructive"
+        });
+        return;
+      }
+      setPendingProductionType("bulk");
+    } else {
+      if (!formData.animalId || !formData.inputValue) {
+        toast({
+          title: t("common.error"),
+          description: t("common.completeRequiredFields"),
+          variant: "destructive"
+        });
+        return;
+      }
+      setPendingProductionType("single");
+    }
+    setConfirmProductionOpen(true);
+  };
+
+  const handleConfirmProduction = async () => {
+    if (pendingProductionType === "bulk") {
+      await handleBulkSubmit();
+    } else {
+      await handleSingleSubmit();
+    }
+    setConfirmProductionOpen(false);
+  };
+
+  const handleDeliverySubmitWithConfirm = () => {
+    const now = new Date();
+    const dt = new Date(deliveryFormData.dateTime);
+    if (dt.getTime() > now.getTime()) {
+      toast({ title: t("common.error"), description: t("common.futureDateNotAllowed"), variant: "destructive" });
+      return;
+    }
+    if (!deliveryFormData.buyerId || !deliveryFormData.volumeL) {
+      toast({
+        title: t("common.error"),
+        description: t("common.completeRequiredFields"),
+        variant: "destructive"
+      });
+      return;
+    }
+    setConfirmDeliveryOpen(true);
+  };
+
+  const handleConfirmDelivery = async () => {
+    await handleDeliverySubmit();
+    setConfirmDeliveryOpen(false);
   };
 
   return (
@@ -198,7 +290,7 @@ export default function MilkCollect() {
                 defaultPricePerL={billing?.default_price_per_l ? Number(billing.default_price_per_l) : undefined}
                 creatingDelivery={creatingDelivery}
                 onFormDataChange={handleDeliveryFormDataChange}
-                onSubmit={handleDeliverySubmit}
+                onSubmit={handleDeliverySubmitWithConfirm}
               />
             </div>
             <div>
@@ -231,6 +323,100 @@ export default function MilkCollect() {
           </div>
           <DialogFooter>
             <Button onClick={() => setConflictsOpen(false)}>{t('common.close')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Production confirmation dialog */}
+      <Dialog open={confirmProductionOpen} onOpenChange={setConfirmProductionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingProductionType === "bulk" ? t("milk.confirmBulkProductionTitle") : t("milk.confirmProductionTitle")}
+            </DialogTitle>
+            <DialogDescription>{t("milk.confirmProductionDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("common.date")}</span>
+              <span className="font-medium">{formData.date}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("milk.shift")}</span>
+              <span className="font-medium">{formData.shift === "AM" ? t("milk.morning") : t("milk.evening")}</span>
+            </div>
+            {pendingProductionType === "single" ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("milk.animal")}</span>
+                  <span className="font-medium">{selectedAnimalLabel || t("milk.selectAnimal")}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("common.quantity")}</span>
+                  <span className="font-medium">
+                    {formData.inputValue} {formData.inputUnit} ({productionLiters.toFixed(1)}L)
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("milk.animalsCapitalized")}</span>
+                  <span className="font-medium">{animalsWithQuantities.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("milk.total")}</span>
+                  <span className="font-medium">
+                    {bulkRawTotal.toFixed(1)} {formData.inputUnit} ({bulkCalculatedTotal.toFixed(1)}L)
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmProductionOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={handleConfirmProduction}
+              disabled={creating || creatingBulk}
+            >
+              {creating || creatingBulk ? t("milk.saving") : t("common.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delivery confirmation dialog */}
+      <Dialog open={confirmDeliveryOpen} onOpenChange={setConfirmDeliveryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("milk.confirmDeliveryTitle")}</DialogTitle>
+            <DialogDescription>{t("milk.confirmDeliveryDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("milk.deliveryDateTime")}</span>
+              <span className="font-medium">{deliveryFormData.dateTime}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("milk.buyerText")}</span>
+              <span className="font-medium">
+                {deliveryFormData.buyerId ? buyers.find((b) => b.id === deliveryFormData.buyerId)?.name || t("milk.notFound") : t("milk.notConfigured")}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("milk.volumeL")}</span>
+              <span className="font-medium">{deliveryFormData.volumeL}L</span>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmDeliveryOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleConfirmDelivery} disabled={creatingDelivery}>
+              {creatingDelivery ? t("milk.saving") : t("common.confirm")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

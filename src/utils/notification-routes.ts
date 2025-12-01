@@ -57,6 +57,21 @@ export function getNotificationRoute(notification: Notification): string | null 
       // TODO: Cuando se cree la ruta /milk/deliveries, actualizar aquí
       return ROUTES.MILK_COLLECTION;
 
+    // ==================== ANIMALES ====================
+    case 'animal_created':
+    case 'animal_updated':
+      if (data?.animal_id) {
+        return ROUTES.ANIMAL_DETAIL(data.animal_id);
+      }
+      return ROUTES.ANIMALS;
+
+    // ==================== EVENTOS DE ANIMALES ====================
+    case 'animal_event_created':
+      if (data?.animal_id) {
+        return `${ROUTES.ANIMAL_DETAIL(data.animal_id)}?tab=events`;
+      }
+      return ROUTES.ANIMALS;
+
     // ==================== EVENTOS DE ANIMALES ====================
     case 'animal_birth':
     case 'animal_sick':
@@ -126,11 +141,14 @@ export function getNotificationBadgeVariant(
 
     case 'delivery_recorded':
     case 'animal_birth':
+    case 'animal_created':
       return 'default';
 
     case 'production_recorded':
     case 'production_bulk_recorded':
     case 'price_updated':
+    case 'animal_updated':
+    case 'animal_event_created':
       return 'secondary';
 
     default:
@@ -150,10 +168,13 @@ export function getNotificationIconColor(type: string): string {
 
     case 'delivery_recorded':
     case 'animal_birth':
+    case 'animal_created':
       return 'text-green-500';
 
     case 'production_recorded':
     case 'production_bulk_recorded':
+    case 'animal_updated':
+    case 'animal_event_created':
       return 'text-blue-500';
 
     case 'price_updated':
@@ -174,6 +195,9 @@ export function getNotificationTypeLabel(type: string): string {
     production_low: 'Producción baja',
     production_bulk_recorded: 'Registro masivo',
     delivery_recorded: 'Entrega',
+    animal_created: 'Nueva vaca',
+    animal_updated: 'Vaca actualizada',
+    animal_event_created: 'Evento de vaca',
     animal_birth: 'Nacimiento',
     animal_sick: 'Animal enfermo',
     animal_health_alert: 'Alerta de salud',

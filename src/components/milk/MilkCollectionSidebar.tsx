@@ -20,7 +20,9 @@ interface RecentEntry {
 
 interface RecentDelivery {
   buyer: string;
-  amount: string;
+  volume: string;
+  amountValue?: number;
+  currency?: string;
   time: string;
 }
 
@@ -102,8 +104,8 @@ export default function MilkCollectionSidebar({
       : 0,
   };
 
-  const formatCurrency = (amount: number): string => {
-    const currency = tenantSettings?.default_currency || 'USD';
+  const formatCurrency = (amount: number, currencyOverride?: string): string => {
+    const currency = currencyOverride || tenantSettings?.default_currency || 'USD';
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(amount);
   };
 
@@ -351,12 +353,23 @@ export default function MilkCollectionSidebar({
           <CardContent>
             <div className="space-y-3">
               {recentDeliveries.map((delivery, index) => (
-                <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-accent/20">
-                  <div>
-                    <p className="font-medium text-sm">{delivery.buyer}</p>
-                    <p className="text-xs text-muted-foreground">{delivery.time}</p>
+                <div key={index} className="p-3 rounded-lg bg-accent/20 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-medium text-sm break-words flex-1 min-w-0">{delivery.buyer}</p>
+                    <Badge variant="outline" className="shrink-0">
+                      {delivery.volume}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary">{delivery.amount}</Badge>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground flex-1 min-w-0">{delivery.time}</p>
+                    {delivery.amountValue !== undefined ? (
+                      <Badge variant="secondary" className="shrink-0">
+                        {formatCurrency(delivery.amountValue, delivery.currency)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="shrink-0">{delivery.volume}</Badge>
+                    )}
+                  </div>
                 </div>
               ))}
               {recentDeliveries.length === 0 && (

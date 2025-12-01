@@ -96,9 +96,13 @@ export interface MilkPriceResponse {
 export interface MilkDeliveryResponse {
   id: UUID;
   date_time: string; // ISO datetime
+  date?: string;
   volume_l: number;
   buyer_id: UUID;
   buyer_name?: string;
+  price_snapshot?: string;
+  currency?: string;
+  amount?: string;
   notes?: string | null;
   created_at: string;
   updated_at: string;

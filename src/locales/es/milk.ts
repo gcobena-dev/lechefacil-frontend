@@ -132,7 +132,13 @@ export default {
   notFound: "No encontrado",
   recordedFor: "registrados para",
   animals: "animales",
+  animalsCapitalized: "Animales",
   bulkConflictsHeader: "Algunos animales ya tienen registro para ese día/turno:",
+  confirmProductionTitle: "Confirmar registro de producción",
+  confirmBulkProductionTitle: "Confirmar registro masivo",
+  confirmProductionDescription: "Revisa los datos antes de guardar el ordeño.",
+  confirmDeliveryTitle: "Confirmar entrega de leche",
+  confirmDeliveryDescription: "Verifica los datos antes de registrar la entrega.",
 
   // MilkPrices específico
   pricesTitle: "Precios de Leche",

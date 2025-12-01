@@ -144,6 +144,7 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
 
   // Calculate recent deliveries
   const recentDeliveries = useMemo(() => {
+    const fallbackCurrency = billing?.default_currency || "USD";
     const items = deliveries
       .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
       .slice(0, 5)
@@ -151,14 +152,18 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
         const buyer = buyers.find(b => b.id === d.buyer_id);
         const time = formatLocalTime(d.date_time);
         const dateStr = formatLocalDateShort(d.date_time);
+        const pricePerL = (d as any).price_snapshot ?? (billing?.default_price_per_l ? parseFloat(String(billing.default_price_per_l)) : undefined);
+        const amountValue = pricePerL !== undefined ? parseFloat(String(d.volume_l)) * pricePerL : undefined;
         return {
           buyer: buyer?.name ?? 'Comprador desconocido',
-          amount: `${parseFloat(String(d.volume_l)).toFixed(1)}L`,
+          volume: `${parseFloat(String(d.volume_l)).toFixed(1)}L`,
+          amountValue,
+          currency: (d as any).currency || fallbackCurrency,
           time: `${dateStr} ${time}`,
         };
       });
     return items;
-  }, [deliveries, buyers]);
+  }, [deliveries, buyers, billing]);
 
   return {
     animals: animalsEnriched,
