@@ -56,6 +56,7 @@ export interface AnimalResponse {
   updated_at: string;
   version: number;
   primary_photo_url?: string | null;
+  primary_photo_signed_url?: string | null;
   photos_count?: number | null;
 }
 

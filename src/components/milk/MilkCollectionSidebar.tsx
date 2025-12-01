@@ -11,6 +11,8 @@ import { getLocalDateString as toLocalDate } from "@/utils/dateUtils";
 import { useEffect, useMemo, useState } from "react";
 import type { AnimalResponse } from "@/services/types";
 import { getPref, setPref } from "@/utils/prefs";
+import { getAnimalImageUrl } from "@/utils/animals";
+import { useNavigate } from "react-router-dom";
 
 interface RecentEntry {
   animal: string;
@@ -64,6 +66,7 @@ export default function MilkCollectionSidebar({
 }: MilkCollectionSidebarProps) {
   const { t } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
+  const navigate = useNavigate();
   const [pageSize, setPageSize] = useState<number>(() => getPref<number>('prefs:milk:daily:pageSize', 10, { session: true }));
   const [page, setPage] = useState<number>(() => getPref<number>('prefs:milk:daily:page', 0, { session: true }));
   const [search, setSearch] = useState<string>(() => getPref<string>('prefs:milk:daily:search', '', { session: true }));
@@ -301,21 +304,38 @@ export default function MilkCollectionSidebar({
                 {/* Condensed list (fits sidebar width on large screens) */}
                 <div className="space-y-3">
                   {pageItems.map((p, idx) => {
-                    const liters = parseFloat(p.volume_l);
-                    const pounds = liters * 2.20462;
-                    const price = priceFor(p);
-                    const amount = liters * price;
-                    const shift = (p.shift || 'AM') as string;
-                    const animal = animals.find(a => (a as any).id === (p as any).animal_id);
-                    const animalLabel = animal ? `${animal.name ?? ''} (${animal.tag ?? ''})`.trim() : '-';
-                  return (
-                    <div key={idx} className="border border-border rounded-lg p-4 bg-card hover:bg-accent/10 transition-colors">
-                      {/* Nombre en primeras dos filas (clamp a 2 líneas) */}
-                      <div
-                        className="font-medium leading-snug line-clamp-2"
-                        title={animalLabel}
-                      >
-                        {animalLabel}
+                  const liters = parseFloat(p.volume_l);
+                  const pounds = liters * 2.20462;
+                  const price = priceFor(p);
+                  const amount = liters * price;
+                  const shift = (p.shift || 'AM') as string;
+                  const animal = animals.find(a => (a as any).id === (p as any).animal_id);
+                  const animalLabel = animal ? `${animal.name ?? ''} (${animal.tag ?? ''})`.trim() : '-';
+                  const photoUrl = getAnimalImageUrl(animal) ?? "/logo.png";
+                return (
+                    <div
+                      key={idx}
+                      className="border border-border rounded-lg p-4 bg-card hover:bg-accent/10 transition-colors cursor-pointer"
+                      onClick={() => {
+                        if (animal?.id) navigate(`/animals/${animal.id}`);
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-md bg-muted overflow-hidden border border-border shrink-0">
+                          <img
+                            src={photoUrl}
+                            alt={animalLabel || "Animal"}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        {/* Nombre en primeras dos filas (clamp a 2 líneas) */}
+                        <div
+                          className="font-medium leading-snug line-clamp-2"
+                          title={animalLabel}
+                        >
+                          {animalLabel}
+                        </div>
                       </div>
                       {/* Controles y monto */}
                       <div className="mt-2 flex items-center justify-between gap-3">

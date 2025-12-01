@@ -1,16 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ProductionReportData } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getAnimalImageUrl } from "@/utils/animals";
+import type { AnimalResponse } from "@/services/types";
+import { Link } from "react-router-dom";
 
 interface DailyDetailReportProps {
   reportData: ProductionReportData;
+  animalsWithPhotos?: AnimalResponse[];
 }
 
-export default function DailyDetailReport({ reportData }: DailyDetailReportProps) {
+export default function DailyDetailReport({ reportData, animalsWithPhotos = [] }: DailyDetailReportProps) {
   const { t, i18n } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
   const [animalPage, setAnimalPage] = useState(0);
@@ -98,6 +102,15 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
     };
   });
 
+  const photoByAnimalId = useMemo(() => {
+    const map = new Map<string, string>();
+    animalsWithPhotos.forEach((a) => {
+      const url = getAnimalImageUrl(a) ?? "/logo.png";
+      map.set(a.id, url);
+    });
+    return map;
+  }, [animalsWithPhotos]);
+
   // Format date helper
   const formatDate = (dateKey: string) => {
     const date = parseDateKey(dateKey);
@@ -145,14 +158,29 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                   <div className="space-y-2 text-xs">
                     {allAnimals.map((animal) => {
                       const totals = animalTotals[animal.id];
+                      const photoUrl = photoByAnimalId.get(animal.id) ?? "/logo.png";
                       return (
-                        <div key={animal.id} className="flex items-center justify-between">
-                          <div className="min-w-0 truncate max-w-[180px]">{animal.tag} {animal.name ? `- ${animal.name}` : ''}</div>
-                          <div className="text-right">
+                        <Link
+                          to={`/animals/${animal.id}`}
+                          key={animal.id}
+                          className="flex items-center justify-between gap-3 hover:bg-accent/40 rounded-md px-2 py-1"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="h-8 w-8 rounded-full overflow-hidden bg-muted border border-border shrink-0">
+                              <img src={photoUrl} alt={animal.tag} className="h-full w-full object-cover" loading="lazy" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-semibold truncate leading-tight">{animal.tag}</div>
+                              {animal.name && (
+                                <div className="text-[10px] text-muted-foreground leading-tight line-clamp-2 break-words min-h-[20px]">{animal.name}</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right self-center">
                             <div className="font-bold text-primary">{totals.liters.toFixed(1)}L</div>
                             <div className="text-[10px] text-muted-foreground">{formatCurrency(totals.revenue)}</div>
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
@@ -190,19 +218,29 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                         .filter((animal) => !!dayData[animal.id])
                         .map((animal) => {
                           const data: any = dayData[animal.id];
+                          const photoUrl = photoByAnimalId.get(animal.id) ?? "/logo.png";
                           return (
-                            <div key={animal.id} className="flex items-center justify-between text-xs">
-                              <div className="min-w-0">
-                                <div className="font-medium truncate max-w-[180px]">{animal.tag}</div>
-                                {animal.name && (
-                                  <div className="text-[10px] text-muted-foreground truncate max-w-[180px]">{animal.name}</div>
-                                )}
+                            <Link
+                              to={`/animals/${animal.id}`}
+                              key={animal.id}
+                              className="flex items-center justify-between text-xs hover:bg-accent/40 rounded-md px-2 py-1"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-8 w-8 rounded-full overflow-hidden bg-muted border border-border shrink-0">
+                                  <img src={photoUrl} alt={animal.tag} className="h-full w-full object-cover" loading="lazy" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-semibold truncate max-w-[140px] leading-tight">{animal.tag}</div>
+                                  {animal.name && (
+                                    <div className="text-[10px] text-muted-foreground leading-tight line-clamp-2 break-words max-w-[140px] min-h-[20px]">{animal.name}</div>
+                                  )}
+                                </div>
                               </div>
-                              <div className="text-right">
+                              <div className="text-right self-center">
                                 <div className="text-muted-foreground">({Number(data.weight_lb).toFixed(1)})</div>
                                 <div className="font-semibold text-primary">{Number(data.total_liters).toFixed(1)}L</div>
                               </div>
-                            </div>
+                            </Link>
                           );
                         })}
                     </div>
@@ -254,12 +292,22 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                 <th className="sticky left-0 bg-muted/50 z-10 px-2 md:px-4 py-2 md:py-3 text-left font-semibold w-[80px] md:w-[120px]">
                   {t('reports.dateLabel')}
                 </th>
-                {visibleAnimals?.map((animal) => (
-                  <th key={animal.id} className="px-2 md:px-3 py-2 md:py-3 text-center font-semibold w-[70px] md:w-[80px]">
-                    <div className="font-semibold">{animal.tag}</div>
-                    {animal.name && <div className="text-[9px] md:text-xs text-muted-foreground font-normal whitespace-normal leading-tight">{animal.name}</div>}
-                  </th>
-                ))}
+                {visibleAnimals?.map((animal) => {
+                  const photoUrl = photoByAnimalId.get(animal.id) ?? "/logo.png";
+                  return (
+                    <th key={animal.id} className="px-2 md:px-3 py-2 md:py-3 text-center font-semibold w-[90px] md:w-[120px] align-top">
+                      <Link to={`/animals/${animal.id}`} className="flex flex-col items-center gap-1 hover:text-primary">
+                        <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border border-border">
+                          <img src={photoUrl} alt={animal.tag} className="h-full w-full object-cover" loading="lazy" />
+                        </div>
+                        <div className="font-semibold truncate w-full leading-tight">{animal.tag}</div>
+                        <div className="text-[9px] md:text-xs text-muted-foreground font-normal leading-tight line-clamp-2 break-words w-full min-h-[24px] text-center">
+                          {animal.name || "\u00A0"}
+                        </div>
+                      </Link>
+                    </th>
+                  );
+                })}
                 <th className="sticky right-0 bg-muted/50 z-10 px-2 md:px-4 py-2 md:py-3 text-center font-semibold w-[70px] md:w-[140px] border-l">
                   <div>{t('reports.total')}</div>
                   <div className="text-[9px] md:text-xs font-normal text-muted-foreground">{t('reports.revenue')}</div>

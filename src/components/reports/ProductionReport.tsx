@@ -658,7 +658,7 @@ export default function ProductionReport() {
 
         {/* Detalle Diario Tab */}
         <TabsContent value="detalle" className="space-y-4">
-          {reportData && <DailyDetailReport reportData={reportData} />}
+          {reportData && <DailyDetailReport reportData={reportData} animalsWithPhotos={animalsData?.items ?? []} />}
         </TabsContent>
 
         <TabsContent value="summary" className="space-y-4">

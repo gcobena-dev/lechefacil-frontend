@@ -31,6 +31,7 @@ import {
   getNotificationIconColor,
   getNotificationTypeLabel,
 } from "@/utils/notification-routes";
+import { getAnimalImageUrl } from "@/utils/animals";
 
 // -----------------------------
 // Helpers seguros reutilizables
@@ -288,27 +289,43 @@ export default function Dashboard() {
                       const liters = toNum(animal?.today_liters);
                       const trend = toStr(animal?.trend, "");
                       const trendPct = toStr(animal?.trend_percentage, "");
+                      const animalId = animal?.animal_id || animal?.id || "";
+                      const photoUrl = getAnimalImageUrl(animal) ?? "/logo.png";
                       return (
-                        <div key={toStr(animal?.animal_id, `${index}`)} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                        <Link
+                          to={animalId ? `/animals/${animalId}` : "#"}
+                          key={toStr(animal?.animal_id ?? animal?.id, `${index}`)}
+                          className="flex items-center justify-between hover:bg-accent/50 rounded-lg px-2 py-1"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold shrink-0">
                               {index + 1}
                             </div>
-                            <div>
-                              <p className="font-medium">{name}</p>
-                              <p className="text-sm text-muted-foreground">{tag}</p>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border border-border shrink-0">
+                                <img
+                                  src={photoUrl}
+                                  alt={name}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium leading-snug line-clamp-2 break-words max-w-[180px]">{name}</p>
+                                <p className="text-xs text-muted-foreground truncate max-w-[140px]">{tag}</p>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{liters}{t("dashboard.liters")}</span>
+                            <span className="font-medium whitespace-nowrap">{liters.toFixed(1)}{t("dashboard.liters")}</span>
                             {trend === 'up' ? (
-                              <TrendingUp className="h-4 w-4 text-success" />
+                              <TrendingUp className="h-3.5 w-3.5 text-success" />
                             ) : trend === 'down' ? (
-                              <TrendingDown className="h-4 w-4 text-warning" />
+                              <TrendingDown className="h-3.5 w-3.5 text-warning" />
                             ) : null}
-                            <span className="text-xs text-muted-foreground">{trendPct}</span>
+                            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{trendPct}</span>
                           </div>
-                        </div>
+                        </Link>
                       );
                     })
                   ) : (

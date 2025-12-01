@@ -28,7 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
-import { getStatusKeyFromCode } from "@/utils/animals";
+import { getAnimalImageUrl, getStatusKeyFromCode } from "@/utils/animals";
 import { getPref, setPref } from "@/utils/prefs";
 
 export default function Animals() {
@@ -121,6 +121,20 @@ export default function Animals() {
       return matchesSearch && matchesStatus && matchesLot;
     });
   }, [items, searchTerm, statusFilter, lotFilter, lots]);
+
+  const renderPhoto = (animal: any) => {
+    const url = getAnimalImageUrl(animal) ?? "/logo.png";
+    return (
+      <div className="h-12 w-12 rounded-md bg-muted overflow-hidden border border-border">
+        <img
+          src={url}
+          alt={animal.name || animal.tag || "Animal"}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  };
 
   const getStatusBadge = (statusOrCode: string, label?: string, desc?: string) => {
     const statusKey = getStatusKeyFromCode(statusOrCode) || statusOrCode.toLowerCase();
@@ -326,14 +340,15 @@ export default function Animals() {
           </div>
 
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{renderHeader('Tag', 'tag')}</TableHead>
-                  <TableHead>{renderHeader(t('common.name'), 'name')}</TableHead>
-                  <TableHead>{renderHeader(t('animals.breed'), 'breed')}</TableHead>
-                  <TableHead>{renderHeader(t('animals.age'), 'age')}</TableHead>
-                  <TableHead>{renderHeader(t('animals.lot'), 'lot')}</TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60px]">{t('common.photo') ?? 'Foto'}</TableHead>
+                    <TableHead>{renderHeader('Tag', 'tag')}</TableHead>
+                    <TableHead>{renderHeader(t('common.name'), 'name')}</TableHead>
+                    <TableHead>{renderHeader(t('animals.breed'), 'breed')}</TableHead>
+                    <TableHead>{renderHeader(t('animals.age'), 'age')}</TableHead>
+                    <TableHead>{renderHeader(t('animals.lot'), 'lot')}</TableHead>
                   <TableHead>{renderHeader(t('animals.status'), 'classification')}</TableHead>
                   <TableHead>{t('common.actions')}</TableHead>
                 </TableRow>
@@ -345,6 +360,7 @@ export default function Animals() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/animals/${animal.id}`)}
                   >
+                    <TableCell>{renderPhoto(animal)}</TableCell>
                     <TableCell className="font-medium">{animal.tag}</TableCell>
                     <TableCell>{animal.name}</TableCell>
                     <TableCell>{animal.breed}</TableCell>
@@ -412,14 +428,17 @@ export default function Animals() {
         {filteredAnimals.map((animal) => (
           <Card key={animal.id}>
             <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-2 gap-3">
                 <Link to={`/animals/${animal.id}`} className="flex-1 cursor-pointer">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold">{animal.tag}</span>
-                      {getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}
+                  <div className="flex gap-3">
+                    {renderPhoto(animal)}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold">{animal.tag}</span>
+                        {getStatusBadge(((animal as any).status_code ?? (animal as any).status) || "", (animal as any).status, (animal as any).status_desc)}
+                      </div>
+                      <h3 className="font-medium">{animal.name}</h3>
                     </div>
-                    <h3 className="font-medium">{animal.name}</h3>
                   </div>
                 </Link>
                 <Button
