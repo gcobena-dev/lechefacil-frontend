@@ -66,8 +66,8 @@ export default function ProductionReport() {
 
   // Fetch data for filters
   const { data: animalsData } = useQuery({
-    queryKey: ["animals-list"],
-    queryFn: () => listAnimals(),
+    queryKey: ["animals-list", { limit: 500 }],
+    queryFn: () => listAnimals({ limit: 500 }),
   });
 
   const { data: breedsData } = useQuery({

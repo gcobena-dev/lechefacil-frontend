@@ -25,6 +25,8 @@ import { useDashboardData } from "@/hooks/useDashboard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserRole, useUserId } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useQuery } from "@tanstack/react-query";
+import { listAnimals } from "@/services/animals";
 import {
   getNotificationRoute,
   getNotificationBadgeVariant,
@@ -66,6 +68,10 @@ export default function Dashboard() {
 
   // Get notifications
   const { notifications, markAsRead } = useNotifications();
+  const animalsList = useQuery({
+    queryKey: ["dashboard-animals", { limit: 500 }],
+    queryFn: () => listAnimals({ limit: 500 }),
+  });
 
   // Get dashboard data based on user role
   const {
@@ -162,6 +168,11 @@ export default function Dashboard() {
 
   const topList = topProducers.data?.top_producers ?? [];
   const alertsList = alerts.data?.alerts ?? [];
+  const photoByAnimalId = new Map<string, string>();
+  animalsList.data?.items?.forEach((a: any) => {
+    const url = getAnimalImageUrl(a);
+    if (url) photoByAnimalId.set(String(a.id), url);
+  });
 
   return (
     <div className="space-y-6">
@@ -290,7 +301,10 @@ export default function Dashboard() {
                       const trend = toStr(animal?.trend, "");
                       const trendPct = toStr(animal?.trend_percentage, "");
                       const animalId = animal?.animal_id || animal?.id || "";
-                      const photoUrl = getAnimalImageUrl(animal) ?? "/logo.png";
+                      const photoUrl =
+                        photoByAnimalId.get(String(animalId)) ||
+                        getAnimalImageUrl(animal) ||
+                        "/logo.png";
                       return (
                         <Link
                           to={animalId ? `/animals/${animalId}` : "#"}
