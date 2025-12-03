@@ -72,12 +72,16 @@ export interface ProductionReportData {
     animal_tag: string;
     total_liters: number;
     avg_per_day: number;
+    primary_photo_url?: string | null;
+    primary_photo_signed_url?: string | null;
   }>;
   daily_by_animal?: Record<string, Record<string, { weight_lb: number; total_liters: number }>>;
   animals?: Array<{
     id: string;
     tag: string;
     name: string | null;
+    primary_photo_url?: string | null;
+    primary_photo_signed_url?: string | null;
   }>;
 }
 

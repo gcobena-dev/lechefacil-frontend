@@ -52,13 +52,20 @@ export default function Animals() {
   useEffect(() => { setPref('prefs:animals:sortDir', sortDir, { session: true }); }, [sortDir]);
 
   const { data } = useQuery({
-    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir }],
+    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir, statusFilter }],
     queryFn: () => listAnimals({
       q: searchTerm || undefined,
       limit: pageSize,
       offset: page * pageSize,
       sort_by: sortBy,
       sort_dir: sortDir,
+      status_codes: statusFilter === 'sold'
+        ? 'SOLD'
+        : statusFilter === 'culled'
+          ? 'CULLED'
+          : statusFilter === 'dead'
+            ? 'DEAD'
+            : undefined,
     }),
   });
 
@@ -121,6 +128,28 @@ export default function Animals() {
       return matchesSearch && matchesStatus && matchesLot;
     });
   }, [items, searchTerm, statusFilter, lotFilter, lots]);
+
+  const computeSummary = (list: typeof items) => {
+    return list.reduce(
+      (acc, animal) => {
+        const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
+        if (statusKey === 'sold') acc.sold += 1;
+        else if (statusKey === 'culled') acc.culled += 1;
+        else if (statusKey === 'active' || statusKey === 'lactating') acc.production += 1;
+        acc.total += 1;
+        return acc;
+      },
+      { production: 0, sold: 0, culled: 0, total: 0 }
+    );
+  };
+
+  const summary = useMemo(() => {
+    // Use backend-provided summary when no local-only filters apply
+    if (statusFilter === 'all' && !lotFilter && data?.summary) {
+      return data.summary;
+    }
+    return computeSummary(filteredAnimals);
+  }, [data?.summary, filteredAnimals, lotFilter, statusFilter]);
 
   const renderPhoto = (animal: any) => {
     const url = getAnimalImageUrl(animal) ?? "/logo.png";
@@ -201,7 +230,7 @@ export default function Animals() {
             <div className="flex items-center gap-2">
               <Milk className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{items.filter(a => getStatusKeyFromCode((a as any).status_code ?? (a as any).status) === 'active').length}</p>
+                <p className="text-2xl font-bold">{summary.production}</p>
                 <p className="text-sm text-muted-foreground">{t('animals.inProductionStats')}</p>
               </div>
             </div>
@@ -211,7 +240,7 @@ export default function Animals() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{items.filter(a => getStatusKeyFromCode((a as any).status_code ?? (a as any).status) === 'sold').length}</p>
+              <p className="text-2xl font-bold">{summary.sold}</p>
               <p className="text-sm text-muted-foreground">{t('animals.soldStats')}</p>
             </div>
           </CardContent>
@@ -220,7 +249,7 @@ export default function Animals() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{items.filter(a => getStatusKeyFromCode((a as any).status_code ?? (a as any).status) === 'culled').length}</p>
+              <p className="text-2xl font-bold">{summary.culled}</p>
               <p className="text-sm text-muted-foreground">{t('animals.culledStats')}</p>
             </div>
           </CardContent>
@@ -229,7 +258,7 @@ export default function Animals() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{items.length}</p>
+              <p className="text-2xl font-bold">{summary.total}</p>
               <p className="text-sm text-muted-foreground">{t('animals.totalStats')}</p>
             </div>
           </CardContent>

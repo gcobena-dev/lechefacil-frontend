@@ -13,7 +13,7 @@ import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery } from "@tanstack/react-query";
-import { listAnimals, getLabelSuggestions } from "@/services/animals";
+import { getLabelSuggestions } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { getAnimalStatuses } from "@/services/animals";
@@ -65,11 +65,6 @@ export default function ProductionReport() {
   });
 
   // Fetch data for filters
-  const { data: animalsData } = useQuery({
-    queryKey: ["animals-list", { limit: 500 }],
-    queryFn: () => listAnimals({ limit: 500 }),
-  });
-
   const { data: breedsData } = useQuery({
     queryKey: ["breeds"],
     queryFn: () => getBreeds(),
@@ -90,7 +85,7 @@ export default function ProductionReport() {
     queryFn: () => getLabelSuggestions(''),
   });
 
-  const animals = animalsData?.items || [];
+  const animals = reportData?.animals || [];
   const breeds = breedsData || [];
   const lots = lotsData || [];
   const statuses = statusesData || [];
@@ -658,7 +653,7 @@ export default function ProductionReport() {
 
         {/* Detalle Diario Tab */}
         <TabsContent value="detalle" className="space-y-4">
-          {reportData && <DailyDetailReport reportData={reportData} animalsWithPhotos={animalsData?.items ?? []} />}
+          {reportData && <DailyDetailReport reportData={reportData} />}
         </TabsContent>
 
         <TabsContent value="summary" className="space-y-4">

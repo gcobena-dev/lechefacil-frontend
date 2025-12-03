@@ -21,6 +21,8 @@ export interface TopProducer {
   today_liters: number;
   trend: 'up' | 'down' | 'stable';
   trend_percentage: string;
+  primary_photo_url?: string | null;
+  primary_photo_signed_url?: string | null;
 }
 
 export interface TopProducersResponse {

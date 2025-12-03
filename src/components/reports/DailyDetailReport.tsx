@@ -6,15 +6,13 @@ import type { ProductionReportData } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getAnimalImageUrl } from "@/utils/animals";
-import type { AnimalResponse } from "@/services/types";
 import { Link } from "react-router-dom";
 
 interface DailyDetailReportProps {
   reportData: ProductionReportData;
-  animalsWithPhotos?: AnimalResponse[];
 }
 
-export default function DailyDetailReport({ reportData, animalsWithPhotos = [] }: DailyDetailReportProps) {
+export default function DailyDetailReport({ reportData }: DailyDetailReportProps) {
   const { t, i18n } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
   const [animalPage, setAnimalPage] = useState(0);
@@ -104,12 +102,12 @@ export default function DailyDetailReport({ reportData, animalsWithPhotos = [] }
 
   const photoByAnimalId = useMemo(() => {
     const map = new Map<string, string>();
-    animalsWithPhotos.forEach((a) => {
-      const url = getAnimalImageUrl(a) ?? "/logo.png";
+    (reportData.animals ?? []).forEach((a) => {
+      const url = getAnimalImageUrl(a as any) ?? "/logo.png";
       map.set(a.id, url);
     });
     return map;
-  }, [animalsWithPhotos]);
+  }, [reportData.animals]);
 
   // Format date helper
   const formatDate = (dateKey: string) => {
