@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AnimalResponse } from "@/services/types";
 import { getPref, setPref } from "@/utils/prefs";
 import { getAnimalImageUrl } from "@/utils/animals";
+import { AnimalPhotoLightbox } from "@/components/animals/AnimalPhotoLightbox";
 import { useNavigate } from "react-router-dom";
 
 interface RecentEntry {
@@ -311,7 +312,7 @@ export default function MilkCollectionSidebar({
                   const shift = (p.shift || 'AM') as string;
                   const animal = animals.find(a => (a as any).id === (p as any).animal_id);
                   const animalLabel = animal ? `${animal.name ?? ''} (${animal.tag ?? ''})`.trim() : '-';
-                  const photoUrl = getAnimalImageUrl(animal) ?? "/logo.png";
+                  const photoUrl = animal ? getAnimalImageUrl(animal as any) ?? "/logo.png" : "/logo.png";
                 return (
                     <div
                       key={idx}
@@ -322,12 +323,24 @@ export default function MilkCollectionSidebar({
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-md bg-muted overflow-hidden border border-border shrink-0">
-                          <img
-                            src={photoUrl}
-                            alt={animalLabel || "Animal"}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
+                          {animal?.id ? (
+                            <AnimalPhotoLightbox
+                              animalId={String(animal.id)}
+                              primaryUrl={(animal as any).primary_photo_url || (animal as any).photo_url}
+                              primarySignedUrl={(animal as any).primary_photo_signed_url}
+                              fallbackUrl={photoUrl}
+                              alt={animalLabel || "Animal"}
+                              className="h-full w-full"
+                              thumbClassName="h-full w-full"
+                            />
+                          ) : (
+                            <img
+                              src={photoUrl}
+                              alt={animalLabel || "Animal"}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          )}
                         </div>
                         {/* Nombre en primeras dos filas (clamp a 2 líneas) */}
                         <div

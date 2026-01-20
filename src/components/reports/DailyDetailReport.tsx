@@ -6,6 +6,7 @@ import type { ProductionReportData } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getAnimalImageUrl } from "@/utils/animals";
+import { AnimalPhotoLightbox } from "@/components/animals/AnimalPhotoLightbox";
 import { Link } from "react-router-dom";
 
 interface DailyDetailReportProps {
@@ -165,7 +166,15 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <div className="h-8 w-8 rounded-full overflow-hidden bg-muted border border-border shrink-0">
-                              <img src={photoUrl} alt={animal.tag} className="h-full w-full object-cover" loading="lazy" />
+                              <AnimalPhotoLightbox
+                                animalId={animal.id}
+                                primaryUrl={(animal as any).primary_photo_url}
+                                primarySignedUrl={(animal as any).primary_photo_signed_url}
+                                fallbackUrl={photoUrl}
+                                alt={animal.tag}
+                                className="h-full w-full"
+                                thumbClassName="h-full w-full"
+                              />
                             </div>
                             <div className="min-w-0">
                               <div className="font-semibold truncate leading-tight">{animal.tag}</div>
@@ -225,7 +234,15 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 <div className="h-8 w-8 rounded-full overflow-hidden bg-muted border border-border shrink-0">
-                                  <img src={photoUrl} alt={animal.tag} className="h-full w-full object-cover" loading="lazy" />
+                                  <AnimalPhotoLightbox
+                                    animalId={animal.id}
+                                    primaryUrl={(animal as any).primary_photo_url}
+                                    primarySignedUrl={(animal as any).primary_photo_signed_url}
+                                    fallbackUrl={photoUrl}
+                                    alt={animal.tag}
+                                    className="h-full w-full"
+                                    thumbClassName="h-full w-full"
+                                  />
                                 </div>
                                 <div className="min-w-0">
                                   <div className="font-semibold truncate max-w-[140px] leading-tight">{animal.tag}</div>
@@ -296,7 +313,15 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                     <th key={animal.id} className="px-2 md:px-3 py-2 md:py-3 text-center font-semibold w-[90px] md:w-[120px] align-top">
                       <Link to={`/animals/${animal.id}`} className="flex flex-col items-center gap-1 hover:text-primary">
                         <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border border-border">
-                          <img src={photoUrl} alt={animal.tag} className="h-full w-full object-cover" loading="lazy" />
+                          <AnimalPhotoLightbox
+                            animalId={animal.id}
+                            primaryUrl={(animal as any).primary_photo_url}
+                            primarySignedUrl={(animal as any).primary_photo_signed_url}
+                            fallbackUrl={photoUrl}
+                            alt={animal.tag}
+                            className="h-full w-full"
+                            thumbClassName="h-full w-full"
+                          />
                         </div>
                         <div className="font-semibold truncate w-full leading-tight">{animal.tag}</div>
                         <div className="text-[9px] md:text-xs text-muted-foreground font-normal leading-tight line-clamp-2 break-words w-full min-h-[24px] text-center">

@@ -29,6 +29,7 @@ import { listAnimals } from "@/services/animals";
 import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getAnimalImageUrl, getStatusKeyFromCode } from "@/utils/animals";
+import { AnimalPhotoLightbox } from "@/components/animals/AnimalPhotoLightbox";
 import { getPref, setPref } from "@/utils/prefs";
 
 export default function Animals() {
@@ -135,7 +136,7 @@ export default function Animals() {
         const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
         if (statusKey === 'sold') acc.sold += 1;
         else if (statusKey === 'culled') acc.culled += 1;
-        else if (statusKey === 'active' || statusKey === 'lactating') acc.production += 1;
+        else if (statusKey === 'active') acc.production += 1;
         acc.total += 1;
         return acc;
       },
@@ -155,11 +156,14 @@ export default function Animals() {
     const url = getAnimalImageUrl(animal) ?? "/logo.png";
     return (
       <div className="h-12 w-12 rounded-md bg-muted overflow-hidden border border-border">
-        <img
-          src={url}
+        <AnimalPhotoLightbox
+          animalId={animal.id}
+          primaryUrl={animal.primary_photo_url || animal.photo_url}
+          primarySignedUrl={animal.primary_photo_signed_url}
+          fallbackUrl={url}
           alt={animal.name || animal.tag || "Animal"}
-          className="h-full w-full object-cover"
-          loading="lazy"
+          className="h-full w-full"
+          thumbClassName="h-full w-full"
         />
       </div>
     );

@@ -23,6 +23,11 @@ export interface TopProducer {
   trend_percentage: string;
   primary_photo_url?: string | null;
   primary_photo_signed_url?: string | null;
+  photos?: Array<{
+    url?: string | null;
+    signed_url?: string | null;
+    is_primary?: boolean;
+  }> | null;
 }
 
 export interface TopProducersResponse {

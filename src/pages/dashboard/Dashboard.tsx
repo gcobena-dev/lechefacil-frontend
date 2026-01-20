@@ -32,6 +32,7 @@ import {
   getNotificationTypeLabel,
 } from "@/utils/notification-routes";
 import { getAnimalImageUrl } from "@/utils/animals";
+import { AnimalPhotoLightbox } from "@/components/animals/AnimalPhotoLightbox";
 
 // -----------------------------
 // Helpers seguros reutilizables
@@ -290,7 +291,10 @@ export default function Dashboard() {
                       const trend = toStr(animal?.trend, "");
                       const trendPct = toStr(animal?.trend_percentage, "");
                       const animalId = animal?.animal_id || animal?.id || "";
-                      const photoUrl = getAnimalImageUrl(animal) || "/logo.png";
+                      const photoUrl = getAnimalImageUrl({
+                        primary_photo_signed_url: animal?.primary_photo_signed_url,
+                        primary_photo_url: animal?.primary_photo_url,
+                      }) || "/logo.png";
                       return (
                         <Link
                           to={animalId ? `/animals/${animalId}` : "#"}
@@ -303,12 +307,24 @@ export default function Dashboard() {
                             </div>
                             <div className="flex items-center gap-2 min-w-0">
                               <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border border-border shrink-0">
-                                <img
-                                  src={photoUrl}
-                                  alt={name}
-                                  className="h-full w-full object-cover"
-                                  loading="lazy"
-                                />
+                                {animalId ? (
+                                  <AnimalPhotoLightbox
+                                    animalId={animalId}
+                                    primaryUrl={animal?.primary_photo_url}
+                                    primarySignedUrl={animal?.primary_photo_signed_url}
+                                    fallbackUrl={photoUrl}
+                                    alt={name}
+                                    className="h-full w-full"
+                                    thumbClassName="h-full w-full"
+                                  />
+                                ) : (
+                                  <img
+                                    src={photoUrl}
+                                    alt={name}
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <p className="font-medium leading-snug line-clamp-2 break-words max-w-[180px]">{name}</p>

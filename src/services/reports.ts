@@ -74,6 +74,11 @@ export interface ProductionReportData {
     avg_per_day: number;
     primary_photo_url?: string | null;
     primary_photo_signed_url?: string | null;
+    photos?: Array<{
+      url?: string | null;
+      signed_url?: string | null;
+      is_primary?: boolean;
+    }> | null;
   }>;
   daily_by_animal?: Record<string, Record<string, { weight_lb: number; total_liters: number }>>;
   animals?: Array<{
@@ -82,6 +87,11 @@ export interface ProductionReportData {
     name: string | null;
     primary_photo_url?: string | null;
     primary_photo_signed_url?: string | null;
+    photos?: Array<{
+      url?: string | null;
+      signed_url?: string | null;
+      is_primary?: boolean;
+    }> | null;
   }>;
 }
 
