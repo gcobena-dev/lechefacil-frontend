@@ -7,6 +7,7 @@ export interface InseminationResponse {
   animal_tag: string | null;
   animal_name: string | null;
   sire_catalog_id: string | null;
+  sire_name: string | null;
   semen_inventory_id: string | null;
   service_event_id: string | null;
   service_date: string;

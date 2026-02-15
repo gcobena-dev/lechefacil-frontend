@@ -201,12 +201,15 @@ export default function ReproductionDashboard() {
                 >
                   <div>
                     <p className="text-sm font-medium">
+                      {ins.animal_tag || "-"}{ins.animal_name ? ` - ${ins.animal_name}` : ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
                       {new Date(ins.service_date).toLocaleDateString()} -{" "}
                       {t(`reproduction.method${ins.method}`)}
                     </p>
-                    {ins.technician && (
+                    {ins.sire_name && (
                       <p className="text-xs text-muted-foreground">
-                        {ins.technician}
+                        {t("reproduction.sire")}: {ins.sire_name}
                       </p>
                     )}
                   </div>

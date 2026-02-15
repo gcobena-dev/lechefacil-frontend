@@ -24,8 +24,8 @@ export function AppSidebar() {
   const navigationItems = [
     { titleKey: "common.dashboard", url: "/dashboard", icon: Home },
     { titleKey: "animals.title", url: "/animals", icon: CowHead },
-    { titleKey: "reproduction.title", url: "/reproduction", icon: Heart },
     { titleKey: "milk.title", url: "/milk/collect", icon: Milk },
+    { titleKey: "reproduction.title", url: "/reproduction", icon: Heart },
     { titleKey: "dashboard.reports", url: "/reports", icon: FileText },
     { titleKey: "common.settings", url: "/settings", icon: Settings },
   ];

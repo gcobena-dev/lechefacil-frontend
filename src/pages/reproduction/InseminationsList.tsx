@@ -125,6 +125,7 @@ export default function InseminationsList() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Animal</TableHead>
+                  <TableHead>{t("reproduction.sire")}</TableHead>
                   <TableHead>{t("reproduction.serviceDate")}</TableHead>
                   <TableHead>{t("reproduction.method")}</TableHead>
                   <TableHead>{t("reproduction.technician")}</TableHead>
@@ -144,6 +145,7 @@ export default function InseminationsList() {
                       <TableCell className="font-medium">
                         {ins.animal_tag || "-"}{ins.animal_name ? ` - ${ins.animal_name}` : ""}
                       </TableCell>
+                      <TableCell>{ins.sire_name || "-"}</TableCell>
                       <TableCell>
                         {new Date(ins.service_date).toLocaleDateString()}
                       </TableCell>
@@ -196,6 +198,11 @@ export default function InseminationsList() {
                           {new Date(ins.service_date).toLocaleDateString()} -{" "}
                           {t(`reproduction.method${ins.method}`)}
                         </p>
+                        {ins.sire_name && (
+                          <p className="text-xs text-muted-foreground">
+                            {t("reproduction.sire")}: {ins.sire_name}
+                          </p>
+                        )}
                         {ins.technician && (
                           <p className="text-xs text-muted-foreground">{ins.technician}</p>
                         )}

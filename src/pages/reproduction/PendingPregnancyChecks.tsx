@@ -47,12 +47,19 @@ export default function PendingPregnancyChecks() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
+                        {ins.animal_tag || "-"}{ins.animal_name ? ` - ${ins.animal_name}` : ""}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
                         {t("reproduction.serviceDate")}:{" "}
                         {new Date(ins.service_date).toLocaleDateString()}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                        {" - "}
                         {t(`reproduction.method${ins.method}`)}
                       </p>
+                      {ins.sire_name && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("reproduction.sire")}: {ins.sire_name}
+                        </p>
+                      )}
                       {ins.technician && (
                         <p className="text-xs text-muted-foreground">
                           {t("reproduction.technician")}: {ins.technician}

@@ -61,6 +61,7 @@ export default {
   allChecksUpToDate: "Todos los chequeos están al día",
 
   // Catálogo de toros
+  sire: "Toro",
   sires: "Toros",
   newSire: "Nuevo Toro",
   editSire: "Editar Toro",
