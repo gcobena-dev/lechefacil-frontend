@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Milk, FileText, Settings, createLucideIcon } from "lucide-react";
+import { Home, Milk, FileText, Heart, createLucideIcon } from "lucide-react";
 import { bullHead } from "@lucide/lab";
 
 const CowHead = createLucideIcon("CowHead", bullHead as any);
@@ -11,8 +11,8 @@ export function BottomNav() {
     { to: "/dashboard", icon: Home, label: "Dashboard" },
     { to: "/animals", icon: CowHead, label: "Animals" },
     { to: "/milk/collect", icon: Milk, label: "Milk" },
+    { to: "/reproduction", icon: Heart, label: "Reproduction" },
     { to: "/reports", icon: FileText, label: "Reports" },
-    { to: "/settings", icon: Settings, label: "Settings" },
   ];
 
   // Hide on routes like login

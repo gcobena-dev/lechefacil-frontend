@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { User, UserCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +22,9 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b bg-card/50 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
-          {/* Logo on the left, replaces sidebar trigger */}
+          {/* Hamburger menu for mobile */}
+          <SidebarTrigger className="md:hidden" />
+          {/* Logo on the left */}
           <Link to="/dashboard" className="flex items-center">
             <img src="/logo.png" alt="LecheFácil" className="h-8 w-8 object-contain" />
           </Link>

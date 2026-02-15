@@ -111,7 +111,7 @@ export default function MilkCollect() {
       if (ids.length > 0) setSelectedAnimals(ids);
     };
     autoSelectAll();
-  }, [activeAnimals, selectedAnimals.length, animalsPagination.total, animalsPagination.pageSize]);
+  }, [activeAnimals, selectedAnimals.length, animalsPagination.total, animalsPagination.pageSize, setSelectedAnimals]);
 
   // Handle form data changes
   const handleFormDataChange = (data: Partial<typeof formData>) => {

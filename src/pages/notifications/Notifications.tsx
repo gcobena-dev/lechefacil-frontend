@@ -18,7 +18,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifications(false, pageSize, page * pageSize);
-  }, [page, pageSize]);
+  }, [page, pageSize, fetchNotifications]);
 
   // Persist during session
   useEffect(() => { setPref('prefs:notifications:page', page, { session: true }); }, [page]);

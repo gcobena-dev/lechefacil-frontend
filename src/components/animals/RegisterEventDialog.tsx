@@ -57,13 +57,11 @@ interface RegisterEventDialogProps {
 const EVENT_TYPES: { value: EventType; labelKey: string; descriptionKey: string }[] = [
   { value: "CALVING", labelKey: "animals.event.calving", descriptionKey: "animals.event.calvingDesc" },
   { value: "DRY_OFF", labelKey: "animals.event.dryOff", descriptionKey: "animals.event.dryOffDesc" },
-  { value: "SERVICE", labelKey: "animals.event.service", descriptionKey: "animals.event.serviceDesc" },
   { value: "BIRTH", labelKey: "animals.event.birth", descriptionKey: "animals.event.birthDesc" },
+  { value: "ABORTION", labelKey: "animals.event.abortion", descriptionKey: "animals.event.abortionDesc" },
   { value: "SALE", labelKey: "animals.event.sale", descriptionKey: "animals.event.saleDesc" },
   { value: "DEATH", labelKey: "animals.event.death", descriptionKey: "animals.event.deathDesc" },
   { value: "CULL", labelKey: "animals.event.cull", descriptionKey: "animals.event.cullDesc" },
-  { value: "EMBRYO_TRANSFER", labelKey: "animals.event.embryoTransfer", descriptionKey: "animals.event.embryoTransferDesc" },
-  { value: "ABORTION", labelKey: "animals.event.abortion", descriptionKey: "animals.event.abortionDesc" },
   { value: "TRANSFER", labelKey: "animals.event.transfer", descriptionKey: "animals.event.transferDesc" },
 ];
 
@@ -120,11 +118,6 @@ export default function RegisterEventDialog({
       breed: animalBreed || "",
       breed_id: animalBreedId || "",
       breed_variant: animalBreedVariant || "",
-      // Service fields
-      external_sire_code: "",
-      external_sire_registry: "",
-      method: "",
-      technician: "",
       // Disposition fields
       reason: "",
       buyer: "",
@@ -146,14 +139,6 @@ export default function RegisterEventDialog({
         if (values.breed) data.breed = values.breed;
         if (values.breed_id) data.breed_id = values.breed_id;
         if (values.breed_variant) data.breed_variant = values.breed_variant;
-        break;
-
-      case "SERVICE":
-      case "EMBRYO_TRANSFER":
-        if (values.external_sire_code) data.external_sire_code = values.external_sire_code;
-        if (values.external_sire_registry) data.external_sire_registry = values.external_sire_registry;
-        if (values.method) data.method = values.method;
-        if (values.technician) data.technician = values.technician;
         break;
 
       case "SALE":
@@ -347,77 +332,6 @@ export default function RegisterEventDialog({
                 )}
               />
             )}
-          </>
-        );
-
-      case "SERVICE":
-      case "EMBRYO_TRANSFER":
-        return (
-          <>
-            <FormField
-              control={form.control}
-              name="external_sire_code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('animals.sireCode')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t('animals.sireCodeExample')} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="external_sire_registry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('animals.registry')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t('animals.registryExample')} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="method"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('animals.method')}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('animals.selectMethod')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="AI">{t('animals.methodAI')}</SelectItem>
-                      <SelectItem value="NATURAL">{t('animals.methodNatural')}</SelectItem>
-                      <SelectItem value="ET">{t('animals.methodET')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="technician"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('animals.technician')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder={t('animals.technicianNamePlaceholder')} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </>
         );
 

@@ -72,13 +72,15 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
   // For cards view, we want most recent first (desc)
   const datesDesc = [...dates].sort((a, b) => parseDateKey(b).getTime() - parseDateKey(a).getTime());
   // Ensure there is a default expanded card when switching to cards mode
+  const datesKey = dates.join('|');
   useEffect(() => {
     if (mobileCards) {
       // Default to the latest date (end of period)
       const last = dates[dates.length - 1];
       setExpandedDateKey((prev) => prev ?? last ?? null);
     }
-  }, [mobileCards, dates.join('|')]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileCards, datesKey]);
 
   // Paginate animals (table mode only)
   const totalAnimals = reportData.animals?.length || 0;

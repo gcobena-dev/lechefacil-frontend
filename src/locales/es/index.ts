@@ -8,6 +8,7 @@ import forms from './forms';
 import reports from './reports';
 import updates from './updates';
 import notifications from './notifications';
+import reproduction from './reproduction';
 
 export default {
   common,
@@ -20,4 +21,5 @@ export default {
   reports,
   updates,
   notifications,
+  reproduction,
 };

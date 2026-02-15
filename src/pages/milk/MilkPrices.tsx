@@ -26,11 +26,11 @@ export default function MilkPrices() {
     queryFn: () => listBuyers(),
   });
 
-  const prices = pricesData ?? [];
   // Order by date descending so index 0 is the most recent
   const sortedPrices = useMemo(() => {
+    const prices = pricesData ?? [];
     return [...prices].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [prices]);
+  }, [pricesData]);
   const buyers = buyersData ?? [];
 
   const currentPrice = sortedPrices[0];

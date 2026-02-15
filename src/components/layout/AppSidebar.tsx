@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Home, FileText, Milk, Settings, createLucideIcon } from "lucide-react";
+import { Home, FileText, Heart, Milk, Settings, createLucideIcon } from "lucide-react";
 import { bullHead } from "@lucide/lab";
 const CowHead = createLucideIcon("CowHead", bullHead as any);
 import { VersionLabel } from "@/components/updates/VersionLabel";
@@ -24,6 +24,7 @@ export function AppSidebar() {
   const navigationItems = [
     { titleKey: "common.dashboard", url: "/dashboard", icon: Home },
     { titleKey: "animals.title", url: "/animals", icon: CowHead },
+    { titleKey: "reproduction.title", url: "/reproduction", icon: Heart },
     { titleKey: "milk.title", url: "/milk/collect", icon: Milk },
     { titleKey: "dashboard.reports", url: "/reports", icon: FileText },
     { titleKey: "common.settings", url: "/settings", icon: Settings },

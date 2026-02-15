@@ -72,6 +72,7 @@ export default function Login() {
         document.removeEventListener('visibilitychange', onVisibility);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkBiometric = async () => {

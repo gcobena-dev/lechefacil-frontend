@@ -18,10 +18,7 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        {/* Sidebar hidden on mobile, visible md+ */}
-        <div className="hidden md:block">
-          <AppSidebar />
-        </div>
+        <AppSidebar />
         <div className="flex-1 flex flex-col">
           <Header />
           {/* Add bottom padding so content isn’t hidden behind BottomNav on mobile */}

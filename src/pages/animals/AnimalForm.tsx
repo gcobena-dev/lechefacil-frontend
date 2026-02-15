@@ -217,6 +217,7 @@ export default function AnimalForm() {
     if (!isGirolando && formData.breedVariant) {
       setFormData(prev => ({ ...prev, breedVariant: '' }));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when breed type changes, not on every formData update
   }, [isGirolando]);
 
   const { mutateAsync: doCreate, isPending: creating } = useMutation({

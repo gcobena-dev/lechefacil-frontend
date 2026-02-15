@@ -41,6 +41,17 @@ import BuyerForm from "./pages/milk/BuyerForm";
 import Health from "./pages/health/Health";
 import HealthEventForm from "./pages/health/HealthEventForm";
 
+// Reproduction pages
+import ReproductionDashboard from "./pages/reproduction/ReproductionDashboard";
+import InseminationsList from "./pages/reproduction/InseminationsList";
+import InseminationForm from "./pages/reproduction/InseminationForm";
+import PendingPregnancyChecks from "./pages/reproduction/PendingPregnancyChecks";
+import SireCatalog from "./pages/reproduction/SireCatalog";
+import SireForm from "./pages/reproduction/SireForm";
+import SireDetail from "./pages/reproduction/SireDetail";
+import SemenInventory from "./pages/reproduction/SemenInventory";
+import SemenStockForm from "./pages/reproduction/SemenStockForm";
+
 // Settings pages
 import Account from "./pages/account/Account";
 import Settings from "./pages/settings/Settings";
@@ -78,6 +89,16 @@ const App = () => (
             <Route path="buyers/new" element={<BuyerForm />} />
             <Route path="health" element={<Health />} />
             <Route path="health/new" element={<HealthEventForm />} />
+            <Route path="reproduction" element={<ReproductionDashboard />} />
+            <Route path="reproduction/inseminations" element={<InseminationsList />} />
+            <Route path="reproduction/inseminations/new" element={<InseminationForm />} />
+            <Route path="reproduction/pregnancy-checks" element={<PendingPregnancyChecks />} />
+            <Route path="reproduction/sires" element={<SireCatalog />} />
+            <Route path="reproduction/sires/new" element={<SireForm />} />
+            <Route path="reproduction/sires/:id" element={<SireDetail />} />
+            <Route path="reproduction/sires/:id/edit" element={<SireForm />} />
+            <Route path="reproduction/semen" element={<SemenInventory />} />
+            <Route path="reproduction/semen/new" element={<SemenStockForm />} />
             <Route path="reports" element={<Reports />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="account" element={<Account />} />
