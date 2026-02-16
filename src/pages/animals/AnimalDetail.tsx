@@ -28,6 +28,7 @@ import {
 import {
   ArrowLeft,
   Edit,
+  Pencil,
   Milk,
   Heart,
   TrendingUp,
@@ -54,11 +55,13 @@ import { formatDate } from "@/utils/format";
 import { useAnimalDetail } from "@/hooks/useAnimalDetail";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAnimalPhotos } from "@/services/animals";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listMilkProductionsPaginated, type MilkProductionListResponse } from "@/services/milkProductions";
+import { listMilkProductionsPaginated, type MilkProductionListResponse, type MilkProductionItem } from "@/services/milkProductions";
+import { useIsAdmin } from "@/hooks/useAuth";
+import EditProductionDialog from "@/components/milk/EditProductionDialog";
 import { useAnimalEvents } from "@/hooks/useAnimalEvents";
 import { useAnimalLactations } from "@/hooks/useAnimalLactations";
 import EventTimelineCard from "@/components/animals/EventTimelineCard";
@@ -80,6 +83,9 @@ export default function AnimalDetail() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(0);
   const [registerEventOpen, setRegisterEventOpen] = useState(false);
+  const [editingProduction, setEditingProduction] = useState<MilkProductionItem | null>(null);
+  const isAdmin = useIsAdmin();
+  const queryClient = useQueryClient();
   // Events pagination
   const [eventsPageSize, setEventsPageSize] = useState<number>(10);
   const [eventsPage, setEventsPage] = useState<number>(1);
@@ -588,6 +594,7 @@ export default function AnimalDetail() {
                               <TableHead>{t('animals.litersHeader')}</TableHead>
                               <TableHead>{t('animals.pricePerLiterHeader')}</TableHead>
                               <TableHead>{t('animals.amountHeader')}</TableHead>
+                              {isAdmin && <TableHead className="w-10"></TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -610,6 +617,18 @@ export default function AnimalDetail() {
                                     <TableCell className="font-medium">{parseFloat(record.volume_l).toFixed(1)}L</TableCell>
                                     <TableCell>{formatCurrency(price)}</TableCell>
                                     <TableCell className="font-medium">{formatCurrency(amount)}</TableCell>
+                                    {isAdmin && (
+                                      <TableCell>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => setEditingProduction(record)}
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </Button>
+                                      </TableCell>
+                                    )}
                                   </TableRow>
                                 );
                               })}
@@ -636,9 +655,21 @@ export default function AnimalDetail() {
                                     {shift}
                                   </Badge>
                                 </div>
-                                <div className="text-right">
-                                  <div className="font-medium text-lg">{parseFloat(record.volume_l).toFixed(1)}L</div>
-                                  <div className="text-sm text-muted-foreground">{formatCurrency(amount)}</div>
+                                <div className="flex items-start gap-2">
+                                  {isAdmin && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => setEditingProduction(record)}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <div className="text-right">
+                                    <div className="font-medium text-lg">{parseFloat(record.volume_l).toFixed(1)}L</div>
+                                    <div className="text-sm text-muted-foreground">{formatCurrency(amount)}</div>
+                                  </div>
                                 </div>
                               </div>
                               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -931,6 +962,17 @@ export default function AnimalDetail() {
           </CardContent>
         </Tabs>
       </Card>
+
+      {/* Edit Production Dialog */}
+      <EditProductionDialog
+        open={!!editingProduction}
+        onOpenChange={(open) => { if (!open) setEditingProduction(null); }}
+        production={editingProduction}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["animal-production-paged"] });
+          queryClient.invalidateQueries({ queryKey: ["animal-detail"] });
+        }}
+      />
 
       {/* Register Event Dialog */}
       <RegisterEventDialog

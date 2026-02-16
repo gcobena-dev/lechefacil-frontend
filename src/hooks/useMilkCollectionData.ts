@@ -155,11 +155,19 @@ export function useMilkCollectionData(formData: { date: string; buyerId: string 
         const pricePerL = (d as any).price_snapshot ?? (billing?.default_price_per_l ? parseFloat(String(billing.default_price_per_l)) : undefined);
         const amountValue = pricePerL !== undefined ? parseFloat(String(d.volume_l)) * pricePerL : undefined;
         return {
+          id: d.id,
+          version: d.version,
           buyer: buyer?.name ?? 'Comprador desconocido',
           volume: `${parseFloat(String(d.volume_l)).toFixed(1)}L`,
+          volume_l: d.volume_l,
           amountValue,
           currency: (d as any).currency || fallbackCurrency,
           time: `${dateStr} ${time}`,
+          notes: d.notes ?? null,
+          date_time: d.date_time,
+          buyer_id: d.buyer_id,
+          buyer_name: d.buyer_name,
+          price_snapshot: d.price_snapshot,
         };
       });
     return items;

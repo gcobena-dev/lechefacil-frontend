@@ -172,6 +172,13 @@ export default {
   showingRange: "Mostrando {{from}} - {{to}} de {{total}}",
   actions: "Acciones",
   cannotDeleteSelf: "No puedes eliminarte a ti mismo",
+  editRole: "Editar rol",
+  confirmEditRole: "Cambiar rol de usuario",
+  confirmEditRoleMessage: "Selecciona el nuevo rol para este usuario.",
+  roleUpdated: "Rol actualizado",
+  roleUpdatedDescription: "El rol del usuario ha sido actualizado exitosamente",
+  couldNotUpdateRole: "No se pudo actualizar el rol del usuario",
+  cannotEditOwnRole: "No puedes editar tu propio rol",
 
   // Errores comunes de configuración
   updateError: "Error al actualizar la configuración",

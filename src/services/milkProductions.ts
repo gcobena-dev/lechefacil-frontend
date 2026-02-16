@@ -13,6 +13,8 @@ export interface MilkProductionItem {
   price_snapshot?: string | null;
   currency: string;
   amount?: string | null;
+  notes?: string | null;
+  version: number;
 }
 
 export interface MilkProductionListResponse {
@@ -71,6 +73,18 @@ export async function createMilkProductionsBulk(payload: {
 }) {
   return apiFetch<MilkProductionItem[]>("/api/v1/milk-productions/bulk", {
     method: "POST",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
+}
+
+export async function updateMilkProduction(
+  id: string,
+  payload: { version: number; input_quantity?: string; notes?: string }
+) {
+  return apiFetch<MilkProductionItem>(`/api/v1/milk-productions/${id}`, {
+    method: "PUT",
     withAuth: true,
     withTenant: true,
     body: payload,

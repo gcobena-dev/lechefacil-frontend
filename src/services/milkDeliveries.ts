@@ -28,3 +28,15 @@ export async function createMilkDelivery(payload: CreateMilkDeliveryPayload) {
     body: payload,
   });
 }
+
+export async function updateMilkDelivery(
+  id: string,
+  payload: { version: number; volume_l?: number; notes?: string }
+) {
+  return apiFetch<MilkDeliveryResponse>(`/api/v1/milk-deliveries/${id}`, {
+    method: "PUT",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
+}

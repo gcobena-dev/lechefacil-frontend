@@ -1,19 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Truck, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { Clock, Truck, ChevronLeft, ChevronRight, ArrowUpDown, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
+import { useIsAdmin } from "@/hooks/useAuth";
 import { getLocalDateString as toLocalDate } from "@/utils/dateUtils";
 import { useEffect, useMemo, useState } from "react";
-import type { AnimalResponse } from "@/services/types";
+import { useQueryClient } from "@tanstack/react-query";
+import type { AnimalResponse, MilkDeliveryResponse } from "@/services/types";
+import type { MilkProductionItem } from "@/services/milkProductions";
 import { getPref, setPref } from "@/utils/prefs";
 import { getAnimalImageUrl } from "@/utils/animals";
 import { AnimalPhotoLightbox } from "@/components/animals/AnimalPhotoLightbox";
 import { useNavigate } from "react-router-dom";
+import EditProductionDialog from "@/components/milk/EditProductionDialog";
+import EditDeliveryDialog from "@/components/milk/EditDeliveryDialog";
 
 interface RecentEntry {
   animal: string;
@@ -22,18 +27,31 @@ interface RecentEntry {
 }
 
 interface RecentDelivery {
+  id: string;
+  version: number;
   buyer: string;
   volume: string;
+  volume_l: number;
   amountValue?: number;
   currency?: string;
   time: string;
+  notes?: string | null;
+  date_time: string;
+  buyer_id: string;
+  buyer_name?: string;
+  price_snapshot?: string;
 }
 
 interface Production {
+  id?: string;
   animal_id?: string;
   date_time: string;
   shift: string;
   volume_l: string;
+  version?: number;
+  input_quantity?: string;
+  input_unit?: string;
+  notes?: string | null;
 }
 
 interface MilkCollectionSidebarProps {
@@ -67,7 +85,12 @@ export default function MilkCollectionSidebar({
 }: MilkCollectionSidebarProps) {
   const { t } = useTranslation();
   const { data: tenantSettings } = useTenantSettings();
+  const isAdmin = useIsAdmin();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [editingProduction, setEditingProduction] = useState<MilkProductionItem | null>(null);
+  const [editingDelivery, setEditingDelivery] = useState<MilkDeliveryResponse | null>(null);
+  const [editingDeliveryBuyerName, setEditingDeliveryBuyerName] = useState<string>("");
   const [pageSize, setPageSize] = useState<number>(() => getPref<number>('prefs:milk:daily:pageSize', 10, { session: true }));
   const [page, setPage] = useState<number>(() => getPref<number>('prefs:milk:daily:page', 0, { session: true }));
   const [search, setSearch] = useState<string>(() => getPref<string>('prefs:milk:daily:search', '', { session: true }));
@@ -352,7 +375,37 @@ export default function MilkCollectionSidebar({
                       </div>
                       {/* Controles y monto */}
                       <div className="mt-2 flex items-center justify-between gap-3">
-                        <Badge variant={shift === 'AM' ? 'default' : 'secondary'} className="shrink-0">{shift}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={shift === 'AM' ? 'default' : 'secondary'} className="shrink-0">{shift}</Badge>
+                          {isAdmin && p.id && p.version !== undefined && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingProduction({
+                                  id: p.id!,
+                                  animal_id: p.animal_id ?? null,
+                                  buyer_id: null,
+                                  date_time: p.date_time,
+                                  shift: p.shift,
+                                  input_unit: p.input_unit ?? 'l',
+                                  input_quantity: p.input_quantity ?? p.volume_l,
+                                  density: '1',
+                                  volume_l: p.volume_l,
+                                  price_snapshot: (p as any).price_snapshot ?? null,
+                                  currency: (p as any).currency ?? 'USD',
+                                  amount: (p as any).amount ?? null,
+                                  notes: p.notes ?? null,
+                                  version: p.version!,
+                                });
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                         <div className="text-right font-medium font-mono whitespace-nowrap">{formatCurrency(amount)}</div>
                       </div>
                       {/* Métricas */}
@@ -386,12 +439,39 @@ export default function MilkCollectionSidebar({
           <CardContent>
             <div className="space-y-3">
               {recentDeliveries.map((delivery, index) => (
-                <div key={index} className="p-3 rounded-lg bg-accent/20 space-y-2">
+                <div key={delivery.id ?? index} className="p-3 rounded-lg bg-accent/20 space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-medium text-sm break-words flex-1 min-w-0">{delivery.buyer}</p>
-                    <Badge variant="outline" className="shrink-0">
-                      {delivery.volume}
-                    </Badge>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => {
+                            setEditingDeliveryBuyerName(delivery.buyer);
+                            setEditingDelivery({
+                              id: delivery.id,
+                              date_time: delivery.date_time,
+                              volume_l: delivery.volume_l,
+                              buyer_id: delivery.buyer_id,
+                              buyer_name: delivery.buyer_name,
+                              price_snapshot: delivery.price_snapshot,
+                              currency: delivery.currency,
+                              notes: delivery.notes,
+                              created_at: '',
+                              updated_at: '',
+                              version: delivery.version,
+                            });
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Badge variant="outline">
+                        {delivery.volume}
+                      </Badge>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs text-muted-foreground flex-1 min-w-0">{delivery.time}</p>
@@ -415,6 +495,24 @@ export default function MilkCollectionSidebar({
           </CardContent>
         </Card>
       )}
+      {/* Edit Dialogs */}
+      <EditProductionDialog
+        open={!!editingProduction}
+        onOpenChange={(open) => { if (!open) setEditingProduction(null); }}
+        production={editingProduction}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["milk-productions"] });
+        }}
+      />
+      <EditDeliveryDialog
+        open={!!editingDelivery}
+        onOpenChange={(open) => { if (!open) setEditingDelivery(null); }}
+        delivery={editingDelivery}
+        buyerName={editingDeliveryBuyerName}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["milk-deliveries"] });
+        }}
+      />
     </div>
   );
 }

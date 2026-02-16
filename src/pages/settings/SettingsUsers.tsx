@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Trash2, Plus } from "lucide-react";
+import { Search, Trash2, Plus, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { addMembership } from "@/services/auth";
-import { listTenantUsers, removeUserMembership, type User } from "@/services/users";
+import { listTenantUsers, removeUserMembership, updateUserRole, type User } from "@/services/users";
 import { getTenantId } from "@/services/config";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -52,6 +52,9 @@ export default function SettingsUsers() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteReason, setDeleteReason] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState("");
 
 
   // Fetch users for admins
@@ -92,6 +95,49 @@ export default function SettingsUsers() {
       setDeleteReason("");
     },
   });
+
+  const { mutateAsync: doUpdateRole, isPending: updatingRole } = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      updateUserRole(tenantId || "", userId, { role }),
+    onSuccess: () => {
+      refetchUsers();
+      setIsEditRoleDialogOpen(false);
+      setEditingUser(null);
+      setNewRole("");
+    },
+  });
+
+  const openEditRoleDialog = (user: User) => {
+    if (user.id === currentUserId) {
+      toast({
+        title: t("common.error"),
+        description: t("common.cannotEditOwnRole"),
+        variant: "destructive",
+      });
+      return;
+    }
+    setEditingUser(user);
+    setNewRole(user.role.toUpperCase());
+    setIsEditRoleDialogOpen(true);
+  };
+
+  const handleUpdateRole = async () => {
+    if (!editingUser) return;
+    try {
+      await doUpdateRole({ userId: editingUser.id, role: newRole });
+      toast({
+        title: t("common.roleUpdated"),
+        description: t("common.roleUpdatedDescription"),
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: t("common.error"),
+        description: t("common.couldNotUpdateRole"),
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -294,19 +340,34 @@ export default function SettingsUsers() {
                             <TableCell>{formatDate(user.last_login)}</TableCell>
                             <TableCell>{formatDate(user.created_at)}</TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openDeleteDialog(user)}
-                                disabled={user.id === currentUserId}
-                                className={user.id === currentUserId
-                                  ? "text-muted-foreground cursor-not-allowed"
-                                  : "text-destructive hover:text-destructive"
-                                }
-                                title={user.id === currentUserId ? t("common.cannotDeleteSelf") : t("common.removeUser")}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openEditRoleDialog(user)}
+                                  disabled={user.id === currentUserId}
+                                  className={user.id === currentUserId
+                                    ? "text-muted-foreground cursor-not-allowed"
+                                    : ""
+                                  }
+                                  title={user.id === currentUserId ? t("common.cannotEditOwnRole") : t("common.editRole")}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openDeleteDialog(user)}
+                                  disabled={user.id === currentUserId}
+                                  className={user.id === currentUserId
+                                    ? "text-muted-foreground cursor-not-allowed"
+                                    : "text-destructive hover:text-destructive"
+                                  }
+                                  title={user.id === currentUserId ? t("common.cannotDeleteSelf") : t("common.removeUser")}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -333,7 +394,20 @@ export default function SettingsUsers() {
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 flex gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditRoleDialog(user)}
+                            disabled={user.id === currentUserId}
+                            className={user.id === currentUserId
+                              ? "text-muted-foreground cursor-not-allowed"
+                              : ""
+                            }
+                            title={user.id === currentUserId ? t("common.cannotEditOwnRole") : t("common.editRole")}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -444,6 +518,56 @@ export default function SettingsUsers() {
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {removingUser ? t("common.loading") : t("common.removeUser")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Role Dialog */}
+      <Dialog open={isEditRoleDialogOpen} onOpenChange={setIsEditRoleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("common.confirmEditRole")}</DialogTitle>
+            <DialogDescription>
+              {t("common.confirmEditRoleMessage")}
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingUser && (
+            <div className="py-4">
+              <div className="mb-4 p-3 bg-muted rounded-lg">
+                <p className="font-medium">{editingUser.first_name} {editingUser.last_name}</p>
+                <p className="text-sm text-muted-foreground">{editingUser.email}</p>
+                <Badge variant={getRoleBadgeVariant(editingUser.role)} className="mt-2">
+                  {getRoleLabel(editingUser.role)}
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-role">{t("common.role")}</Label>
+                <Select value={newRole} onValueChange={setNewRole}>
+                  <SelectTrigger id="new-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLE_OPTIONS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditRoleDialogOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={handleUpdateRole}
+              disabled={updatingRole || newRole === editingUser?.role.toUpperCase()}
+            >
+              {updatingRole ? t("common.loading") : t("common.saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>

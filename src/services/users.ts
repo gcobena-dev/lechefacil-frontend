@@ -59,6 +59,34 @@ export interface RemoveUserMembershipResponse {
   removed_at: string;
 }
 
+export interface UpdateUserRolePayload {
+  role: string;
+}
+
+export interface UpdateUserRoleResponse {
+  message: string;
+  user_id: string;
+  tenant_id: string;
+  role: string;
+  updated_at: string;
+}
+
+export async function updateUserRole(
+  tenantId: string,
+  userId: string,
+  payload: UpdateUserRolePayload
+): Promise<UpdateUserRoleResponse> {
+  return apiFetch<UpdateUserRoleResponse>(
+    `/api/v1/tenants/${tenantId}/users/${userId}/membership`,
+    {
+      method: "PATCH",
+      withAuth: true,
+      withTenant: true,
+      body: payload,
+    }
+  );
+}
+
 export async function removeUserMembership(
   tenantId: string,
   userId: string,
