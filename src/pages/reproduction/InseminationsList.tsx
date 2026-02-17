@@ -80,7 +80,6 @@ export default function InseminationsList() {
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / pageSize);
 
   const onSort = (key: string) => {
     setPage(0);
@@ -116,7 +115,7 @@ export default function InseminationsList() {
   };
 
   return (
-    <div className="space-y-3 p-2 md:p-6">
+    <div className="space-y-3 p-2 md:p-6 overflow-hidden">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => navigate("/reproduction")}>
@@ -131,7 +130,7 @@ export default function InseminationsList() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 md:flex gap-2">
+      <div className="grid grid-cols-2 md:flex gap-2 [&>*]:min-w-0">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger>
             <SelectValue />
@@ -358,11 +357,12 @@ export default function InseminationsList() {
                       </Badge>
                     </div>
                     {(ins.pregnancy_status === "PENDING" || isAdmin) && (
-                      <div className="flex items-center gap-1 mt-3 pt-3 border-t">
+                      <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t">
                         {ins.pregnancy_status === "PENDING" && (
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-xs"
                             onClick={() => setCheckDialogId(ins.id)}
                           >
                             {t("reproduction.recordCheck")}
