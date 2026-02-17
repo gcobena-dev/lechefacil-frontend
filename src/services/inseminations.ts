@@ -61,6 +61,8 @@ export async function listInseminations(params?: {
   date_to?: string;
   limit?: number;
   offset?: number;
+  sort_by?: string;
+  sort_dir?: string;
 }) {
   return apiFetch<InseminationListResponse>(
     "/api/v1/reproduction/inseminations",
@@ -75,6 +77,8 @@ export async function listInseminations(params?: {
         date_to: params?.date_to,
         limit: params?.limit,
         offset: params?.offset,
+        sort_by: params?.sort_by,
+        sort_dir: params?.sort_dir,
       },
     }
   );
@@ -113,6 +117,17 @@ export async function updateInsemination(
       withAuth: true,
       withTenant: true,
       body: payload,
+    }
+  );
+}
+
+export async function deleteInsemination(id: string) {
+  return apiFetch<void>(
+    `/api/v1/reproduction/inseminations/${id}`,
+    {
+      method: "DELETE",
+      withAuth: true,
+      withTenant: true,
     }
   );
 }

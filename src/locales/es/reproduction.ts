@@ -39,6 +39,10 @@ export default {
   noSemenAvailable: "Sin pajuelas disponibles para este toro",
   inseminationRecorded: "Inseminación registrada correctamente",
   inseminationUpdated: "Inseminación actualizada",
+  editInseminationDescription: "Modifica los campos de esta inseminación",
+  deleteInsemination: "Eliminar Inseminación",
+  confirmDeleteInsemination: "¿Estás seguro de que deseas eliminar esta inseminación? Esta acción no se puede deshacer.",
+  inseminationDeleted: "Inseminación eliminada",
 
   // Estado de preñez
   pregnancyStatus: "Estado de Preñez",
@@ -136,4 +140,5 @@ export default {
   loading: "Cargando...",
   noResults: "Sin resultados",
   viewDetails: "Ver detalle",
+  viewAll: "Ver todo",
 };

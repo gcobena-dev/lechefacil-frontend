@@ -161,7 +161,7 @@ export default function ReproductionDashboard() {
               size="sm"
               onClick={() => navigate("/reproduction/pregnancy-checks")}
             >
-              {t("reproduction.viewDetails")}
+              {t("reproduction.viewAll")}
             </Button>
           </CardContent>
         </Card>
@@ -179,7 +179,7 @@ export default function ReproductionDashboard() {
               size="sm"
               onClick={() => navigate("/reproduction/inseminations")}
             >
-              {t("reproduction.viewDetails")}
+              {t("reproduction.viewAll")}
             </Button>
           </div>
         </CardHeader>

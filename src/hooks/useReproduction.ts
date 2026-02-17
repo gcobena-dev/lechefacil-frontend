@@ -20,6 +20,8 @@ import {
 import {
   listInseminations,
   createInsemination,
+  updateInsemination,
+  deleteInsemination,
   recordPregnancyCheck,
   getPendingPregnancyChecks,
   type CreateInseminationPayload,
@@ -147,6 +149,8 @@ export function useInseminations(params?: {
   date_to?: string;
   limit?: number;
   offset?: number;
+  sort_by?: string;
+  sort_dir?: string;
 }) {
   return useQuery({
     queryKey: ["inseminations", params],
@@ -162,6 +166,32 @@ export function useCreateInsemination() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inseminations"] });
       qc.invalidateQueries({ queryKey: ["semen-stock"] });
+    },
+  });
+}
+
+export function useUpdateInsemination() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: { technician?: string; notes?: string; heat_detected?: boolean; protocol?: string };
+    }) => updateInsemination(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inseminations"] });
+    },
+  });
+}
+
+export function useDeleteInsemination() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteInsemination(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inseminations"] });
     },
   });
 }

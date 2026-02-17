@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useInseminations, useSires } from "@/hooks/useReproduction";
+import { useIsAdmin } from "@/hooks/useAuth";
+import { useInseminations, useSires, useDeleteInsemination } from "@/hooks/useReproduction";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +23,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, ArrowUpDown, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { PregnancyCheckDialog } from "@/components/reproduction/PregnancyCheckDialog";
+import EditInseminationDialog from "@/components/reproduction/EditInseminationDialog";
+import type { InseminationResponse } from "@/services/inseminations";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
@@ -40,7 +54,15 @@ export default function InseminationsList() {
   const [dateTo, setDateTo] = useState<string>("");
   const [page, setPage] = useState(0);
   const pageSize = 20;
+  const [sortBy, setSortBy] = useState("service_date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [checkDialogId, setCheckDialogId] = useState<string | null>(null);
+  const [editingInsemination, setEditingInsemination] = useState<InseminationResponse | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const isAdmin = useIsAdmin();
+  const { toast } = useToast();
+  const deleteMutation = useDeleteInsemination();
 
   const { data: siresData } = useSires({ limit: 100 });
   const sires = siresData?.items ?? [];
@@ -52,11 +74,46 @@ export default function InseminationsList() {
     date_to: dateTo || undefined,
     limit: pageSize,
     offset: page * pageSize,
+    sort_by: sortBy,
+    sort_dir: sortDir,
   });
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize);
+
+  const onSort = (key: string) => {
+    setPage(0);
+    setSortBy((prev) => {
+      if (prev === key) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      setSortDir('asc');
+      return key;
+    });
+  };
+
+  const renderHeader = (label: string, key: string) => {
+    const isActive = sortBy === key;
+    const icon = !isActive ? (
+      <ArrowUpDown className="ml-1 h-3.5 w-3.5 opacity-50" />
+    ) : sortDir === 'asc' ? (
+      <ChevronUp className="ml-1 h-3.5 w-3.5" />
+    ) : (
+      <ChevronDown className="ml-1 h-3.5 w-3.5" />
+    );
+    return (
+      <button
+        type="button"
+        className={`inline-flex items-center hover:text-foreground ${isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}
+        onClick={() => onSort(key)}
+      >
+        <span>{label}</span>
+        {icon}
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-3 p-2 md:p-6">
@@ -124,14 +181,14 @@ export default function InseminationsList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Animal</TableHead>
-                  <TableHead>{t("reproduction.sire")}</TableHead>
-                  <TableHead>{t("reproduction.serviceDate")}</TableHead>
-                  <TableHead>{t("reproduction.method")}</TableHead>
-                  <TableHead>{t("reproduction.technician")}</TableHead>
-                  <TableHead>{t("reproduction.pregnancyStatus")}</TableHead>
-                  <TableHead>{t("reproduction.daysSinceService")}</TableHead>
-                  <TableHead>{t("reproduction.expectedCalvingDate")}</TableHead>
+                  <TableHead>{renderHeader("Animal", "animal")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.sire"), "sire")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.serviceDate"), "service_date")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.method"), "method")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.technician"), "technician")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.pregnancyStatus"), "pregnancy_status")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.daysSinceService"), "service_date")}</TableHead>
+                  <TableHead>{renderHeader(t("reproduction.expectedCalvingDate"), "expected_calving_date")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,15 +220,37 @@ export default function InseminationsList() {
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        {ins.pregnancy_status === "PENDING" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCheckDialogId(ins.id)}
-                          >
-                            {t("reproduction.recordCheck")}
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {ins.pregnancy_status === "PENDING" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCheckDialogId(ins.id)}
+                            >
+                              {t("reproduction.recordCheck")}
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setEditingInsemination(ins)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => setDeletingId(ins.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -212,15 +291,37 @@ export default function InseminationsList() {
                         <Badge variant={STATUS_VARIANTS[ins.pregnancy_status] || "secondary"}>
                           {t(`reproduction.${ins.pregnancy_status.toLowerCase()}`)}
                         </Badge>
-                        {ins.pregnancy_status === "PENDING" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCheckDialogId(ins.id)}
-                          >
-                            {t("reproduction.recordCheck")}
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {ins.pregnancy_status === "PENDING" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCheckDialogId(ins.id)}
+                            >
+                              {t("reproduction.recordCheck")}
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setEditingInsemination(ins)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => setDeletingId(ins.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -263,6 +364,41 @@ export default function InseminationsList() {
           onClose={() => setCheckDialogId(null)}
         />
       )}
+
+      <EditInseminationDialog
+        open={!!editingInsemination}
+        onOpenChange={(open) => { if (!open) setEditingInsemination(null); }}
+        insemination={editingInsemination}
+      />
+
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => { if (!open) setDeletingId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("reproduction.deleteInsemination")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("reproduction.confirmDeleteInsemination")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("reproduction.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!deletingId) return;
+                try {
+                  await deleteMutation.mutateAsync(deletingId);
+                  toast({ title: t("reproduction.inseminationDeleted") });
+                } catch {
+                  toast({ title: t("reproduction.inseminationDeleted"), variant: "destructive" });
+                }
+                setDeletingId(null);
+              }}
+            >
+              {t("reproduction.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
