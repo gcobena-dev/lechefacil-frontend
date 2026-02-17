@@ -33,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, ArrowUpDown, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { PregnancyCheckDialog } from "@/components/reproduction/PregnancyCheckDialog";
 import EditInseminationDialog from "@/components/reproduction/EditInseminationDialog";
 import type { InseminationResponse } from "@/services/inseminations";
@@ -53,7 +53,7 @@ export default function InseminationsList() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [page, setPage] = useState(0);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
   const [sortBy, setSortBy] = useState("service_date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [checkDialogId, setCheckDialogId] = useState<string | null>(null);
@@ -178,6 +178,37 @@ export default function InseminationsList() {
         <>
           {/* Desktop Table */}
           <div className="hidden md:block">
+            {/* Pagination Controls - Desktop */}
+            <div className="flex items-center justify-between border-b pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Mostrando {items.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Por página</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue placeholder="20" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -261,6 +292,41 @@ export default function InseminationsList() {
 
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
+            {/* Pagination Controls - Mobile */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Mostrando {items.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Por página</span>
+                      <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue placeholder="20" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="30">30</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {items.map((ins) => {
               const daysSince = Math.floor(
                 (Date.now() - new Date(ins.service_date).getTime()) / (1000 * 60 * 60 * 24)
@@ -287,73 +353,48 @@ export default function InseminationsList() {
                         )}
                         <p className="text-xs text-muted-foreground">{daysSince}d</p>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge variant={STATUS_VARIANTS[ins.pregnancy_status] || "secondary"}>
-                          {t(`reproduction.${ins.pregnancy_status.toLowerCase()}`)}
-                        </Badge>
-                        <div className="flex items-center gap-1">
-                          {ins.pregnancy_status === "PENDING" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCheckDialogId(ins.id)}
-                            >
-                              {t("reproduction.recordCheck")}
-                            </Button>
-                          )}
-                          {isAdmin && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => setEditingInsemination(ins)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive"
-                                onClick={() => setDeletingId(ins.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      <Badge variant={STATUS_VARIANTS[ins.pregnancy_status] || "secondary"}>
+                        {t(`reproduction.${ins.pregnancy_status.toLowerCase()}`)}
+                      </Badge>
                     </div>
+                    {(ins.pregnancy_status === "PENDING" || isAdmin) && (
+                      <div className="flex items-center gap-1 mt-3 pt-3 border-t">
+                        {ins.pregnancy_status === "PENDING" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCheckDialogId(ins.id)}
+                          >
+                            {t("reproduction.recordCheck")}
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <div className="ml-auto flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setEditingInsemination(ins)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => setDeletingId(ins.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                &lt;
-              </Button>
-              <span className="flex items-center text-sm text-muted-foreground">
-                {page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                &gt;
-              </Button>
-            </div>
-          )}
         </>
       )}
 

@@ -15,7 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Plus, Search, Heart } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Plus, Search, Heart } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function SireCatalog() {
   const { t } = useTranslation();
@@ -24,7 +31,7 @@ export default function SireCatalog() {
   const deleteMutation = useDeleteSire();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   const { data, isLoading } = useSires({
     active_only: false,
@@ -87,6 +94,37 @@ export default function SireCatalog() {
         <>
           {/* Desktop Table */}
           <div className="hidden md:block">
+            {/* Pagination Controls - Desktop */}
+            <div className="flex items-center justify-between border-b pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Mostrando {items.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Por página</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue placeholder="20" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -141,6 +179,41 @@ export default function SireCatalog() {
 
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
+            {/* Pagination Controls - Mobile */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Mostrando {items.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Por página</span>
+                      <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue placeholder="20" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="30">30</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {items.map((sire) => (
               <Card
                 key={sire.id}
@@ -169,21 +242,6 @@ export default function SireCatalog() {
               </Card>
             ))}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-                &lt;
-              </Button>
-              <span className="flex items-center text-sm text-muted-foreground">
-                {page + 1} / {totalPages}
-              </span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
-                &gt;
-              </Button>
-            </div>
-          )}
         </>
       )}
     </div>
