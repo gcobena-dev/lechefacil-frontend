@@ -1,17 +1,19 @@
-import { EdgeToEdge } from '@capawesome/capacitor-android-edge-to-edge-support';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { Capacitor, registerPlugin } from '@capacitor/core';
-import { initPushNotifications } from '@/services/push';
+import { EdgeToEdge } from "@capawesome/capacitor-android-edge-to-edge-support";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { Capacitor, registerPlugin } from "@capacitor/core";
+import { initPushNotifications } from "@/services/push";
 // Use registerPlugin to avoid bundling @capacitor/app (not installed in web)
-const App = registerPlugin<any>('App');
+const App = registerPlugin<any>("App");
 
 const hslToHex = (h: number, s: number, l: number): string => {
   l /= 100;
-  const a = s * Math.min(l, 1 - l) / 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
   const f = (n: number) => {
     const k = (n + h / 30) % 12;
     const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, '0');
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, "0");
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 };
@@ -58,7 +60,9 @@ export async function initializeCapacitor() {
       await EdgeToEdge.enable();
 
       // Detect if system uses dark theme
-      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDarkMode = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
 
       // Apply initial theme
       await applyTheme(isDarkMode);
@@ -67,28 +71,30 @@ export async function initializeCapacitor() {
       // Safe to call; it will no-op if not native or permissions denied
       await initPushNotifications();
       // Re-register on auth token changes (e.g., user logs in), best-effort
-      window.addEventListener('lf_token_changed', () => {
+      window.addEventListener("lf_token_changed", () => {
         initPushNotifications();
       });
 
       // Listen for system theme changes
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async (e) => {
-        await applyTheme(e.matches);
-      });
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", async (e) => {
+          await applyTheme(e.matches);
+        });
 
       // Handle Android hardware back button to navigate within the app
-      App.addListener('backButton', ({ canGoBack }) => {
+      App.addListener("backButton", ({ canGoBack }) => {
         try {
           if (canGoBack) {
             window.history.back();
           }
           // If cannot go back, allow default behavior (usually exits app)
         } catch (err) {
-          console.error('Error handling backButton:', err);
+          console.error("Error handling backButton:", err);
         }
       });
     } catch (error) {
-      console.error('Error initializing Capacitor:', error);
+      console.error("Error initializing Capacitor:", error);
     }
   }
 }

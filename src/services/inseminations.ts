@@ -95,20 +95,22 @@ export async function getInsemination(id: string) {
 }
 
 export async function createInsemination(payload: CreateInseminationPayload) {
-  return apiFetch<InseminationResponse>(
-    "/api/v1/reproduction/inseminations",
-    {
-      method: "POST",
-      withAuth: true,
-      withTenant: true,
-      body: payload,
-    }
-  );
+  return apiFetch<InseminationResponse>("/api/v1/reproduction/inseminations", {
+    method: "POST",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
 }
 
 export async function updateInsemination(
   id: string,
-  payload: { technician?: string; notes?: string; heat_detected?: boolean; protocol?: string }
+  payload: {
+    technician?: string;
+    notes?: string;
+    heat_detected?: boolean;
+    protocol?: string;
+  }
 ) {
   return apiFetch<InseminationResponse>(
     `/api/v1/reproduction/inseminations/${id}`,
@@ -122,14 +124,11 @@ export async function updateInsemination(
 }
 
 export async function deleteInsemination(id: string) {
-  return apiFetch<void>(
-    `/api/v1/reproduction/inseminations/${id}`,
-    {
-      method: "DELETE",
-      withAuth: true,
-      withTenant: true,
-    }
-  );
+  return apiFetch<void>(`/api/v1/reproduction/inseminations/${id}`, {
+    method: "DELETE",
+    withAuth: true,
+    withTenant: true,
+  });
 }
 
 export async function recordPregnancyCheck(

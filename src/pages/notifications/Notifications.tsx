@@ -25,59 +25,56 @@ export default function NotificationsPage() {
   useEffect(() => { setPref('prefs:notifications:pageSize', pageSize, { session: true }); }, [pageSize]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl sm:text-2xl font-semibold">{t('notifications.title')}</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={unreadCount > 0 ? 'destructive' : 'secondary'}>
+    <div className="space-y-4 w-full min-w-0">
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-2xl font-semibold truncate">{t('notifications.title')}</h1>
+          <Badge variant={unreadCount > 0 ? 'destructive' : 'secondary'} className="flex-shrink-0">
             {t('notifications.unreadCount', { count: unreadCount })}
           </Badge>
-          <Button variant="outline" onClick={() => fetchNotifications(false)} disabled={loading}>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fetchNotifications(false)} disabled={loading}>
             {t('common.refresh')}
           </Button>
           {unreadCount > 0 && (
-            <Button variant="ghost" onClick={markAllAsRead} disabled={loading}>
+            <Button variant="ghost" size="sm" onClick={markAllAsRead} disabled={loading}>
               {t('notifications.markAllAsRead')}
             </Button>
           )}
         </div>
       </div>
 
+      {/* Card */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-sm sm:text-base">{t('notifications.all')}</CardTitle>
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{t('common.perPage')}</span>
-                <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
-                  <SelectTrigger className="w-[92px] sm:w-[100px]">
-                    <SelectValue placeholder="10" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="30">30</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4 space-y-2">
+          <CardTitle className="text-sm sm:text-base">{t('notifications.all')}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
+              <SelectTrigger className="w-[68px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="30">30</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {notifications.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">{t('notifications.empty')}</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {notifications.map((n) => (
                 <div
                   key={n.id}
@@ -86,24 +83,24 @@ export default function NotificationsPage() {
                     if (!n.read) markAsRead([n.id]);
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{n.title}</p>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{n.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString('es-EC')}</p>
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm line-clamp-2 break-words">{n.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-3 break-words">{n.message}</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString('es-EC')}</p>
                     </div>
-                    {!n.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 flex-shrink-0" />}
+                    {!n.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0" />}
                   </div>
                 </div>
               ))}
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-2">
-                <span className="text-xs sm:text-sm text-muted-foreground">{t('common.showingRange', { from: notifications.length === 0 ? 0 : (page * pageSize) + 1, to: Math.min((page + 1) * pageSize, total), total })}</span>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-[11px] text-muted-foreground">{t('common.showingRange', { from: notifications.length === 0 ? 0 : (page * pageSize) + 1, to: Math.min((page + 1) * pageSize, total), total })}</span>
                 <div className="flex items-center gap-1">
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
-                    <ChevronLeft className="h-4 w-4" />
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                    <ChevronLeft className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
-                    <ChevronRight className="h-4 w-4" />
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+                    <ChevronRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
@@ -113,7 +110,7 @@ export default function NotificationsPage() {
       </Card>
 
       <div className="flex justify-end">
-        <Button variant="secondary" onClick={() => navigate(-1)}>{t('common.back')}</Button>
+        <Button variant="secondary" size="sm" onClick={() => navigate(-1)}>{t('common.back')}</Button>
       </div>
     </div>
   );

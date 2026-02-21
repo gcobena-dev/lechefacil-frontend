@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor } from "@capacitor/core";
 
 export function isMobileClient(): boolean {
   try {
@@ -12,4 +12,3 @@ export function isMobileClient(): boolean {
     return false;
   }
 }
-

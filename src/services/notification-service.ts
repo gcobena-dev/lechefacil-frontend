@@ -1,5 +1,5 @@
-import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from "@capacitor/core";
+import { LocalNotifications } from "@capacitor/local-notifications";
 
 export interface Notification {
   id: string;
@@ -26,17 +26,17 @@ class NotificationService {
       if (Capacitor.isNativePlatform()) {
         // Mobile: Local Notifications
         const result = await LocalNotifications.requestPermissions();
-        this.permissionGranted = result.display === 'granted';
-      } else if ('Notification' in window) {
+        this.permissionGranted = result.display === "granted";
+      } else if ("Notification" in window) {
         // Web: Notification API
         const permission = await Notification.requestPermission();
-        this.permissionGranted = permission === 'granted';
+        this.permissionGranted = permission === "granted";
       }
 
-      console.log('Notification permission:', this.permissionGranted);
+      console.log("Notification permission:", this.permissionGranted);
       return this.permissionGranted;
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
+      console.error("Error requesting notification permission:", error);
       return false;
     }
   }
@@ -47,8 +47,8 @@ class NotificationService {
   hasPermission(): boolean {
     if (Capacitor.isNativePlatform()) {
       return this.permissionGranted;
-    } else if ('Notification' in window) {
-      return Notification.permission === 'granted';
+    } else if ("Notification" in window) {
+      return Notification.permission === "granted";
     }
     return false;
   }
@@ -58,7 +58,7 @@ class NotificationService {
    */
   async show(notification: Notification): Promise<void> {
     if (!this.hasPermission()) {
-      console.warn('No notification permission granted');
+      console.warn("No notification permission granted");
       return;
     }
 
@@ -76,17 +76,20 @@ class NotificationService {
                 type: notification.type,
                 data: notification.data,
               },
-              smallIcon: 'ic_stat_icon_config_sample',
-              iconColor: '#488AFF',
+              smallIcon: "ic_stat_icon_config_sample",
+              iconColor: "#488AFF",
             },
           ],
         });
-      } else if ('Notification' in window && Notification.permission === 'granted') {
+      } else if (
+        "Notification" in window &&
+        Notification.permission === "granted"
+      ) {
         // Web: Browser Notification
         const webNotification = new Notification(notification.title, {
           body: notification.message,
-          icon: '/logo.png',
-          badge: '/badge.png',
+          icon: "/logo.png",
+          badge: "/badge.png",
           tag: notification.id,
           data: {
             notificationId: notification.id,
@@ -104,7 +107,7 @@ class NotificationService {
         };
       }
     } catch (error) {
-      console.error('Error showing notification:', error);
+      console.error("Error showing notification:", error);
     }
   }
 
@@ -112,7 +115,7 @@ class NotificationService {
    * Genera un ID numérico a partir de un UUID (requerido por mobile)
    */
   private generateNumericId(uuid: string): number {
-    return parseInt(uuid.replace(/-/g, '').substring(0, 8), 16);
+    return parseInt(uuid.replace(/-/g, "").substring(0, 8), 16);
   }
 
   /**
@@ -120,23 +123,26 @@ class NotificationService {
    */
   registerClickListener(callback: (notification: Notification) => void): void {
     if (Capacitor.isNativePlatform()) {
-      LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
-        const extra = action.notification.extra;
-        if (extra) {
-          callback({
-            id: extra.notificationId,
-            type: extra.type,
-            title: action.notification.title,
-            message: action.notification.body,
-            data: extra.data,
-            // Campos dummy para cumplir con la interfaz
-            tenant_id: '',
-            user_id: '',
-            read: false,
-            created_at: '',
-          });
+      LocalNotifications.addListener(
+        "localNotificationActionPerformed",
+        (action) => {
+          const extra = action.notification.extra;
+          if (extra) {
+            callback({
+              id: extra.notificationId,
+              type: extra.type,
+              title: action.notification.title,
+              message: action.notification.body,
+              data: extra.data,
+              // Campos dummy para cumplir con la interfaz
+              tenant_id: "",
+              user_id: "",
+              read: false,
+              created_at: "",
+            });
+          }
         }
-      });
+      );
     }
   }
 

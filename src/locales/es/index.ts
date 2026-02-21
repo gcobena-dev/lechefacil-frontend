@@ -1,14 +1,14 @@
-import common from './common';
-import auth from './auth';
-import dashboard from './dashboard';
-import animals from './animals';
-import milk from './milk';
-import health from './health';
-import forms from './forms';
-import reports from './reports';
-import updates from './updates';
-import notifications from './notifications';
-import reproduction from './reproduction';
+import common from "./common";
+import auth from "./auth";
+import dashboard from "./dashboard";
+import animals from "./animals";
+import milk from "./milk";
+import health from "./health";
+import forms from "./forms";
+import reports from "./reports";
+import updates from "./updates";
+import notifications from "./notifications";
+import reproduction from "./reproduction";
 
 export default {
   common,

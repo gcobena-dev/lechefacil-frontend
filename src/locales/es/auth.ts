@@ -34,9 +34,11 @@ export default {
   passwordUpdateError: "No se pudo cambiar la contraseña",
   // Forgot/Reset Password
   forgotPasswordTitle: "Recuperar contraseña",
-  forgotPasswordDescription: "Ingresa tu correo y te enviaremos un enlace para restablecer la contraseña.",
+  forgotPasswordDescription:
+    "Ingresa tu correo y te enviaremos un enlace para restablecer la contraseña.",
   sendResetLink: "Enviar enlace",
-  resetRequestedDescription: "Si el correo existe, te enviamos instrucciones para restablecer tu contraseña.",
+  resetRequestedDescription:
+    "Si el correo existe, te enviamos instrucciones para restablecer tu contraseña.",
   backToLogin: "Volver a iniciar sesión",
   resetPasswordTitle: "Crear nueva contraseña",
   resetPasswordDescription: "Ingresa tu nueva contraseña para continuar.",
@@ -60,7 +62,8 @@ export default {
 
   // Errors
   loginError: "Error al iniciar sesión. Verifica tus credenciales.",
-  biometricLoginError: "Error al iniciar sesión con biometría. Intenta nuevamente.",
+  biometricLoginError:
+    "Error al iniciar sesión con biometría. Intenta nuevamente.",
   configError: "Configura VITE_API_URL en .env para conectar al backend",
 
   // Biometric
@@ -88,7 +91,8 @@ export default {
 
   // SelectFarm
   selectFarmTitle: "Selecciona una Finca",
-  selectFarmSubtitle: "Tienes acceso a múltiples fincas. Selecciona la que deseas gestionar.",
+  selectFarmSubtitle:
+    "Tienes acceso a múltiples fincas. Selecciona la que deseas gestionar.",
   farmLocationPlaceholder: "Ubicación por definir",
   animals: "Animales",
   lastAccess: "Último acceso",
@@ -100,7 +104,8 @@ export default {
 
   // RequestAccess
   requestAccessTitle: "Solicitar Acceso",
-  requestAccessDescription: "No tienes acceso a ninguna finca. Completa el formulario para solicitar acceso.",
+  requestAccessDescription:
+    "No tienes acceso a ninguna finca. Completa el formulario para solicitar acceso.",
   fullName: "Nombre completo",
   fullNamePlaceholder: "Tu nombre completo",
   phoneNumber: "Número de teléfono",
@@ -112,10 +117,12 @@ export default {
   requestedRole: "Rol solicitado",
   requestedRolePlaceholder: "Selecciona el rol que solicitas",
   additionalMessage: "Mensaje adicional (opcional)",
-  additionalMessagePlaceholder: "Explica por qué necesitas acceso o cualquier información adicional...",
+  additionalMessagePlaceholder:
+    "Explica por qué necesitas acceso o cualquier información adicional...",
   sendRequest: "Enviar solicitud",
   requestSent: "Solicitud enviada",
-  requestSentDescription: "Tu solicitud de acceso ha sido enviada. Te contactaremos pronto.",
+  requestSentDescription:
+    "Tu solicitud de acceso ha sido enviada. Te contactaremos pronto.",
   requestError: "No se pudo enviar tu solicitud",
   alreadyHaveAccount: "¿Ya tienes una cuenta?",
   signIn: "Iniciar sesión",

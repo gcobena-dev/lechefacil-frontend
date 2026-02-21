@@ -5,13 +5,18 @@ declare global {
 }
 
 // Prefer runtime-provided config (env.js), fallback to vite build-time vars
-const RUNTIME_API_URL = (typeof window !== 'undefined' && window.__APP_CONFIG__?.VITE_API_URL) as string | undefined;
-const RUNTIME_TENANT_HEADER = (typeof window !== 'undefined' && window.__APP_CONFIG__?.VITE_TENANT_HEADER) as string | undefined;
+const RUNTIME_API_URL = (typeof window !== "undefined" &&
+  window.__APP_CONFIG__?.VITE_API_URL) as string | undefined;
+const RUNTIME_TENANT_HEADER = (typeof window !== "undefined" &&
+  window.__APP_CONFIG__?.VITE_TENANT_HEADER) as string | undefined;
 
-export const API_URL = RUNTIME_API_URL ?? (import.meta.env.VITE_API_URL as string | undefined);
+export const API_URL =
+  RUNTIME_API_URL ?? (import.meta.env.VITE_API_URL as string | undefined);
 // Función para validar y sanitizar el nombre del header
 function getValidTenantHeader(): string {
-  const envHeader = RUNTIME_TENANT_HEADER ?? (import.meta.env.VITE_TENANT_HEADER as string | undefined);
+  const envHeader =
+    RUNTIME_TENANT_HEADER ??
+    (import.meta.env.VITE_TENANT_HEADER as string | undefined);
 
   // Si no hay header configurado, usar el default
   if (!envHeader) {
@@ -26,7 +31,9 @@ function getValidTenantHeader(): string {
   const validHeaderRegex = /^[a-zA-Z0-9\-_]+$/;
 
   if (!validHeaderRegex.test(sanitized)) {
-    console.warn(`Invalid TENANT_HEADER "${sanitized}", using default "X-Tenant-ID"`);
+    console.warn(
+      `Invalid TENANT_HEADER "${sanitized}", using default "X-Tenant-ID"`
+    );
     return "X-Tenant-ID";
   }
 
@@ -48,9 +55,9 @@ export function setToken(token: string | null) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
   // Notify listeners in this tab about token changes
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
-      window.dispatchEvent(new CustomEvent('lf_token_changed'));
+      window.dispatchEvent(new CustomEvent("lf_token_changed"));
     } catch (_e) {
       // no-op
     }
@@ -74,12 +81,12 @@ export function requireApiUrl(): string {
 }
 
 export function getMustChangePassword(): boolean {
-  return localStorage.getItem(MUST_CHANGE_PASSWORD_KEY) === 'true';
+  return localStorage.getItem(MUST_CHANGE_PASSWORD_KEY) === "true";
 }
 
 export function setMustChangePassword(mustChange: boolean) {
   if (mustChange) {
-    localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, 'true');
+    localStorage.setItem(MUST_CHANGE_PASSWORD_KEY, "true");
   } else {
     localStorage.removeItem(MUST_CHANGE_PASSWORD_KEY);
   }

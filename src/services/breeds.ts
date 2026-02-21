@@ -19,7 +19,11 @@ export async function getBreeds(params?: { active?: boolean }) {
   });
 }
 
-export async function createBreed(payload: { name: string; active?: boolean; metadata?: Record<string, unknown> | null }) {
+export async function createBreed(payload: {
+  name: string;
+  active?: boolean;
+  metadata?: Record<string, unknown> | null;
+}) {
   return apiFetch<BreedResponse>("/api/v1/breeds/", {
     method: "POST",
     withAuth: true,
@@ -28,7 +32,14 @@ export async function createBreed(payload: { name: string; active?: boolean; met
   });
 }
 
-export async function updateBreed(id: string, payload: Partial<{ name: string; active: boolean; metadata: Record<string, unknown> | null }>) {
+export async function updateBreed(
+  id: string,
+  payload: Partial<{
+    name: string;
+    active: boolean;
+    metadata: Record<string, unknown> | null;
+  }>
+) {
   return apiFetch<BreedResponse>(`/api/v1/breeds/${id}`, {
     method: "PUT",
     withAuth: true,
@@ -44,4 +55,3 @@ export async function deleteBreed(id: string) {
     withTenant: true,
   });
 }
-

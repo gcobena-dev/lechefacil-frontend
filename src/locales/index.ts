@@ -1,4 +1,4 @@
-import es from './es';
+import es from "./es";
 
 export const resources = {
   es: {
@@ -6,5 +6,5 @@ export const resources = {
   },
 };
 
-export const defaultNS = 'translation';
-export const fallbackLng = 'es';
+export const defaultNS = "translation";
+export const fallbackLng = "es";

@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useWebSocket } from './useWebSocket';
-import { notificationService, Notification } from '../services/notification-service';
-import { requireApiUrl, getTenantId } from '../services/config';
-import { useToken } from './useToken';
-import { apiFetch } from '../services/client';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useWebSocket } from "./useWebSocket";
+import {
+  notificationService,
+  Notification,
+} from "../services/notification-service";
+import { requireApiUrl, getTenantId } from "../services/config";
+import { useToken } from "./useToken";
+import { apiFetch } from "../services/client";
 
 interface UseNotificationsOptions {
   onNotificationReceived?: (notification: Notification) => void;
@@ -31,19 +34,21 @@ export function useNotifications({
 
   const apiUrl = requireApiUrl();
   // Do not embed token in URL; pass to hook so it reconnects when token changes.
-  const token = useToken() || '';
-  const tenantId = getTenantId() || '';
+  const token = useToken() || "";
+  const tenantId = getTenantId() || "";
 
   // Build WebSocket base URL from API_URL
   // - If API_URL includes '/api/v1', take the part before it
   // - Remove trailing slash
-  const baseBeforeApi = apiUrl.includes('/api/v1')
-    ? apiUrl.split('/api/v1')[0]
+  const baseBeforeApi = apiUrl.includes("/api/v1")
+    ? apiUrl.split("/api/v1")[0]
     : apiUrl;
-  const baseUrl = baseBeforeApi.endsWith('/') ? baseBeforeApi.slice(0, -1) : baseBeforeApi;
+  const baseUrl = baseBeforeApi.endsWith("/")
+    ? baseBeforeApi.slice(0, -1)
+    : baseBeforeApi;
   const wsBaseUrl = baseUrl
-    .replace('http://', 'ws://')
-    .replace('https://', 'wss://');
+    .replace("http://", "ws://")
+    .replace("https://", "wss://");
 
   // Token is appended by useWebSocket during connect
   const wsUrl = `${wsBaseUrl}/api/v1/notifications/ws?tenant_id=${tenantId}`;
@@ -54,7 +59,7 @@ export function useNotifications({
     token,
     enabled: enabled && !!token && !!tenantId,
     onMessage: (data) => {
-      if (data.type === 'notification') {
+      if (data.type === "notification") {
         const notification = data.notification as Notification;
 
         // Update local state
@@ -75,7 +80,7 @@ export function useNotifications({
 
       // Handle mobile notification clicks
       notificationService.registerClickListener((notification) => {
-        console.log('Mobile notification clicked:', notification);
+        console.log("Mobile notification clicked:", notification);
         onNotificationReceived?.(notification);
       });
 
@@ -92,52 +97,82 @@ export function useNotifications({
     }
   }, [enabled, token]);
 
+  // Guard to skip cross-tab refetch when this instance dispatched the event
+  const selfDispatchRef = useRef(false);
+  const debounceRef = useRef<NodeJS.Timeout>();
+
   // Cross-tab/component sync: refresh when notifications change elsewhere
   useEffect(() => {
     const onUpdated = () => {
-      if (enabled && token) {
-        fetchNotifications();
+      // Skip if this instance triggered the event
+      if (selfDispatchRef.current) {
+        selfDispatchRef.current = false;
+        return;
       }
+      if (!enabled || !token) return;
+      // Debounce to avoid concurrent fetches
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => fetchNotifications(), 300);
     };
-    if (typeof window !== 'undefined') {
-      window.addEventListener('lf_notifications_updated', onUpdated as EventListener);
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "lf_notifications_updated",
+        onUpdated as EventListener
+      );
     }
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('lf_notifications_updated', onUpdated as EventListener);
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "lf_notifications_updated",
+          onUpdated as EventListener
+        );
       }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [enabled, token]);
 
-  // Fetch notifications
-  const fetchNotifications = async (unreadOnly = false, limit = 10, offset = 0) => {
-    setLoading(true);
-    try {
-      const data = await apiFetch<NotificationListResponse>('/api/v1/notifications', {
-        query: {
-          unread_only: unreadOnly,
-          limit,
-          offset,
-        },
-        withAuth: true,
-        withTenant: true,
-      });
-
-      setNotifications(data.notifications);
-      setUnreadCount(data.unread_count);
-      setTotal(data.total);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
+  const dispatchUpdatedEvent = useCallback(() => {
+    selfDispatchRef.current = true;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("lf_notifications_updated"));
     }
-  };
+  }, []);
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(
+    async (unreadOnly = false, limit = 10, offset = 0) => {
+      setLoading(true);
+      try {
+        const data = await apiFetch<NotificationListResponse>(
+          "/api/v1/notifications",
+          {
+            query: {
+              unread_only: unreadOnly,
+              limit,
+              offset,
+            },
+            withAuth: true,
+            withTenant: true,
+          }
+        );
+
+        setNotifications(data.notifications);
+        setUnreadCount(data.unread_count);
+        setTotal(data.total);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   // Mark notifications as read
   const markAsRead = async (notificationIds: string[]) => {
     try {
-      await apiFetch<MarkAsReadResponse>('/api/v1/notifications/mark-read', {
-        method: 'PATCH',
+      await apiFetch<MarkAsReadResponse>("/api/v1/notifications/mark-read", {
+        method: "PATCH",
         body: { notification_ids: notificationIds },
         withAuth: true,
         withTenant: true,
@@ -153,34 +188,36 @@ export function useNotifications({
       );
 
       setUnreadCount((prev) => Math.max(0, prev - notificationIds.length));
-      // Notify other components (e.g., header bell) to refresh
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('lf_notifications_updated'));
-      }
+      dispatchUpdatedEvent();
     } catch (error) {
-      console.error('Error marking notifications as read:', error);
+      console.error("Error marking notifications as read:", error);
     }
   };
 
   // Mark all as read
   const markAllAsRead = async () => {
     try {
-      await apiFetch<MarkAsReadResponse>('/api/v1/notifications/mark-all-read', {
-        method: 'POST',
-        withAuth: true,
-        withTenant: true,
-      });
+      await apiFetch<MarkAsReadResponse>(
+        "/api/v1/notifications/mark-all-read",
+        {
+          method: "POST",
+          withAuth: true,
+          withTenant: true,
+        }
+      );
 
       // Update local state
       setNotifications((prev) =>
-        prev.map((n) => ({ ...n, read: true, read_at: new Date().toISOString() }))
+        prev.map((n) => ({
+          ...n,
+          read: true,
+          read_at: new Date().toISOString(),
+        }))
       );
       setUnreadCount(0);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('lf_notifications_updated'));
-      }
+      dispatchUpdatedEvent();
     } catch (error) {
-      console.error('Error marking all as read:', error);
+      console.error("Error marking all as read:", error);
     }
   };
 

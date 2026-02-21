@@ -11,7 +11,8 @@ export default {
 
   // Report types
   productionReport: "Reporte de Producción",
-  productionDescription: "Análisis de producción diaria, semanal y mensual de leche",
+  productionDescription:
+    "Análisis de producción diaria, semanal y mensual de leche",
 
   financialReport: "Reporte Financiero",
   financialDescription: "Ingresos, gastos y rentabilidad por período",
@@ -149,7 +150,8 @@ export default {
   animalStatusDistribution: "Distribución de Estados de Animales",
   topPerformers: "Mejores Productores",
   averageProduction: "Producción Promedio",
-  noAnimalsDataForCharts: "No hay datos de animales disponibles para mostrar gráficos",
+  noAnimalsDataForCharts:
+    "No hay datos de animales disponibles para mostrar gráficos",
 
   // Totals
   total: "Total",

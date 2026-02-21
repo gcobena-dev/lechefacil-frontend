@@ -21,7 +21,7 @@ export interface MeResponse {
   user_id: UUID;
   email: string;
   active_tenant: UUID;
-  active_role: 'ADMIN' | 'WORKER' | 'VET' | 'MANAGER' | 'VETERINARIAN';
+  active_role: "ADMIN" | "WORKER" | "VET" | "MANAGER" | "VETERINARIAN";
   memberships: Membership[];
   claims: Record<string, unknown>;
 }
@@ -122,7 +122,7 @@ export interface AnimalPhotoUploadResponse {
   upload_url: string;
   storage_key: string;
   fields: {
-    'Content-Type': string;
+    "Content-Type": string;
     key: string;
     AWSAccessKeyId: string;
     policy: string;

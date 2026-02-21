@@ -18,7 +18,11 @@ export async function getLots(params?: { active?: boolean }) {
   });
 }
 
-export async function createLot(payload: { name: string; active?: boolean; notes?: string | null }) {
+export async function createLot(payload: {
+  name: string;
+  active?: boolean;
+  notes?: string | null;
+}) {
   return apiFetch<LotResponse>("/api/v1/lots/", {
     method: "POST",
     withAuth: true,
@@ -27,7 +31,10 @@ export async function createLot(payload: { name: string; active?: boolean; notes
   });
 }
 
-export async function updateLot(id: string, payload: Partial<{ name: string; active: boolean; notes: string | null }>) {
+export async function updateLot(
+  id: string,
+  payload: Partial<{ name: string; active: boolean; notes: string | null }>
+) {
   return apiFetch<LotResponse>(`/api/v1/lots/${id}`, {
     method: "PUT",
     withAuth: true,
@@ -44,7 +51,11 @@ export async function deleteLot(id: string) {
   });
 }
 
-export async function assignAnimalLot(animalId: string, version: number, lotId: string | null) {
+export async function assignAnimalLot(
+  animalId: string,
+  version: number,
+  lotId: string | null
+) {
   return apiFetch<AnimalResponse>(`/api/v1/animals/${animalId}/lot`, {
     method: "PUT",
     withAuth: true,
@@ -52,4 +63,3 @@ export async function assignAnimalLot(animalId: string, version: number, lotId: 
     body: { lot_id: lotId, version },
   });
 }
-

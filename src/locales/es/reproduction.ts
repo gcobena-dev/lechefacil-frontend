@@ -41,7 +41,8 @@ export default {
   inseminationUpdated: "Inseminación actualizada",
   editInseminationDescription: "Modifica los campos de esta inseminación",
   deleteInsemination: "Eliminar Inseminación",
-  confirmDeleteInsemination: "¿Estás seguro de que deseas eliminar esta inseminación? Esta acción no se puede deshacer.",
+  confirmDeleteInsemination:
+    "¿Estás seguro de que deseas eliminar esta inseminación? Esta acción no se puede deshacer.",
   inseminationDeleted: "Inseminación eliminada",
 
   // Estado de preñez

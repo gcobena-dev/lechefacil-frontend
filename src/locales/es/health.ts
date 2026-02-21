@@ -102,7 +102,8 @@ export default {
   until: "Hasta",
   noActiveWithdrawal: "Sin retiro activo",
   noHealthEvents: "No hay eventos de salud registrados",
-  startRegistering: "Comienza registrando vacunas, tratamientos u observaciones",
+  startRegistering:
+    "Comienza registrando vacunas, tratamientos u observaciones",
   registerEvent: "Registrar evento",
   loadingEvents: "Cargando eventos...",
   withdrawalAlert: "ANIMAL EN PERÍODO DE RETIRO",
@@ -149,9 +150,11 @@ export default {
   observations: "Observaciones",
   observationsPlaceholder: "Describe las observaciones realizadas...",
   emergencyDescription: "Descripción de la emergencia",
-  emergencyPlaceholder: "Describe qué sucedió, síntomas, tratamiento aplicado, etc...",
+  emergencyPlaceholder:
+    "Describe qué sucedió, síntomas, tratamiento aplicado, etc...",
   veterinarianWhoAttended: "Nombre del veterinario que atendió",
-  emergencyAlert: "Este registro es para emergencias veterinarias. Asegúrate de incluir todos los detalles relevantes del incidente.",
+  emergencyAlert:
+    "Este registro es para emergencias veterinarias. Asegúrate de incluir todos los detalles relevantes del incidente.",
 
   // Selector de tipo
   vaccinationLabel: "Vacunación",
@@ -182,7 +185,8 @@ export default {
   treatmentRegistered: "Tratamiento registrado",
   treatmentSavedSuccess: "El tratamiento se ha guardado correctamente",
   observationRegistered: "Observación registrada",
-  observationSavedSuccess: "La observación veterinaria se ha guardado correctamente",
+  observationSavedSuccess:
+    "La observación veterinaria se ha guardado correctamente",
   emergencyRegistered: "Emergencia registrada",
   emergencySavedSuccess: "El evento de emergencia se ha guardado correctamente",
   error: "Error",
@@ -198,7 +202,8 @@ export default {
   editEmergency: "Editar Emergencia",
   healthRecordNotFound: "Registro de salud no encontrado",
   healthRecordUpdated: "Registro actualizado",
-  healthRecordUpdateSuccess: "El registro de salud se ha actualizado correctamente",
+  healthRecordUpdateSuccess:
+    "El registro de salud se ha actualizado correctamente",
   errorUpdatingHealthRecord: "No se pudo actualizar el registro",
   saveChanges: "Guardar cambios",
   treatmentDescription: "Tratamiento",

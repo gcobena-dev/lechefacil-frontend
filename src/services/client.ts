@@ -1,4 +1,11 @@
-import { requireApiUrl, getToken, getTenantId, TENANT_HEADER, setToken, setMustChangePassword } from "./config";
+import {
+  requireApiUrl,
+  getToken,
+  getTenantId,
+  TENANT_HEADER,
+  setToken,
+  setMustChangePassword,
+} from "./config";
 import { refreshAccess } from "./auth";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -71,9 +78,15 @@ export async function apiFetch<T>(
         setMustChangePassword(refreshData.must_change_password);
 
         // If user has multiple memberships and no tenant is set, they might need to select farm
-        if (refreshData.memberships && refreshData.memberships.length > 1 && !getTenantId()) {
+        if (
+          refreshData.memberships &&
+          refreshData.memberships.length > 1 &&
+          !getTenantId()
+        ) {
           // This could redirect to farm selection, but for now we'll continue with the request
-          console.warn("Multiple memberships found, user might need to select farm");
+          console.warn(
+            "Multiple memberships found, user might need to select farm"
+          );
         }
 
         // retry original request with new token

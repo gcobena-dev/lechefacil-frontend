@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface UseWebSocketOptions {
   url: string;
@@ -27,7 +27,11 @@ export function useWebSocket({
   const connect = () => {
     if (!enabled) return;
     // Avoid duplicate connections if one is OPEN or CONNECTING
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+    if (
+      wsRef.current &&
+      (wsRef.current.readyState === WebSocket.OPEN ||
+        wsRef.current.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -36,20 +40,23 @@ export function useWebSocket({
       let wsUrl = url;
       const hasTokenInUrl = /[?&]token=/.test(wsUrl);
       if (token && !hasTokenInUrl) {
-        const needsAmp = wsUrl.includes('?') && !/[?&]$/.test(wsUrl);
-        wsUrl = wsUrl + (wsUrl.includes('?') ? (needsAmp ? '&' : '') : '?') + `token=${token}`;
+        const needsAmp = wsUrl.includes("?") && !/[?&]$/.test(wsUrl);
+        wsUrl =
+          wsUrl +
+          (wsUrl.includes("?") ? (needsAmp ? "&" : "") : "?") +
+          `token=${token}`;
       }
       // proceed to connect
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log("WebSocket connected");
         setIsConnected(true);
 
         // Enviar ping cada 30 segundos para mantener conexión
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
-            ws.send('ping');
+            ws.send("ping");
           }
         }, 30000);
       };
@@ -57,24 +64,24 @@ export function useWebSocket({
       ws.onmessage = (event) => {
         try {
           // Responder a pong del servidor
-          if (event.data === 'pong') {
+          if (event.data === "pong") {
             return;
           }
 
           const data = JSON.parse(event.data);
           onMessage?.(data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error("Error parsing WebSocket message:", error);
         }
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error("WebSocket error:", error);
         onError?.(error);
       };
 
       ws.onclose = (evt) => {
-        console.log('WebSocket disconnected');
+        console.log("WebSocket disconnected");
         // Si el servidor cierra por política (1008), probablemente token inválido/expirado
         if ((evt as CloseEvent).code === 1008) {
           // Pausar reconexión automática hasta que el token cambie
@@ -98,7 +105,7 @@ export function useWebSocket({
 
       wsRef.current = ws;
     } catch (error) {
-      console.error('Error connecting WebSocket:', error);
+      console.error("Error connecting WebSocket:", error);
 
       // Reintentar conexión
       if (shouldReconnectRef.current && enabled) {
@@ -128,9 +135,11 @@ export function useWebSocket({
 
   const send = (data: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(typeof data === 'string' ? data : JSON.stringify(data));
+      wsRef.current.send(
+        typeof data === "string" ? data : JSON.stringify(data)
+      );
     } else {
-      console.warn('WebSocket is not connected');
+      console.warn("WebSocket is not connected");
     }
   };
 
@@ -153,10 +162,15 @@ export function useWebSocket({
       lastTokenRef.current = token;
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         try {
-          wsRef.current.close(4001, 'token updated');
-        } catch (_) { /* ignore */ }
+          wsRef.current.close(4001, "token updated");
+        } catch (_) {
+          /* ignore */
+        }
         // onclose handler will schedule reconnect because shouldReconnectRef is true
-      } else if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {
+      } else if (
+        !wsRef.current ||
+        wsRef.current.readyState === WebSocket.CLOSED
+      ) {
         connect();
       }
     }

@@ -1,4 +1,4 @@
-import { apiFetch } from './client';
+import { apiFetch } from "./client";
 
 // Types for Dashboard API responses
 export interface DailyKPIs {
@@ -19,7 +19,7 @@ export interface TopProducer {
   name: string;
   tag: string;
   today_liters: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
   trend_percentage: string;
   primary_photo_url?: string | null;
   primary_photo_signed_url?: string | null;
@@ -38,13 +38,13 @@ export interface DailyProgress {
   date: string;
   shifts: {
     morning: {
-      status: 'completed' | 'in_progress' | 'pending';
+      status: "completed" | "in_progress" | "pending";
       completed_at: string | null;
       scheduled_at: string;
       liters: number;
     };
     evening: {
-      status: 'completed' | 'in_progress' | 'pending';
+      status: "completed" | "in_progress" | "pending";
       completed_at: string | null;
       scheduled_at: string;
       liters: number;
@@ -59,9 +59,9 @@ export interface DailyProgress {
 
 export interface Alert {
   id: string;
-  type: 'health' | 'production' | 'price';
+  type: "health" | "production" | "price";
   message: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
   animal_id?: string;
   created_at: string;
 }
@@ -75,7 +75,7 @@ export interface WorkerProgress {
     animals_milked: number;
     total_animals_assigned: number;
     liters_recorded: number;
-    current_shift: 'AM' | 'PM';
+    current_shift: "AM" | "PM";
     shift_start_time: string;
   };
 }
@@ -87,7 +87,7 @@ export interface UrgentAlert {
   alert_type: string;
   message: string;
   details: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
 }
 
 export interface VetAlerts {
@@ -111,16 +111,19 @@ export interface AdminOverview {
 // Dashboard API service functions
 export async function getDailyKPIs(date: string): Promise<DailyKPIs> {
   return apiFetch<DailyKPIs>(`/api/v1/dashboard/daily-kpis`, {
-    method: 'GET',
+    method: "GET",
     query: { date },
     withAuth: true,
     withTenant: true,
   });
 }
 
-export async function getTopProducers(date: string, limit: number = 5): Promise<TopProducersResponse> {
+export async function getTopProducers(
+  date: string,
+  limit: number = 5
+): Promise<TopProducersResponse> {
   return apiFetch<TopProducersResponse>(`/api/v1/dashboard/top-producers`, {
-    method: 'GET',
+    method: "GET",
     query: { date, limit },
     withAuth: true,
     withTenant: true,
@@ -129,25 +132,30 @@ export async function getTopProducers(date: string, limit: number = 5): Promise<
 
 export async function getDailyProgress(date: string): Promise<DailyProgress> {
   return apiFetch<DailyProgress>(`/api/v1/dashboard/daily-progress`, {
-    method: 'GET',
+    method: "GET",
     query: { date },
     withAuth: true,
     withTenant: true,
   });
 }
 
-export async function getAlerts(priority: string = 'all'): Promise<AlertsResponse> {
+export async function getAlerts(
+  priority: string = "all"
+): Promise<AlertsResponse> {
   return apiFetch<AlertsResponse>(`/api/v1/dashboard/alerts`, {
-    method: 'GET',
+    method: "GET",
     query: { priority },
     withAuth: true,
     withTenant: true,
   });
 }
 
-export async function getWorkerProgress(userId: string, date: string): Promise<WorkerProgress> {
+export async function getWorkerProgress(
+  userId: string,
+  date: string
+): Promise<WorkerProgress> {
   return apiFetch<WorkerProgress>(`/api/v1/dashboard/worker-progress`, {
-    method: 'GET',
+    method: "GET",
     query: { user_id: userId, date },
     withAuth: true,
     withTenant: true,
@@ -156,7 +164,7 @@ export async function getWorkerProgress(userId: string, date: string): Promise<W
 
 export async function getVetAlerts(date: string): Promise<VetAlerts> {
   return apiFetch<VetAlerts>(`/api/v1/dashboard/vet-alerts`, {
-    method: 'GET',
+    method: "GET",
     query: { date },
     withAuth: true,
     withTenant: true,
@@ -165,7 +173,7 @@ export async function getVetAlerts(date: string): Promise<VetAlerts> {
 
 export async function getAdminOverview(date: string): Promise<AdminOverview> {
   return apiFetch<AdminOverview>(`/api/v1/dashboard/admin-overview`, {
-    method: 'GET',
+    method: "GET",
     query: { date },
     withAuth: true,
     withTenant: true,

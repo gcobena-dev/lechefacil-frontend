@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { refreshAccess } from '@/services/auth';
-import { getToken, setToken, setMustChangePassword } from '@/services/config';
+import { useEffect, useRef } from "react";
+import { refreshAccess } from "@/services/auth";
+import { getToken, setToken, setMustChangePassword } from "@/services/config";
 
 interface Options {
   enabled?: boolean;
@@ -11,7 +11,10 @@ interface Options {
  * Periodically refreshes the access token while a session exists.
  * Also refreshes on tab becoming visible if last attempt was a while ago.
  */
-export function useSilentRefresh({ enabled = true, intervalMs = 45 * 60 * 1000 }: Options = {}) {
+export function useSilentRefresh({
+  enabled = true,
+  intervalMs = 45 * 60 * 1000,
+}: Options = {}) {
   const lastRunRef = useRef<number>(0);
   const timerRef = useRef<number | null>(null);
 
@@ -43,20 +46,19 @@ export function useSilentRefresh({ enabled = true, intervalMs = 45 * 60 * 1000 }
     schedule();
 
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         // If we have been in background for long, refresh on resume
         if (Date.now() - lastRunRef.current > intervalMs / 2) {
           tryRefresh();
         }
       }
     };
-    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       window.clearTimeout(initial);
       if (timerRef.current) window.clearInterval(timerRef.current);
-      document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [enabled, intervalMs]);
 }
-

@@ -1,4 +1,8 @@
-export function getPref<T>(key: string, defaultValue: T, options?: { session?: boolean }): T {
+export function getPref<T>(
+  key: string,
+  defaultValue: T,
+  options?: { session?: boolean }
+): T {
   try {
     const useSession = options?.session ?? true;
     const storage = useSession ? window.sessionStorage : window.localStorage;
@@ -10,7 +14,11 @@ export function getPref<T>(key: string, defaultValue: T, options?: { session?: b
   }
 }
 
-export function setPref<T>(key: string, value: T, options?: { session?: boolean }): void {
+export function setPref<T>(
+  key: string,
+  value: T,
+  options?: { session?: boolean }
+): void {
   try {
     const useSession = options?.session ?? true;
     const storage = useSession ? window.sessionStorage : window.localStorage;
@@ -19,4 +27,3 @@ export function setPref<T>(key: string, value: T, options?: { session?: boolean 
     // ignore write errors
   }
 }
-

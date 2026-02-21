@@ -34,13 +34,17 @@ export async function listTenantUsers(
 ): Promise<UsersListResponse> {
   const searchParams = new URLSearchParams();
 
-  if (params.page !== undefined) searchParams.set('page', params.page.toString());
-  if (params.limit !== undefined) searchParams.set('limit', params.limit.toString());
-  if (params.role) searchParams.set('role', params.role);
-  if (params.search) searchParams.set('search', params.search);
+  if (params.page !== undefined)
+    searchParams.set("page", params.page.toString());
+  if (params.limit !== undefined)
+    searchParams.set("limit", params.limit.toString());
+  if (params.role) searchParams.set("role", params.role);
+  if (params.search) searchParams.set("search", params.search);
 
   const queryString = searchParams.toString();
-  const url = `/api/v1/tenants/${tenantId}/users${queryString ? `?${queryString}` : ''}`;
+  const url = `/api/v1/tenants/${tenantId}/users${
+    queryString ? `?${queryString}` : ""
+  }`;
 
   return apiFetch<UsersListResponse>(url, {
     withAuth: true,

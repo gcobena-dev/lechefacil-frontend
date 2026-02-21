@@ -24,30 +24,41 @@ export interface MilkProductionListResponse {
   offset: number;
 }
 
-export async function listMilkProductions(params: { date_from?: string; date_to?: string; animal_id?: string; order_by?: 'recent' | 'volume' | 'name' | 'code'; order?: 'asc' | 'desc'; limit?: number; offset?: number }) {
+export async function listMilkProductions(params: {
+  date_from?: string;
+  date_to?: string;
+  animal_id?: string;
+  order_by?: "recent" | "volume" | "name" | "code";
+  order?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}) {
   // Backward-compatible helper that returns only items
-  const resp = await apiFetch<MilkProductionListResponse>("/api/v1/milk-productions/", {
-    withAuth: true,
-    withTenant: true,
-    query: {
-      date_from: params.date_from,
-      date_to: params.date_to,
-      animal_id: params.animal_id,
-      order_by: params.order_by,
-      order: params.order,
-      limit: params.limit,
-      offset: params.offset,
-    },
-  });
+  const resp = await apiFetch<MilkProductionListResponse>(
+    "/api/v1/milk-productions/",
+    {
+      withAuth: true,
+      withTenant: true,
+      query: {
+        date_from: params.date_from,
+        date_to: params.date_to,
+        animal_id: params.animal_id,
+        order_by: params.order_by,
+        order: params.order,
+        limit: params.limit,
+        offset: params.offset,
+      },
+    }
+  );
   return resp.items;
 }
 
 export async function createMilkProduction(payload: {
   date?: string; // YYYY-MM-DD
-  shift?: 'AM' | 'PM';
+  shift?: "AM" | "PM";
   date_time?: string; // ISO
   animal_id: string;
-  input_unit: 'l' | 'kg' | 'lb';
+  input_unit: "l" | "kg" | "lb";
   input_quantity: number | string;
   density?: number | string | null;
   buyer_id?: string | null;
@@ -63,9 +74,9 @@ export async function createMilkProduction(payload: {
 
 export async function createMilkProductionsBulk(payload: {
   date?: string; // YYYY-MM-DD
-  shift?: 'AM' | 'PM';
+  shift?: "AM" | "PM";
   date_time?: string; // ISO
-  input_unit?: 'l' | 'kg' | 'lb';
+  input_unit?: "l" | "kg" | "lb";
   density?: number | string | null;
   buyer_id?: string | null;
   notes?: string | null;
@@ -91,7 +102,13 @@ export async function updateMilkProduction(
   });
 }
 
-export async function listMilkProductionsPaginated(params: { date_from?: string; date_to?: string; animal_id?: string; limit?: number; offset?: number }) {
+export async function listMilkProductionsPaginated(params: {
+  date_from?: string;
+  date_to?: string;
+  animal_id?: string;
+  limit?: number;
+  offset?: number;
+}) {
   return apiFetch<MilkProductionListResponse>("/api/v1/milk-productions/", {
     withAuth: true,
     withTenant: true,
@@ -140,17 +157,23 @@ export interface ProcessOcrResponse {
 }
 
 export async function getOcrUploadUrl(contentType: string) {
-  return apiFetch<PresignUploadResponse>("/api/v1/milk-productions/ocr/uploads", {
-    method: "POST",
-    withAuth: true,
-    withTenant: true,
-    body: {
-      content_type: contentType,
-    },
-  });
+  return apiFetch<PresignUploadResponse>(
+    "/api/v1/milk-productions/ocr/uploads",
+    {
+      method: "POST",
+      withAuth: true,
+      withTenant: true,
+      body: {
+        content_type: contentType,
+      },
+    }
+  );
 }
 
-export async function uploadToS3(presignedData: PresignUploadResponse, file: File) {
+export async function uploadToS3(
+  presignedData: PresignUploadResponse,
+  file: File
+) {
   const formData = new FormData();
 
   // Add fields if present (for some S3 configurations)

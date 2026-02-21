@@ -1,5 +1,8 @@
-import { NativeBiometric, BiometryType } from '@capgo/capacitor-native-biometric';
-import { Capacitor } from '@capacitor/core';
+import {
+  NativeBiometric,
+  BiometryType,
+} from "@capgo/capacitor-native-biometric";
+import { Capacitor } from "@capacitor/core";
 
 export class BiometricService {
   /**
@@ -74,11 +77,12 @@ export class BiometricService {
     try {
       // Verificar que el usuario puede autenticarse
       await NativeBiometric.verifyIdentity({
-        reason: options?.reason || 'Inicia sesión con tu huella dactilar',
-        title: options?.title || 'Autenticación biométrica',
-        subtitle: options?.subtitle || 'Coloca tu dedo en el sensor',
-        description: options?.description || 'Usa tu huella para acceder a LecheFácil',
-        negativeButtonText: options?.negativeButtonText || 'Cancelar',
+        reason: options?.reason || "Inicia sesión con tu huella dactilar",
+        title: options?.title || "Autenticación biométrica",
+        subtitle: options?.subtitle || "Coloca tu dedo en el sensor",
+        description:
+          options?.description || "Usa tu huella para acceder a LecheFácil",
+        negativeButtonText: options?.negativeButtonText || "Cancelar",
         maxAttempts: 3,
       });
 
@@ -116,17 +120,17 @@ export class BiometricService {
   getBiometryTypeName(type: BiometryType): string {
     switch (type) {
       case BiometryType.TOUCH_ID:
-        return 'Touch ID';
+        return "Touch ID";
       case BiometryType.FACE_ID:
-        return 'Face ID';
+        return "Face ID";
       case BiometryType.FINGERPRINT:
-        return 'Huella dactilar';
+        return "Huella dactilar";
       case BiometryType.FACE_AUTHENTICATION:
-        return 'Reconocimiento facial';
+        return "Reconocimiento facial";
       case BiometryType.IRIS_AUTHENTICATION:
-        return 'Reconocimiento de iris';
+        return "Reconocimiento de iris";
       default:
-        return 'Biometría';
+        return "Biometría";
     }
   }
 }

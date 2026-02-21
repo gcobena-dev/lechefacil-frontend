@@ -92,15 +92,12 @@ export async function updateSemenStock(
   id: string,
   payload: UpdateSemenStockPayload
 ) {
-  return apiFetch<SemenInventoryResponse>(
-    `/api/v1/reproduction/semen/${id}`,
-    {
-      method: "PUT",
-      withAuth: true,
-      withTenant: true,
-      body: payload,
-    }
-  );
+  return apiFetch<SemenInventoryResponse>(`/api/v1/reproduction/semen/${id}`, {
+    method: "PUT",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
 }
 
 export async function deleteSemenStock(id: string) {

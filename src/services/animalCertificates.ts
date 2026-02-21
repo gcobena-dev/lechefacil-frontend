@@ -1,4 +1,4 @@
-import { apiFetch, ApiError } from './client';
+import { apiFetch, ApiError } from "./client";
 
 export interface AnimalCertificate {
   id: string;
@@ -66,7 +66,7 @@ export const getAnimalCertificate = async (
     return await apiFetch<AnimalCertificate>(
       `/api/v1/animals/${animalId}/certificate`,
       {
-        method: 'GET',
+        method: "GET",
         withAuth: true,
         withTenant: true,
       }
@@ -84,14 +84,17 @@ export const getAnimalCertificate = async (
  */
 export const createCertificate = async (
   animalId: string,
-  payload: Omit<CertificateCreatePayload, 'animal_id'>
+  payload: Omit<CertificateCreatePayload, "animal_id">
 ): Promise<AnimalCertificate> => {
-  return apiFetch<AnimalCertificate>(`/api/v1/animals/${animalId}/certificate`, {
-    method: 'POST',
-    body: { ...payload, animal_id: animalId },
-    withAuth: true,
-    withTenant: true,
-  });
+  return apiFetch<AnimalCertificate>(
+    `/api/v1/animals/${animalId}/certificate`,
+    {
+      method: "POST",
+      body: { ...payload, animal_id: animalId },
+      withAuth: true,
+      withTenant: true,
+    }
+  );
 };
 
 /**
@@ -101,12 +104,15 @@ export const updateCertificate = async (
   animalId: string,
   payload: CertificateUpdatePayload
 ): Promise<AnimalCertificate> => {
-  return apiFetch<AnimalCertificate>(`/api/v1/animals/${animalId}/certificate`, {
-    method: 'PUT',
-    body: payload,
-    withAuth: true,
-    withTenant: true,
-  });
+  return apiFetch<AnimalCertificate>(
+    `/api/v1/animals/${animalId}/certificate`,
+    {
+      method: "PUT",
+      body: payload,
+      withAuth: true,
+      withTenant: true,
+    }
+  );
 };
 
 /**
@@ -114,7 +120,7 @@ export const updateCertificate = async (
  */
 export const deleteCertificate = async (animalId: string): Promise<void> => {
   await apiFetch<void>(`/api/v1/animals/${animalId}/certificate`, {
-    method: 'DELETE',
+    method: "DELETE",
     withAuth: true,
     withTenant: true,
   });

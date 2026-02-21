@@ -1,13 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiFetch } from '@/services/client';
-import { MeResponse } from '@/services/types';
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/services/client";
+import { MeResponse } from "@/services/types";
 
 type UserProfile = MeResponse;
 
 // Get current user profile with role information
 export async function getUserProfile(): Promise<UserProfile> {
-  return apiFetch<UserProfile>('/api/v1/me', {
-    method: 'GET',
+  return apiFetch<UserProfile>("/api/v1/me", {
+    method: "GET",
     withAuth: true,
     withTenant: true,
   });
@@ -15,14 +15,20 @@ export async function getUserProfile(): Promise<UserProfile> {
 
 export function useUserProfile() {
   return useQuery<UserProfile>({
-    queryKey: ['auth', 'profile'],
+    queryKey: ["auth", "profile"],
     queryFn: getUserProfile,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
 // Helper hook to get current user role
-export function useUserRole(): 'ADMIN' | 'WORKER' | 'VET' | 'MANAGER' | 'VETERINARIAN' | undefined {
+export function useUserRole():
+  | "ADMIN"
+  | "WORKER"
+  | "VET"
+  | "MANAGER"
+  | "VETERINARIAN"
+  | undefined {
   const { data } = useUserProfile();
   return data?.active_role;
 }
@@ -40,12 +46,14 @@ export function useTenantId(): string | undefined {
 }
 
 // Helper to check if user has specific role
-export function useHasRole(role: 'ADMIN' | 'WORKER' | 'VET' | 'MANAGER' | 'VETERINARIAN'): boolean {
+export function useHasRole(
+  role: "ADMIN" | "WORKER" | "VET" | "MANAGER" | "VETERINARIAN"
+): boolean {
   const userRole = useUserRole();
   return userRole === role;
 }
 
 // Helper to check if user is admin (has admin privileges)
 export function useIsAdmin(): boolean {
-  return useHasRole('ADMIN');
+  return useHasRole("ADMIN");
 }

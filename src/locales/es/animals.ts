@@ -211,7 +211,8 @@ export default {
   highPerformer: "Alto rendimiento",
   averagePerformer: "Rendimiento promedio",
   lowPerformer: "Bajo rendimiento",
-  trendHint: "Compara el promedio de los últimos 30 días vs. los últimos 90 días.",
+  trendHint:
+    "Compara el promedio de los últimos 30 días vs. los últimos 90 días.",
   trendGreen: "Verde: mejorando",
   trendRed: "Rojo: <80% del promedio",
   trendGray: "Gris: estable",
@@ -225,7 +226,8 @@ export default {
   amountHeader: "Monto",
 
   // Tooltip de tendencia
-  productionTrendTooltip: "Compara el promedio de los últimos 30 días vs. los últimos 90 días. \nVerde: mejorando\nRojo: <80% del promedio\nGris: estable.",
+  productionTrendTooltip:
+    "Compara el promedio de los últimos 30 días vs. los últimos 90 días. \nVerde: mejorando\nRojo: <80% del promedio\nGris: estable.",
 
   // Ingresos
   earnings: "Ingresos",
@@ -243,7 +245,8 @@ export default {
   uploadingPhotos: "Subiendo fotos...",
   setPrimary: "Marcar como principal",
   primaryPhotoUpdated: "Foto principal actualizada",
-  primaryPhotoUpdatedDesc: "La foto principal ha sido actualizada correctamente",
+  primaryPhotoUpdatedDesc:
+    "La foto principal ha sido actualizada correctamente",
   couldNotUpdatePrimary: "No se pudo actualizar la foto principal",
   labels: "Etiquetas",
   noName: "Sin nombre",
@@ -287,7 +290,8 @@ export default {
   sire: "Padre (Sire)",
   viewDam: "Ver madre",
   viewSire: "Ver padre",
-  editGenealogyHint: "Para editar la información genealógica, usa el botón \"Editar Animal\" arriba.",
+  editGenealogyHint:
+    'Para editar la información genealógica, usa el botón "Editar Animal" arriba.',
   certificate: "Certificado",
   registryNumber: "Número de Registro",
   registryNumberExample: "Ej: HOL-123456",
@@ -304,7 +308,8 @@ export default {
   farm: "Finca",
   farmNamePlaceholder: "Nombre de la finca",
   noCertificateInfo: "No hay información de certificado registrada",
-  editCertificateHint: "Para editar la información del certificado, usa el botón \"Editar Animal\" arriba.",
+  editCertificateHint:
+    'Para editar la información del certificado, usa el botón "Editar Animal" arriba.',
   animalPhoto: "Foto del animal",
 
   // Event dialog and timeline
@@ -345,7 +350,8 @@ export default {
   registering: "Registrando...",
   registerEvent: "Registrar Evento",
   noEventsRegistered: "No hay eventos registrados",
-  startRegisteringEvents: "Comienza a registrar eventos del animal para llevar un historial completo",
+  startRegisteringEvents:
+    "Comienza a registrar eventos del animal para llevar un historial completo",
   registerFirstEvent: "Registrar Primer Evento",
 
   // Event type labels

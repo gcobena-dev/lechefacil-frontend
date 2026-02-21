@@ -178,7 +178,12 @@ export function useUpdateInsemination() {
       payload,
     }: {
       id: string;
-      payload: { technician?: string; notes?: string; heat_detected?: boolean; protocol?: string };
+      payload: {
+        technician?: string;
+        notes?: string;
+        heat_detected?: boolean;
+        protocol?: string;
+      };
     }) => updateInsemination(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inseminations"] });

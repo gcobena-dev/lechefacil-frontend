@@ -1,7 +1,11 @@
 import { apiFetch } from "./client";
 import { MilkPriceResponse } from "./types";
 
-export async function listMilkPrices(params?: { date_from?: string; date_to?: string; buyer_id?: string | null }) {
+export async function listMilkPrices(params?: {
+  date_from?: string;
+  date_to?: string;
+  buyer_id?: string | null;
+}) {
   return apiFetch<MilkPriceResponse[]>("/api/v1/milk-prices/", {
     withAuth: true,
     withTenant: true,
@@ -13,7 +17,12 @@ export async function listMilkPrices(params?: { date_from?: string; date_to?: st
   });
 }
 
-export async function createMilkPrice(payload: { date: string; price_per_l: string | number; currency?: string; buyer_id: string }) {
+export async function createMilkPrice(payload: {
+  date: string;
+  price_per_l: string | number;
+  currency?: string;
+  buyer_id: string;
+}) {
   return apiFetch<MilkPriceResponse>("/api/v1/milk-prices/", {
     method: "POST",
     withAuth: true,
@@ -22,7 +31,15 @@ export async function createMilkPrice(payload: { date: string; price_per_l: stri
   });
 }
 
-export async function updateMilkPrice(id: string, payload: Partial<{ date: string; price_per_l: string | number; currency: string; buyer_id: string | null }>) {
+export async function updateMilkPrice(
+  id: string,
+  payload: Partial<{
+    date: string;
+    price_per_l: string | number;
+    currency: string;
+    buyer_id: string | null;
+  }>
+) {
   return apiFetch<MilkPriceResponse>(`/api/v1/milk-prices/${id}`, {
     method: "PUT",
     withAuth: true,

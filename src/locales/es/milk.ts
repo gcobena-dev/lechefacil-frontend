@@ -133,12 +133,14 @@ export default {
   recordedFor: "registrados para",
   animals: "animales",
   animalsCapitalized: "Animales",
-  bulkConflictsHeader: "Algunos animales ya tienen registro para ese día/turno:",
+  bulkConflictsHeader:
+    "Algunos animales ya tienen registro para ese día/turno:",
   confirmProductionTitle: "Confirmar registro de producción",
   confirmBulkProductionTitle: "Confirmar registro masivo",
   confirmProductionDescription: "Revisa los datos antes de guardar el ordeño.",
   confirmDeliveryTitle: "Confirmar entrega de leche",
-  confirmDeliveryDescription: "Verifica los datos antes de registrar la entrega.",
+  confirmDeliveryDescription:
+    "Verifica los datos antes de registrar la entrega.",
 
   // MilkPrices específico
   pricesTitle: "Precios de Leche",
@@ -178,9 +180,11 @@ export default {
   priceSavedCorrectly: "Se guardó el precio correctamente",
   couldNotRegisterPrice: "No se pudo registrar el precio",
   buyerRequiredTitle: "Comprador requerido",
-  buyerRequiredDescription: "Debes seleccionar un comprador para registrar un precio.",
+  buyerRequiredDescription:
+    "Debes seleccionar un comprador para registrar un precio.",
   noBuyersTitle: "No hay compradores",
-  noBuyersDescription: "Necesitas crear al menos un comprador para poder registrar precios.",
+  noBuyersDescription:
+    "Necesitas crear al menos un comprador para poder registrar precios.",
   createBuyerCta: "Crear comprador",
   noBuyersHelper: "No hay compradores disponibles. Crea uno para continuar.",
 

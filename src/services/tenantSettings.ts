@@ -18,7 +18,9 @@ export async function getTenantSettings(): Promise<TenantSettings> {
   });
 }
 
-export async function updateTenantSettings(payload: UpdateTenantSettingsPayload): Promise<TenantSettings> {
+export async function updateTenantSettings(
+  payload: UpdateTenantSettingsPayload
+): Promise<TenantSettings> {
   return apiFetch<TenantSettings>("/api/v1/settings/billing", {
     method: "PUT",
     withAuth: true,

@@ -8,7 +8,11 @@ export interface CreateMilkDeliveryPayload {
   notes?: string;
 }
 
-export async function listMilkDeliveries(params?: { date_from?: string; date_to?: string; buyer_id?: string | null }) {
+export async function listMilkDeliveries(params?: {
+  date_from?: string;
+  date_to?: string;
+  buyer_id?: string | null;
+}) {
   return apiFetch<MilkDeliveryResponse[]>("/api/v1/milk-deliveries/", {
     withAuth: true,
     withTenant: true,

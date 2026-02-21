@@ -56,14 +56,17 @@ export async function listHealthRecords(
   animalId: string,
   params?: { limit?: number; offset?: number }
 ) {
-  return apiFetch<HealthRecordListResponse>(`/api/v1/animals/${animalId}/health`, {
-    withAuth: true,
-    withTenant: true,
-    query: {
-      limit: params?.limit,
-      offset: params?.offset,
-    },
-  });
+  return apiFetch<HealthRecordListResponse>(
+    `/api/v1/animals/${animalId}/health`,
+    {
+      withAuth: true,
+      withTenant: true,
+      query: {
+        limit: params?.limit,
+        offset: params?.offset,
+      },
+    }
+  );
 }
 
 export async function getHealthRecord(animalId: string, recordId: string) {

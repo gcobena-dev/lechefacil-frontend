@@ -4,8 +4,8 @@
  */
 export function getLocalDateString(date: Date): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -22,16 +22,16 @@ export function getTodayLocalDateString(): string {
  */
 export function getLocalDateTimeInputValue(date: Date = new Date()): string {
   const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const hh = String(date.getHours()).padStart(2, '0');
-  const mm = String(date.getMinutes()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${d}T${hh}:${mm}`;
 }
 
 // Default locale/timezone for display
-export const DEFAULT_LOCALE = 'es-EC';
-export const DEFAULT_TIMEZONE = 'America/Guayaquil';
+export const DEFAULT_LOCALE = "es-EC";
+export const DEFAULT_TIMEZONE = "America/Guayaquil";
 
 /** Coerce string | Date to Date */
 export function toDate(value: string | Date): Date {
@@ -44,7 +44,7 @@ export function toDate(value: string | Date): Date {
  * Avoids Date.toISOString() which converts to UTC and can shift the calendar date.
  */
 export function toLocalOffsetISO(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
+  const pad = (n: number) => String(n).padStart(2, "0");
   const y = date.getFullYear();
   const m = pad(date.getMonth() + 1);
   const d = pad(date.getDate());
@@ -53,7 +53,7 @@ export function toLocalOffsetISO(date: Date): string {
   const ss = pad(date.getSeconds());
 
   const offsetMin = -date.getTimezoneOffset(); // minutes east of UTC
-  const sign = offsetMin >= 0 ? '+' : '-';
+  const sign = offsetMin >= 0 ? "+" : "-";
   const offH = pad(Math.floor(Math.abs(offsetMin) / 60));
   const offM = pad(Math.abs(offsetMin) % 60);
 
@@ -61,21 +61,39 @@ export function toLocalOffsetISO(date: Date): string {
 }
 
 /** Format time as HH:mm in local timezone */
-export function formatLocalTime(value: string | Date, locale: string = DEFAULT_LOCALE, timeZone: string = DEFAULT_TIMEZONE): string {
+export function formatLocalTime(
+  value: string | Date,
+  locale: string = DEFAULT_LOCALE,
+  timeZone: string = DEFAULT_TIMEZONE
+): string {
   const dt = toDate(value);
-  return new Intl.DateTimeFormat(locale, { timeZone, hour: '2-digit', minute: '2-digit' }).format(dt);
+  return new Intl.DateTimeFormat(locale, {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(dt);
 }
 
 /** Format date as short month + day (e.g., "27 sept") */
-export function formatLocalDateShort(value: string | Date, locale: string = DEFAULT_LOCALE, timeZone: string = DEFAULT_TIMEZONE): string {
+export function formatLocalDateShort(
+  value: string | Date,
+  locale: string = DEFAULT_LOCALE,
+  timeZone: string = DEFAULT_TIMEZONE
+): string {
   const dt = toDate(value);
-  return new Intl.DateTimeFormat(locale, { timeZone, month: 'short', day: 'numeric' }).format(dt);
+  return new Intl.DateTimeFormat(locale, {
+    timeZone,
+    month: "short",
+    day: "numeric",
+  }).format(dt);
 }
 
 /**
  * Get date range for common periods in local timezone
  */
-export function getLocalDateRange(period: 'lastWeek' | 'lastMonth' | 'last3Months' | 'thisYear'): {
+export function getLocalDateRange(
+  period: "lastWeek" | "lastMonth" | "last3Months" | "thisYear"
+): {
   dateFrom: string;
   dateTo: string;
 } {
@@ -83,16 +101,16 @@ export function getLocalDateRange(period: 'lastWeek' | 'lastMonth' | 'last3Month
   const startDate = new Date();
 
   switch (period) {
-    case 'lastWeek':
+    case "lastWeek":
       startDate.setDate(today.getDate() - 7);
       break;
-    case 'lastMonth':
+    case "lastMonth":
       startDate.setMonth(today.getMonth() - 1);
       break;
-    case 'last3Months':
+    case "last3Months":
       startDate.setMonth(today.getMonth() - 3);
       break;
-    case 'thisYear':
+    case "thisYear":
       startDate.setMonth(0);
       startDate.setDate(1);
       break;
@@ -100,7 +118,7 @@ export function getLocalDateRange(period: 'lastWeek' | 'lastMonth' | 'last3Month
 
   return {
     dateFrom: getLocalDateString(startDate),
-    dateTo: getLocalDateString(today)
+    dateTo: getLocalDateString(today),
   };
 }
 

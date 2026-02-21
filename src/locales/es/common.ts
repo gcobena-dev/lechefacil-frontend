@@ -41,7 +41,8 @@ export default {
   settings: "Configuración",
   logout: "Cerrar Sesión",
   myAccount: "Mi Cuenta",
-  manageAccountSettings: "Gestionar la información personal y configuración de tu cuenta",
+  manageAccountSettings:
+    "Gestionar la información personal y configuración de tu cuenta",
   user: "Usuario",
   milkManagementSystem: "Sistema de Gestión Lechera",
 
@@ -88,7 +89,8 @@ export default {
   completeRequiredFields: "Por favor completa todos los campos requeridos",
   recordSuccessful: "Registro exitoso",
   recordError: "No se pudo registrar",
-  enterQuantityAtLeast: "Ingresa la cantidad para al menos un animal seleccionado",
+  enterQuantityAtLeast:
+    "Ingresa la cantidad para al menos un animal seleccionado",
   bulkRecordSuccessful: "Registro bulk exitoso",
   registrationError: "Error al registrar",
   futureDateNotAllowed: "No se puede registrar con fecha futura",
@@ -104,7 +106,8 @@ export default {
   showingResults: "Mostrando {{start}}-{{end}} de {{total}} resultados",
   labels: "Etiquetas",
   addLabels: "Agregar etiquetas...",
-  labelsHelper: "{{count}}/{{max}} etiquetas • Presiona espacio, coma o Enter para agregar",
+  labelsHelper:
+    "{{count}}/{{max}} etiquetas • Presiona espacio, coma o Enter para agregar",
   removeTagAria: "Eliminar {{tag}}",
 
   // Configuración de perfil
@@ -157,10 +160,12 @@ export default {
   createdAt: "Fecha de creación",
   removeUser: "Eliminar usuario",
   confirmDeleteUser: "Confirmar eliminación",
-  confirmDeleteUserMessage: "¿Estás seguro de que deseas eliminar este usuario del tenant? Esta acción no se puede deshacer.",
+  confirmDeleteUserMessage:
+    "¿Estás seguro de que deseas eliminar este usuario del tenant? Esta acción no se puede deshacer.",
   reason: "Razón (opcional)",
   userRemoved: "Usuario eliminado",
-  userRemovedDescription: "El usuario ha sido eliminado del tenant exitosamente",
+  userRemovedDescription:
+    "El usuario ha sido eliminado del tenant exitosamente",
   couldNotRemoveUser: "No se pudo eliminar el usuario",
   noUsersFound: "No se encontraron usuarios",
   page: "Página",
@@ -192,8 +197,10 @@ export default {
 
   // Role-based access
   accessDenied: "Acceso Denegado",
-  adminRequired: "Se requieren privilegios de administrador para acceder a esta sección.",
-  insufficientPermissions: "No tienes los permisos necesarios para acceder a esta sección.",
+  adminRequired:
+    "Se requieren privilegios de administrador para acceder a esta sección.",
+  insufficientPermissions:
+    "No tienes los permisos necesarios para acceder a esta sección.",
 
   // Placeholders
   deleteUserReasonPlaceholder: "Razón para eliminar al usuario...",
