@@ -41,7 +41,7 @@ export default function AnimalsReport() {
   });
   const { data: animalsData } = useQuery({
     queryKey: ["animals-list-all"],
-    queryFn: () => listAnimals(),
+    queryFn: () => listAnimals({ limit: 500 }),
   });
   const { data: breedsData } = useQuery({
     queryKey: ["breeds"],
@@ -341,180 +341,196 @@ export default function AnimalsReport() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          {/* Advanced Filters Toggle */}
+          <div className="border-t pt-4">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className="flex items-center gap-2 w-full justify-between md:w-auto md:justify-start"
+              className="flex items-center gap-2 w-full justify-between"
             >
-              <Filter className="h-4 w-4" />
-              Filtros Avanzados
-              {((filters.animal_ids?.length || 0) + (filters.labels?.length || 0) + (filters.breed_ids?.length || 0) + (filters.lot_ids?.length || 0) + (filters.status_ids?.length || 0)) > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {(filters.animal_ids?.length || 0) + (filters.labels?.length || 0) + (filters.breed_ids?.length || 0) + (filters.lot_ids?.length || 0) + (filters.status_ids?.length || 0)}
-                </Badge>
-              )}
+              <span className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                Filtros Avanzados
+                {((filters.animal_ids?.length || 0) + (filters.labels?.length || 0) + (filters.breed_ids?.length || 0) + (filters.lot_ids?.length || 0) + (filters.status_ids?.length || 0)) > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {(filters.animal_ids?.length || 0) + (filters.labels?.length || 0) + (filters.breed_ids?.length || 0) + (filters.lot_ids?.length || 0) + (filters.status_ids?.length || 0)}
+                  </Badge>
+                )}
+              </span>
               {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
+
+            {showAdvancedFilters && (
+              <div className="mt-4 space-y-4 border rounded-lg p-4 bg-muted/30">
+                {/* Animals Multi-Select */}
+                <div className="space-y-2">
+                  <Label>{t('reports.selectAnimals')}</Label>
+                  <Select value="" onValueChange={(value) => {
+                    if (!filters.animal_ids?.includes(value)) {
+                      setFilters(prev => ({ ...prev, animal_ids: [...(prev.animal_ids || []), value] }));
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar animal..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {animals.map((a: any) => (
+                        <SelectItem key={a.id} value={a.id}>{a.tag} {a.name ? `- ${a.name}` : ''}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!!filters.animal_ids?.length && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {filters.animal_ids.map((id) => {
+                        const a = animals.find((x: any) => x.id === id);
+                        return (
+                          <Badge key={id} variant="outline" className="text-xs gap-1">
+                            {a ? (a.name ? `${a.name} (${a.tag})` : a.tag) : id}
+                            <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, animal_ids: (prev.animal_ids || []).filter(x => x !== id) }))} />
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Labels Multi-Select */}
+                <div className="space-y-2">
+                  <Label>Etiquetas</Label>
+                  <Select value="" onValueChange={(value) => {
+                    if (!filters.labels?.includes(value)) {
+                      setFilters(prev => ({ ...prev, labels: [...(prev.labels || []), value] }));
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar etiqueta..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allLabels.map((label: string) => (
+                        <SelectItem key={label} value={label}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!!filters.labels?.length && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {filters.labels.map((label) => (
+                        <Badge key={label} variant="secondary" className="gap-1">
+                          {label}
+                          <button
+                            onClick={() => setFilters(prev => ({ ...prev, labels: (prev.labels || []).filter(l => l !== label) }))}
+                            className="ml-1 hover:bg-destructive/20 rounded-full"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Breeds, Lots, Status in a grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Breeds */}
+                  <div className="space-y-2">
+                    <Label>Razas</Label>
+                    <Select value="" onValueChange={(value) => {
+                      if (!filters.breed_ids?.includes(value)) {
+                        setFilters(prev => ({ ...prev, breed_ids: [...(prev.breed_ids || []), value] }));
+                      }
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {breeds.map((b: any) => (
+                          <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!!filters.breed_ids?.length && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.breed_ids.map((id) => {
+                          const b = breeds.find((x: any) => x.id === id);
+                          return (
+                            <Badge key={id} variant="outline" className="text-xs gap-1">
+                              {b?.name || id}
+                              <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, breed_ids: (prev.breed_ids || []).filter(x => x !== id) }))} />
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lots */}
+                  <div className="space-y-2">
+                    <Label>Lotes</Label>
+                    <Select value="" onValueChange={(value) => {
+                      if (!filters.lot_ids?.includes(value)) {
+                        setFilters(prev => ({ ...prev, lot_ids: [...(prev.lot_ids || []), value] }));
+                      }
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lots.map((l: any) => (
+                          <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!!filters.lot_ids?.length && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.lot_ids.map((id) => {
+                          const l = lots.find((x: any) => x.id === id);
+                          return (
+                            <Badge key={id} variant="outline" className="text-xs gap-1">
+                              {l?.name || id}
+                              <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, lot_ids: (prev.lot_ids || []).filter(x => x !== id) }))} />
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label>Estados</Label>
+                    <Select value="" onValueChange={(value) => {
+                      if (!filters.status_ids?.includes(value)) {
+                        setFilters(prev => ({ ...prev, status_ids: [...(prev.status_ids || []), value] }));
+                      }
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {animalStatuses.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!!filters.status_ids?.length && (
+                      <div className="flex flex-wrap gap-1">
+                        {filters.status_ids.map((id) => {
+                          const s = animalStatuses.find((x: any) => x.id === id);
+                          return (
+                            <Badge key={id} variant="outline" className="text-xs gap-1">
+                              {s?.name || id}
+                              <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, status_ids: (prev.status_ids || []).filter(x => x !== id) }))} />
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-
-          {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('reports.selectAnimals')}</Label>
-                <Select value="" onValueChange={(value) => {
-                  if (!filters.animal_ids?.includes(value)) {
-                    setFilters(prev => ({ ...prev, animal_ids: [...(prev.animal_ids || []), value] }));
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {animals.map((a: any) => (
-                      <SelectItem key={a.id} value={a.id}>{a.tag} {a.name ? `- ${a.name}` : ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!!filters.animal_ids?.length && (
-                  <div className="flex flex-wrap gap-1">
-                    {filters.animal_ids.map((id) => {
-                      const a = animals.find((x: any) => x.id === id);
-                      return (
-                        <Badge key={id} variant="outline" className="text-xs gap-1">
-                          {a ? (a.name ? `${a.name} (${a.tag})` : a.tag) : id}
-                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, animal_ids: (prev.animal_ids || []).filter(x => x !== id) }))} />
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Etiquetas</Label>
-                <Select value="" onValueChange={(value) => {
-                  if (!filters.labels?.includes(value)) {
-                    setFilters(prev => ({ ...prev, labels: [...(prev.labels || []), value] }));
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allLabels.map((label: string) => (
-                      <SelectItem key={label} value={label}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!!filters.labels?.length && (
-                  <div className="flex flex-wrap gap-1">
-                    {filters.labels.map((label) => (
-                      <Badge key={label} variant="outline" className="text-xs gap-1">
-                        {label}
-                        <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, labels: (prev.labels || []).filter(l => l !== label) }))} />
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Razas</Label>
-                <Select value="" onValueChange={(value) => {
-                  if (!filters.breed_ids?.includes(value)) {
-                    setFilters(prev => ({ ...prev, breed_ids: [...(prev.breed_ids || []), value] }));
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {breeds.map((b: any) => (
-                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!!filters.breed_ids?.length && (
-                  <div className="flex flex-wrap gap-1">
-                    {filters.breed_ids.map((id) => {
-                      const b = breeds.find((x: any) => x.id === id);
-                      return (
-                        <Badge key={id} variant="outline" className="text-xs gap-1">
-                          {b?.name || id}
-                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, breed_ids: (prev.breed_ids || []).filter(x => x !== id) }))} />
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Lotes</Label>
-                <Select value="" onValueChange={(value) => {
-                  if (!filters.lot_ids?.includes(value)) {
-                    setFilters(prev => ({ ...prev, lot_ids: [...(prev.lot_ids || []), value] }));
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lots.map((l: any) => (
-                      <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!!filters.lot_ids?.length && (
-                  <div className="flex flex-wrap gap-1">
-                    {filters.lot_ids.map((id) => {
-                      const l = lots.find((x: any) => x.id === id);
-                      return (
-                        <Badge key={id} variant="outline" className="text-xs gap-1">
-                          {l?.name || id}
-                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, lot_ids: (prev.lot_ids || []).filter(x => x !== id) }))} />
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Estados</Label>
-                <Select value="" onValueChange={(value) => {
-                  if (!filters.status_ids?.includes(value)) {
-                    setFilters(prev => ({ ...prev, status_ids: [...(prev.status_ids || []), value] }));
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {animalStatuses.map((s: any) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!!filters.status_ids?.length && (
-                  <div className="flex flex-wrap gap-1">
-                    {filters.status_ids.map((id) => {
-                      const s = animalStatuses.find((x: any) => x.id === id);
-                      return (
-                        <Badge key={id} variant="outline" className="text-xs gap-1">
-                          {s?.name || id}
-                          <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, status_ids: (prev.status_ids || []).filter(x => x !== id) }))} />
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

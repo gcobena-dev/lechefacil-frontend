@@ -13,7 +13,7 @@ import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery } from "@tanstack/react-query";
-import { getLabelSuggestions } from "@/services/animals";
+import { getLabelSuggestions, listAnimals } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { getAnimalStatuses } from "@/services/animals";
@@ -85,7 +85,12 @@ export default function ProductionReport() {
     queryFn: () => getLabelSuggestions(''),
   });
 
-  const animals = reportData?.animals || [];
+  const { data: animalsData } = useQuery({
+    queryKey: ["animals-list-all"],
+    queryFn: () => listAnimals({ limit: 500 }),
+  });
+
+  const animals = animalsData?.items || [];
   const breeds = breedsData || [];
   const lots = lotsData || [];
   const statuses = statusesData || [];
@@ -122,24 +127,42 @@ export default function ProductionReport() {
     }
   }, [filters, t]);
 
+  // Parse a date string that may be "dd/mm" (no year) by inferring
+  // the correct year from the report period range (handles cross-year periods).
+  const parseDateString = (dateString: string): Date => {
+    if (dateString.match(/^\d{1,2}\/\d{1,2}$/)) {
+      const [day, month] = dateString.split('/');
+      const m = parseInt(month) - 1;
+      const d = parseInt(day);
+
+      const fromDate = reportData?.summary?.period_from
+        ? new Date(reportData.summary.period_from)
+        : null;
+      const toDate = reportData?.summary?.period_to
+        ? new Date(reportData.summary.period_to)
+        : null;
+
+      if (fromDate && toDate && fromDate.getFullYear() !== toDate.getFullYear()) {
+        // Cross-year period: if the month is <= the end month of the end year,
+        // and the month is < the start month of the start year, use end year
+        const startYear = fromDate.getFullYear();
+        const endYear = toDate.getFullYear();
+        const startMonth = fromDate.getMonth();
+        // If month is before the start month, it belongs to the next year
+        const year = m < startMonth ? endYear : startYear;
+        return new Date(year, m, d);
+      }
+
+      const year = fromDate?.getFullYear() ?? new Date().getFullYear();
+      return new Date(year, m, d);
+    }
+    return new Date(dateString);
+  };
+
   // Helper functions for date formatting and calculations
   const formatDate = (dateString: string) => {
     try {
-      let date: Date;
-
-      // Handle format like "21/09" (day/month without year)
-      if (dateString.match(/^\d{1,2}\/\d{1,2}$/)) {
-        const [day, month] = dateString.split('/');
-        // Use current year or year from the report period
-        const currentYear = reportData?.summary?.period_from ?
-          new Date(reportData.summary.period_from).getFullYear() :
-          new Date().getFullYear();
-
-        // Create date avoiding timezone issues by using the Date constructor with separate parameters
-        date = new Date(currentYear, parseInt(month) - 1, parseInt(day));
-      } else {
-        date = new Date(dateString);
-      }
+      const date = parseDateString(dateString);
 
       if (isNaN(date.getTime())) {
         return { formatted: t('forms.invalidDate'), dayName: '' };
@@ -201,19 +224,7 @@ export default function ProductionReport() {
         };
       })
       .sort((a, b) => {
-        // Sort by original date format for chronological order
-        const parseDate = (dateStr: string) => {
-          if (dateStr.match(/^\d{1,2}\/\d{1,2}$/)) {
-            const [day, month] = dateStr.split('/');
-            const currentYear = reportData?.summary?.period_from ?
-              new Date(reportData.summary.period_from).getFullYear() :
-              new Date().getFullYear();
-            // Use Date constructor with separate parameters to avoid timezone issues
-            return new Date(currentYear, parseInt(month) - 1, parseInt(day));
-          }
-          return new Date(dateStr);
-        };
-        return parseDate(a.originalDate).getTime() - parseDate(b.originalDate).getTime();
+        return parseDateString(a.originalDate).getTime() - parseDateString(b.originalDate).getTime();
       });
   };
 
@@ -439,9 +450,9 @@ export default function ProductionReport() {
                       <SelectValue placeholder="Seleccionar animal..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {animals.map((animal: any) => (
-                        <SelectItem key={animal.id} value={animal.id}>
-                          {animal.tag} - {animal.name || 'Sin nombre'}
+                      {animals.map((a: any) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.tag} {a.name ? `- ${a.name}` : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -449,16 +460,11 @@ export default function ProductionReport() {
                   {filters.animal_ids.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {filters.animal_ids.map((id) => {
-                        const animal = animals.find((a: any) => a.id === id);
+                        const a = animals.find((x: any) => x.id === id);
                         return (
-                          <Badge key={id} variant="secondary" className="gap-1">
-                            {animal?.tag || id}
-                            <button
-                              onClick={() => setFilters(prev => ({ ...prev, animal_ids: prev.animal_ids.filter(aid => aid !== id) }))}
-                              className="ml-1 hover:bg-destructive/20 rounded-full"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
+                          <Badge key={id} variant="outline" className="text-xs gap-1">
+                            {a ? (a.name ? `${a.name} (${a.tag})` : a.tag) : id}
+                            <X className="h-2 w-2 cursor-pointer" onClick={() => setFilters(prev => ({ ...prev, animal_ids: prev.animal_ids.filter(aid => aid !== id) }))} />
                           </Badge>
                         );
                       })}
@@ -893,18 +899,7 @@ export default function ProductionReport() {
                       <tbody>
                         {prepareChartData()
                           .sort((a, b) => {
-                            // Sort by parsed date - most recent first
-                            const parseDate = (dateStr: string) => {
-                              if (dateStr.match(/^\d{1,2}\/\d{1,2}$/)) {
-                                const [day, month] = dateStr.split('/');
-                                const currentYear = reportData?.summary?.period_from ?
-                                  new Date(reportData.summary.period_from).getFullYear() :
-                                  new Date().getFullYear();
-                                return new Date(currentYear, parseInt(month) - 1, parseInt(day));
-                              }
-                              return new Date(dateStr);
-                            };
-                            return parseDate(b.originalDate).getTime() - parseDate(a.originalDate).getTime();
+                            return parseDateString(b.originalDate).getTime() - parseDateString(a.originalDate).getTime();
                           })
                           .map((row) => (
                             <tr key={row.originalDate} className="hover:bg-muted/30">
@@ -983,17 +978,7 @@ export default function ProductionReport() {
 
                   {prepareChartData()
                     .sort((a, b) => {
-                      const parseDate = (dateStr: string) => {
-                        if (dateStr.match(/^\d{1,2}\/\d{1,2}$/)) {
-                          const [day, month] = dateStr.split('/');
-                          const currentYear = reportData?.summary?.period_from ?
-                            new Date(reportData.summary.period_from).getFullYear() :
-                            new Date().getFullYear();
-                          return new Date(currentYear, parseInt(month) - 1, parseInt(day));
-                        }
-                        return new Date(dateStr);
-                      };
-                      return parseDate(b.originalDate).getTime() - parseDate(a.originalDate).getTime();
+                      return parseDateString(b.originalDate).getTime() - parseDateString(a.originalDate).getTime();
                     })
                     .map((row) => (
                       <div key={row.originalDate} className="border border-border rounded-lg p-3 bg-card">

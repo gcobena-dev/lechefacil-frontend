@@ -88,8 +88,8 @@ export default {
 
   // Estadísticas
   inProductionStats: "En Producción",
-  soldStats: "Vendidos",
-  culledStats: "Descartados",
+  withdrawnStats: "Dados de baja",
+  otherStats: "Otros",
   totalStats: "Total",
 
   // Formulario
@@ -206,6 +206,8 @@ export default {
   // Estadísticas adicionales
   last30Days: "Últimos 30 días",
   last30DaysProduction: "Producción últimos 30 días",
+  last90DaysProduction: "Producción últimos 90 días",
+  daysWithRecords: "{days} de 90 días con registros",
   recordsIn90Days: "Registros en 90 días",
   productionTrend: "Tendencia de producción",
   highPerformer: "Alto rendimiento",

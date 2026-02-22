@@ -66,6 +66,7 @@ import { useAnimalEvents } from "@/hooks/useAnimalEvents";
 import { useAnimalLactations } from "@/hooks/useAnimalLactations";
 import EventTimelineCard from "@/components/animals/EventTimelineCard";
 import LactationCard from "@/components/animals/LactationCard";
+import ProductionLineChart from "@/components/charts/ProductionLineChart";
 import { getAnimalCertificate } from "@/services/animalCertificates";
 import RegisterEventDialog from "@/components/animals/RegisterEventDialog";
 import HealthSummaryCards from "@/components/health/HealthSummaryCards";
@@ -110,9 +111,9 @@ export default function AnimalDetail() {
     enabled: !!id,
   });
 
-  // Compute last 90 days range like hook
+  // Compute last 90 days range like hook (use -89 for inclusive 90-day range)
   const today = useMemo(() => new Date(), []);
-  const ninetyDaysAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d; }, []);
+  const ninetyDaysAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 89); return d; }, []);
   const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
 
   // Paginated productions for the table
@@ -443,7 +444,7 @@ export default function AnimalDetail() {
                 <BarChart3 className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{productionSummary.recordsCount}</p>
+                <p className="text-2xl font-bold">{total || productionSummary.recordsCount}</p>
                 <p className="text-sm text-muted-foreground">{t('animals.recordsIn90Days')}</p>
               </div>
             </div>
@@ -451,25 +452,28 @@ export default function AnimalDetail() {
         </Card>
       </div>
 
-      {/* Last 30 Days Summary */}
+      {/* Last 90 Days Production Summary + Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            {t('animals.last30DaysProduction')}
+            {t('animals.last90DaysProduction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">{t('animals.last30Days')}</p>
-              <p className="text-3xl font-bold">{productionSummary.last30DaysLiters.toFixed(1)}L</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('animals.total90Days')}</p>
+              <p className="text-3xl font-bold">{productionSummary.totalLiters.toFixed(1)}L</p>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
-                  {t('animals.dailyAverage')}: {productionSummary.last30DaysAvg.toFixed(1)}L
+                  {t('animals.dailyAverage')}: {productionSummary.avgDaily.toFixed(1)}L
                 </p>
                 <p className="text-sm font-medium text-green-600">
-                  {t('animals.earnings')}: {formatCurrency(productionSummary.last30DaysEarnings)}
+                  {t('animals.earnings')}: {formatCurrency(productionSummary.totalEarnings)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t('animals.daysWithRecords').replace('{days}', String(productionSummary.daysWithRecords))}
                 </p>
               </div>
             </div>
@@ -493,23 +497,75 @@ export default function AnimalDetail() {
                 </TooltipProvider>
               </div>
               <div className="flex items-center gap-2">
-                {productionSummary.last30DaysAvg > productionSummary.avgDaily ? (
-                  <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    {t('animals.highPerformer')}
-                  </Badge>
-                ) : productionSummary.last30DaysAvg < productionSummary.avgDaily * 0.8 ? (
-                  <Badge variant="destructive">
-                    {t('animals.lowPerformer')}
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary">
-                    {t('animals.averagePerformer')}
-                  </Badge>
-                )}
+                {(() => {
+                  // Compare last 30 days avg vs full 90 days avg for trend
+                  const thirtyDaysAgo = new Date();
+                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                  const last30 = productionData.filter(
+                    (p) => new Date(p.date_time) >= thirtyDaysAgo
+                  );
+                  const last30Days = new Set(
+                    last30.map((p) => new Date(p.date_time).toDateString())
+                  ).size;
+                  const last30Liters = last30.reduce(
+                    (sum, p) => sum + parseFloat(p.volume_l),
+                    0
+                  );
+                  const last30Avg = last30Days > 0 ? last30Liters / last30Days : 0;
+
+                  if (last30Avg > productionSummary.avgDaily) {
+                    return (
+                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                        <TrendingUp className="h-3 w-3 mr-1" />
+                        {t('animals.highPerformer')}
+                      </Badge>
+                    );
+                  } else if (last30Avg < productionSummary.avgDaily * 0.8) {
+                    return (
+                      <Badge variant="destructive">
+                        {t('animals.lowPerformer')}
+                      </Badge>
+                    );
+                  } else {
+                    return (
+                      <Badge variant="secondary">
+                        {t('animals.averagePerformer')}
+                      </Badge>
+                    );
+                  }
+                })()}
               </div>
             </div>
           </div>
+
+          {/* Production Chart */}
+          {productionData.length > 0 && (
+            <div className="mt-6 md:col-span-2">
+              <ProductionLineChart
+                data={(() => {
+                  // Group by date and sum AM+PM
+                  const byDate: Record<string, number> = {};
+                  productionData.forEach((p) => {
+                    const date = p.date_time.split("T")[0];
+                    byDate[date] = (byDate[date] || 0) + parseFloat(p.volume_l);
+                  });
+                  return Object.entries(byDate)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([date, vol]) => ({
+                      date,
+                      [animal.name || animal.tag]: Number(vol.toFixed(1)),
+                    }));
+                })()}
+                animals={[
+                  {
+                    key: animal.name || animal.tag,
+                    label: animal.name || animal.tag,
+                  },
+                ]}
+                days={90}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

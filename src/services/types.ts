@@ -69,8 +69,8 @@ export interface AnimalsListResponse {
 
 export interface AnimalsSummary {
   production: number;
-  sold: number;
-  culled: number;
+  withdrawn: number;
+  other: number;
   total: number;
 }
 

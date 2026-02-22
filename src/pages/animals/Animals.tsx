@@ -134,13 +134,14 @@ export default function Animals() {
     return list.reduce(
       (acc, animal) => {
         const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
-        if (statusKey === 'sold') acc.sold += 1;
-        else if (statusKey === 'culled') acc.culled += 1;
-        else if (statusKey === 'active') acc.production += 1;
+        const code = ((animal as any).status_code ?? (animal as any).status ?? "").toUpperCase();
+        if (code === 'LACTATING') acc.production += 1;
+        else if (['SOLD', 'CULLED', 'DEAD'].includes(code) || ['sold', 'culled', 'dead'].includes(statusKey)) acc.withdrawn += 1;
+        else acc.other += 1;
         acc.total += 1;
         return acc;
       },
-      { production: 0, sold: 0, culled: 0, total: 0 }
+      { production: 0, withdrawn: 0, other: 0, total: 0 }
     );
   };
 
@@ -244,17 +245,17 @@ export default function Animals() {
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{summary.sold}</p>
-              <p className="text-sm text-muted-foreground">{t('animals.soldStats')}</p>
+              <p className="text-2xl font-bold">{summary.withdrawn}</p>
+              <p className="text-sm text-muted-foreground">{t('animals.withdrawnStats')}</p>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div>
-              <p className="text-2xl font-bold">{summary.culled}</p>
-              <p className="text-sm text-muted-foreground">{t('animals.culledStats')}</p>
+              <p className="text-2xl font-bold">{summary.other}</p>
+              <p className="text-sm text-muted-foreground">{t('animals.otherStats')}</p>
             </div>
           </CardContent>
         </Card>
