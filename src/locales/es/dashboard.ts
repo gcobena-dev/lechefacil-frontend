@@ -35,7 +35,7 @@ export default {
   dailyProgressTitle: "Progreso del Día",
   dailyProgressDescription: "Meta diaria vs. producción actual",
   goalInfoDaily:
-    "Meta diaria calculada como el promedio de producción de los últimos 30 días.",
+    "Meta diaria = promedio de litros/vaca (últimos 30 días) × vacas ordeñadas hoy.",
   morningMilking: "Ordeño Matutino",
   eveningMilking: "Ordeño Vespertino",
   dailyGoal: "Meta Diaria",
@@ -72,7 +72,7 @@ export default {
   monthlyProfitability: "Rentabilidad mes",
   productionVsGoal: "Producción vs meta",
   goalInfoMTD:
-    "Meta MTD = (promedio diario últimos 30 días) × días transcurridos del mes.",
+    "Meta MTD = (promedio litros/vaca últimos 30 días) × vacas promedio del mes × días transcurridos.",
   pendingAlerts: "Alertas pendientes",
   upcomingTasks: "Próximas tareas",
 
