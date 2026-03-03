@@ -7,6 +7,7 @@ import {
 import { requireApiUrl, getToken, getTenantId, TENANT_HEADER } from "./config";
 
 const DEVICE_TOKEN_KEY = "lf_device_push_token";
+let listenersAttached = false;
 
 export function getSavedDeviceToken(): string | null {
   try {
@@ -102,27 +103,43 @@ export async function initPushNotifications() {
   }
   if (status.receive !== "granted") return;
 
+  // Attach listeners only once to avoid duplicates on re-init
+  if (!listenersAttached) {
+    listenersAttached = true;
+
+    // Listen for registration
+    PushNotifications.addListener("registration", async (token: Token) => {
+      const t = token.value;
+      console.log("[Push] registration token:", t?.slice(0, 12) + "...");
+      setSavedDeviceToken(t);
+      try {
+        await registerTokenWithBackend(t);
+        console.log("[Push] token sent to backend");
+      } catch (e) {
+        console.warn("Failed to register device token in backend", e);
+      }
+    });
+
+    // Foreground reception (optional: could show a toast or local notification)
+    PushNotifications.addListener("pushNotificationReceived", (_notification) => {
+      console.log("[Push] pushNotificationReceived (foreground)", _notification);
+    });
+  }
+
   // Register will trigger the 'registration' event with token
   await PushNotifications.register();
   console.log("[Push] register called");
 
-  // Listen for registration
-  PushNotifications.addListener("registration", async (token: Token) => {
-    const t = token.value;
-    console.log("[Push] registration token:", t?.slice(0, 12) + "...");
-    setSavedDeviceToken(t);
+  // If we already have a saved token, re-register it with backend
+  // (covers the case where listeners fired before auth was ready)
+  const saved = getSavedDeviceToken();
+  if (saved) {
     try {
-      await registerTokenWithBackend(t);
-      console.log("[Push] token sent to backend");
+      await registerTokenWithBackend(saved);
     } catch (e) {
-      console.warn("Failed to register device token in backend", e);
+      console.warn("[Push] re-register saved token failed", e);
     }
-  });
-
-  // Foreground reception (optional: could show a toast or local notification)
-  PushNotifications.addListener("pushNotificationReceived", (_notification) => {
-    console.log("[Push] pushNotificationReceived (foreground)", _notification);
-  });
+  }
 }
 
 export async function unregisterPushNotifications() {

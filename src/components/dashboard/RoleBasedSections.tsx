@@ -224,7 +224,23 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
           {adminOverview.data ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">{t("dashboard.monthlyProfitability")}</span>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  {t("dashboard.monthlyProfitability")}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t('dashboard.infoMonthlyProfitability')}
+                        className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-muted-foreground hover:bg-accent"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 text-sm" side="top" align="start">
+                      {t('dashboard.infoMonthlyProfitability')}
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <span className={`font-medium flex items-center gap-1 ${
                   adminOverview.data.management_overview.monthly_profitability.startsWith('+') ? 'text-success' : 'text-destructive'
                 }`}>
@@ -257,13 +273,45 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
                 <span className="font-medium">{adminOverview.data.management_overview.production_vs_goal}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">{t("dashboard.pendingAlerts")}</span>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  {t("dashboard.pendingAlerts")}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t('dashboard.infoPendingAlerts')}
+                        className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-muted-foreground hover:bg-accent"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 text-sm" side="top" align="start">
+                      {t('dashboard.infoPendingAlerts')}
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <Badge variant={adminOverview.data.management_overview.pending_alerts > 0 ? "destructive" : "outline"}>
                   {adminOverview.data.management_overview.pending_alerts}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">{t("dashboard.upcomingTasks")}</span>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  {t("dashboard.upcomingTasks")}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t('dashboard.infoUpcomingTasks')}
+                        className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-muted-foreground hover:bg-accent"
+                      >
+                        <Info className="w-3.5 h-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 text-sm" side="top" align="start">
+                      {t('dashboard.infoUpcomingTasks')}
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <span className="font-medium">{adminOverview.data.management_overview.upcoming_tasks}</span>
               </div>
             </div>

@@ -127,6 +127,48 @@ export default {
   noStock: "No hay pajuelas en inventario",
   addFirstStock: "Agrega pajuelas al inventario para comenzar",
 
+  // Dashboard KPIs
+  kpiCowsInseminated: "Vacas Inseminadas",
+  kpiStrawsUsed: "Pajuelas Utilizadas",
+  kpiServicesPerCow: "Servicios/Vaca",
+  kpiPregnantPct: "Preñadas %",
+  kpiOpenPct: "Vacías %",
+  kpiConceptionRate: "Tasa Concepción",
+  kpiTotal: "Total",
+  kpiCows: "Vacas",
+  kpiInseminations: "Inseminaciones",
+  kpiOneService: "1 Servicio",
+  kpiTwoServices: "2 Servicios",
+  kpiThreePlusServices: "3+ Servicios",
+  kpiCowsInseminatedShort: "Vacas",
+
+  // Dashboard charts
+  kpiReproductiveStatus: "Estado Reproductivo",
+  kpiServicesDistribution: "Distribución de Servicios",
+  kpiInseminationActivity: "Actividad de Inseminación",
+  kpiMonthlyTrends: "Tendencia Mensual",
+
+  // Postpartum alerts
+  kpiPostpartumAlerts: "Alerta Reproductiva Posparto",
+  kpiAnimal: "Vaca",
+  kpiCalvingDate: "Fecha Parto",
+  kpiDaysPostpartum: "Días Posparto",
+  kpiAlertLevel: "Estado",
+  kpiOptimal: "Óptimo",
+  kpiWarning: "Atención",
+  kpiCritical: "Crítico",
+  kpiNoPostpartumAlerts: "Sin alertas posparto activas",
+
+  // Date filter
+  kpiLast3Months: "Últimos 3 meses",
+  kpiLast6Months: "Últimos 6 meses",
+  kpiLast12Months: "Últimos 12 meses",
+  kpiThisYear: "Este año",
+  kpiDateRange: "Período",
+
+  // Empty states
+  noData: "Sin datos disponibles",
+
   // Común
   notes: "Notas",
   notesPlaceholder: "Observaciones adicionales...",

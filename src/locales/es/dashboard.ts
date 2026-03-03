@@ -35,10 +35,11 @@ export default {
   dailyProgressTitle: "Progreso del Día",
   dailyProgressDescription: "Meta diaria vs. producción actual",
   goalInfoDaily:
-    "Meta diaria = promedio de litros/vaca (últimos 30 días) × vacas ordeñadas hoy.",
+    "Litros esperados hoy según el rendimiento promedio por vaca en los últimos 30 días y la cantidad de vacas ordeñadas. Si aún no se ha ordeñado, muestra el promedio de una sola vaca.",
   morningMilking: "Ordeño Matutino",
   eveningMilking: "Ordeño Vespertino",
   dailyGoal: "Meta Diaria",
+  expected: "esperado",
   completed: "Completado",
   pending: "Pendiente",
   inProgress: "En Progreso",
@@ -71,8 +72,12 @@ export default {
   managementOverview: "Vista General",
   monthlyProfitability: "Rentabilidad mes",
   productionVsGoal: "Producción vs meta",
-  goalInfoMTD:
-    "Meta MTD = (promedio litros/vaca últimos 30 días) × vacas promedio del mes × días transcurridos.",
+  goalInfoMTD: "Porcentaje de lo producido este mes respecto a lo esperado.",
+  infoMonthlyProfitability:
+    "Comparación de ingresos por entregas de leche respecto al mismo período del mes anterior.",
+  infoPendingAlerts:
+    "Animales con tratamientos activos que tienen retiro de leche vigente.",
+  infoUpcomingTasks: "Vacunaciones programadas para los próximos 7 días.",
   pendingAlerts: "Alertas pendientes",
   upcomingTasks: "Próximas tareas",
 

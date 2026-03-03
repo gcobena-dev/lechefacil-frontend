@@ -455,7 +455,7 @@ export default function Dashboard() {
 
               <div className="flex justify-between text-sm">
                 <span className="flex items-center gap-2">
-                  {t("dashboard.dailyGoal")} ({dailyGoalTarget.toFixed(2)}{t("dashboard.liters")})
+                  {t("dashboard.dailyGoal")} ({t("dashboard.expected")}: {dailyGoalTarget.toFixed(2)}{t("dashboard.liters")})
                   <Popover>
                     <PopoverTrigger asChild>
                       <button
