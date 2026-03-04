@@ -454,13 +454,13 @@ export default function AnimalDetail() {
 
       {/* Last 90 Days Production Summary + Chart */}
       <Card>
-        <CardHeader>
+        <CardHeader className="px-2 sm:px-6">
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             {t('animals.last90DaysProduction')}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">{t('animals.total90Days')}</p>
@@ -540,7 +540,7 @@ export default function AnimalDetail() {
 
           {/* Production Chart */}
           {productionData.length > 0 && (
-            <div className="mt-6 md:col-span-2">
+            <div className="mt-6 md:col-span-2 min-w-0 overflow-hidden">
               <ProductionLineChart
                 data={(() => {
                   // Group by date and sum AM+PM

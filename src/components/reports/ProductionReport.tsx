@@ -11,7 +11,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { generateProductionReport, downloadPDFReport, type ReportRequest, type ProductionReportData } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useQuery } from "@tanstack/react-query";
 import { getLabelSuggestions, listAnimals } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
@@ -784,94 +784,180 @@ export default function ProductionReport() {
             </div>
           )}
 
-          {reportData && (
+          {reportData && (() => {
+            const chartData = prepareChartData();
+            const useLineChart = chartData.length > 7;
+            return (
             <div className="space-y-4">
               {/* Production Chart */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <BarChart3 className="h-5 w-5" />
                     {t("reports.dailyProduction")}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div style={{ width: '100%', height: '400px' }}>
+                <CardContent className="px-1 pb-3 sm:px-6 sm:pb-6">
+                  <div className="w-full h-[280px] sm:h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={prepareChartData()}
-                        margin={{
-                          top: 20,
-                          right: 30,
-                          left: 20,
-                          bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="date"
-                          tick={{ fontSize: 12 }}
-                          angle={-45}
-                          textAnchor="end"
-                          height={80}
-                        />
-                        <YAxis
-                          yAxisId="litros"
-                          orientation="left"
-                          tick={{ fontSize: 12 }}
-                          // Add padding so low values (e.g., today) are visible
-                          domain={[
-                            (dataMin: number) => Math.max(0, Math.floor(dataMin - 10)),
-                            (dataMax: number) => Math.ceil(dataMax + 10),
-                          ]}
-                        />
-                        <YAxis
-                          yAxisId="ingresos"
-                          orientation="right"
-                          tick={{ fontSize: 12 }}
-                          // Add ~10% headroom and floor at zero
-                          domain={[
-                            (dataMin: number) => Math.max(0, Math.floor(dataMin * 0.9)),
-                            (dataMax: number) => Math.ceil(dataMax * 1.1),
-                          ]}
-                        />
-                        <Tooltip
-                          formatter={(value: number, name: string) => {
-                            if (name === 'producidos') return [`${value.toLocaleString()}L`, t("reports.litersProduced")];
-                            if (name === 'entregados') return [`${value.toLocaleString()}L`, t("reports.litersDelivered")];
-                            if (name === 'ingresos') return [formatCurrency(value), t("reports.totalRevenue")];
-                            return [value, name];
+                      {useLineChart ? (
+                        <LineChart
+                          data={chartData}
+                          margin={{
+                            top: 10,
+                            right: 10,
+                            left: 0,
+                            bottom: 5,
                           }}
-                          labelFormatter={(label: string) => `${t('reports.dateLabel')}: ${label}`}
-                        />
-                        <Legend />
-                        <Bar
-                          yAxisId="litros"
-                          dataKey="producidos"
-                          fill="#3B82F6"
-                          name={t("reports.litersProduced")}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <Bar
-                          yAxisId="litros"
-                          dataKey="entregados"
-                          fill="#22C55E"
-                          name={t("reports.litersDelivered")}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <Bar
-                          yAxisId="ingresos"
-                          dataKey="ingresos"
-                          fill="#10B981"
-                          name={t("reports.totalRevenue")}
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 10 }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60}
+                            interval="preserveStartEnd"
+                          />
+                          <YAxis
+                            yAxisId="litros"
+                            orientation="left"
+                            tick={{ fontSize: 11 }}
+                            width={40}
+                            domain={[
+                              (dataMin: number) => Math.max(0, Math.floor(dataMin - 10)),
+                              (dataMax: number) => Math.ceil(dataMax + 10),
+                            ]}
+                          />
+                          <YAxis
+                            yAxisId="ingresos"
+                            orientation="right"
+                            tick={{ fontSize: 11 }}
+                            width={45}
+                            domain={[
+                              (dataMin: number) => Math.max(0, Math.floor(dataMin * 0.9)),
+                              (dataMax: number) => Math.ceil(dataMax * 1.1),
+                            ]}
+                          />
+                          <Tooltip
+                            formatter={(value: number, name: string) => {
+                              if (name === 'producidos') return [`${value.toLocaleString()}L`, t("reports.litersProduced")];
+                              if (name === 'entregados') return [`${value.toLocaleString()}L`, t("reports.litersDelivered")];
+                              if (name === 'ingresos') return [formatCurrency(value), t("reports.totalRevenue")];
+                              return [value, name];
+                            }}
+                            labelFormatter={(label: string) => `${t('reports.dateLabel')}: ${label}`}
+                          />
+                          <Legend />
+                          <Line
+                            yAxisId="litros"
+                            type="monotone"
+                            dataKey="producidos"
+                            stroke="#3B82F6"
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                            name={t("reports.litersProduced")}
+                          />
+                          <Line
+                            yAxisId="litros"
+                            type="monotone"
+                            dataKey="entregados"
+                            stroke="#22C55E"
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                            name={t("reports.litersDelivered")}
+                          />
+                          <Line
+                            yAxisId="ingresos"
+                            type="monotone"
+                            dataKey="ingresos"
+                            stroke="#10B981"
+                            strokeWidth={2}
+                            dot={{ r: 3 }}
+                            activeDot={{ r: 5 }}
+                            name={t("reports.totalRevenue")}
+                          />
+                        </LineChart>
+                      ) : (
+                        <BarChart
+                          data={chartData}
+                          margin={{
+                            top: 10,
+                            right: 10,
+                            left: 0,
+                            bottom: 5,
+                          }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 11 }}
+                            angle={-45}
+                            textAnchor="end"
+                            height={70}
+                          />
+                          <YAxis
+                            yAxisId="litros"
+                            orientation="left"
+                            tick={{ fontSize: 11 }}
+                            width={40}
+                            domain={[
+                              (dataMin: number) => Math.max(0, Math.floor(dataMin - 10)),
+                              (dataMax: number) => Math.ceil(dataMax + 10),
+                            ]}
+                          />
+                          <YAxis
+                            yAxisId="ingresos"
+                            orientation="right"
+                            tick={{ fontSize: 11 }}
+                            width={45}
+                            domain={[
+                              (dataMin: number) => Math.max(0, Math.floor(dataMin * 0.9)),
+                              (dataMax: number) => Math.ceil(dataMax * 1.1),
+                            ]}
+                          />
+                          <Tooltip
+                            formatter={(value: number, name: string) => {
+                              if (name === 'producidos') return [`${value.toLocaleString()}L`, t("reports.litersProduced")];
+                              if (name === 'entregados') return [`${value.toLocaleString()}L`, t("reports.litersDelivered")];
+                              if (name === 'ingresos') return [formatCurrency(value), t("reports.totalRevenue")];
+                              return [value, name];
+                            }}
+                            labelFormatter={(label: string) => `${t('reports.dateLabel')}: ${label}`}
+                          />
+                          <Legend />
+                          <Bar
+                            yAxisId="litros"
+                            dataKey="producidos"
+                            fill="#3B82F6"
+                            name={t("reports.litersProduced")}
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            yAxisId="litros"
+                            dataKey="entregados"
+                            fill="#22C55E"
+                            name={t("reports.litersDelivered")}
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            yAxisId="ingresos"
+                            dataKey="ingresos"
+                            fill="#10B981"
+                            name={t("reports.totalRevenue")}
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      )}
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          )}
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="tables" className="space-y-4">

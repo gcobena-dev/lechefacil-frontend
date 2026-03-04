@@ -55,7 +55,7 @@ export default function DateRangeFilter({ dateFrom, dateTo, onChange }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {presets.map((preset) => (
         <Button
           key={preset.label}

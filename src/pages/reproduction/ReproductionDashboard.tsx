@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useInseminations, usePendingPregnancyChecks } from "@/hooks/useReproduction";
 import { useReproductionKPIs } from "@/hooks/useReproductionDashboard";
@@ -27,6 +28,8 @@ import ServicesPerCowChart from "@/components/charts/ServicesPerCowChart";
 import InseminationActivityChart from "@/components/charts/InseminationActivityChart";
 import MonthlyTrendChart from "@/components/charts/MonthlyTrendChart";
 import PostpartumAlertTable from "@/components/reproduction/PostpartumAlertTable";
+import type { InseminationInfo } from "@/components/reproduction/PostpartumAlertTable";
+import { listInseminations } from "@/services/inseminations";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
@@ -56,6 +59,37 @@ export default function ReproductionDashboard() {
   const { data: inseminationsData } = useInseminations({ limit: 5 });
   const { data: pendingChecks } = usePendingPregnancyChecks();
 
+  const postpartumAnimalIds = useMemo(
+    () => kpis?.postpartum_alerts.map((a) => a.animal_id) ?? [],
+    [kpis?.postpartum_alerts],
+  );
+
+  const inseminationQueries = useQuery({
+    queryKey: ["inseminations-postpartum", postpartumAnimalIds],
+    queryFn: () =>
+      Promise.all(
+        postpartumAnimalIds.map((id) =>
+          listInseminations({ animal_id: id, limit: 1, sort_by: "service_date", sort_dir: "desc" }),
+        ),
+      ),
+    enabled: postpartumAnimalIds.length > 0,
+  });
+
+  const inseminationMap = useMemo(() => {
+    const map = new Map<string, InseminationInfo>();
+    if (!inseminationQueries.data) return map;
+    inseminationQueries.data.forEach((res, i) => {
+      const item = res.items[0];
+      if (item) {
+        map.set(postpartumAnimalIds[i], {
+          pregnancy_status: item.pregnancy_status,
+          service_date: item.service_date,
+        });
+      }
+    });
+    return map;
+  }, [inseminationQueries.data, postpartumAnimalIds]);
+
   const pendingCount = pendingChecks?.length ?? 0;
   const recentInseminations = inseminationsData?.items ?? [];
 
@@ -74,7 +108,7 @@ export default function ReproductionDashboard() {
       </div>
 
       {/* 2. Quick Actions */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -114,6 +148,7 @@ export default function ReproductionDashboard() {
       </div>
 
       {/* 3. Date Range Filter */}
+      <hr className="border-border" />
       <DateRangeFilter
         dateFrom={dateFrom}
         dateTo={dateTo}
@@ -245,7 +280,7 @@ export default function ReproductionDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PostpartumAlertTable alerts={kpis.postpartum_alerts} />
+            <PostpartumAlertTable alerts={kpis.postpartum_alerts} inseminationMap={inseminationMap} />
           </CardContent>
         </Card>
       )}

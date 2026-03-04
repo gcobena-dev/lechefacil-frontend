@@ -158,6 +158,8 @@ export default {
   kpiWarning: "Atención",
   kpiCritical: "Crítico",
   kpiNoPostpartumAlerts: "Sin alertas posparto activas",
+  kpiReproductiveStatus: "Estado Reproductivo",
+  kpiNoInsemination: "Sin inseminar",
 
   // Date filter
   kpiLast3Months: "Últimos 3 meses",

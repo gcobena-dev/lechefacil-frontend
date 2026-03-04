@@ -612,14 +612,14 @@ export default function AnimalsReport() {
             <div className="space-y-6">
               {/* Status Distribution Pie Chart */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Activity className="h-5 w-5" />
                     {t("reports.animalStatusDistribution")}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                <CardContent className="px-1 pb-3 sm:px-6 sm:pb-6">
+                  <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
                       <Pie
                         data={[
@@ -650,92 +650,114 @@ export default function AnimalsReport() {
 
               {/* Top Performers Bar Chart */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Users className="h-5 w-5" />
-                    {t("reports.topPerformers")}
+                    Top 10 - {t("reports.topPerformers")}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={400}>
-                    <BarChart
-                      data={getFilteredAnimals()
-                        .filter(animal => animal.total_liters > 0)
-                        .sort((a, b) => b.total_liters - a.total_liters)
-                        .slice(0, 10)
-                        .map(animal => ({
-                          name: animal.name || animal.tag,
-                          totalLiters: animal.total_liters,
-                          avgPerRecord: Number(animal.avg_per_record.toFixed(1))
-                        }))
-                      }
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="name"
-                        angle={-45}
-                        textAnchor="end"
-                        height={100}
-                        interval={0}
-                      />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value, name) => [
-                          `${value}L`,
-                          name === 'totalLiters' ? t("reports.totalLiters") : t("reports.avgPerRecord")
-                        ]}
-                      />
-                      <Legend />
-                      <Bar dataKey="totalLiters" fill="#3b82f6" name={t("reports.totalLiters")} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <CardContent className="px-1 pb-3 sm:px-6 sm:pb-6">
+                  <div className="w-full h-[280px] sm:h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={getFilteredAnimals()
+                          .filter(animal => animal.total_liters > 0)
+                          .sort((a, b) => b.total_liters - a.total_liters)
+                          .slice(0, 10)
+                          .map(animal => ({
+                            tag: animal.tag || animal.name,
+                            fullName: animal.name || animal.tag,
+                            totalLiters: animal.total_liters,
+                            avgPerRecord: Number(animal.avg_per_record.toFixed(1))
+                          }))
+                        }
+                        margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="tag"
+                          angle={-45}
+                          textAnchor="end"
+                          height={70}
+                          interval={0}
+                          tick={{ fontSize: 11 }}
+                        />
+                        <YAxis tick={{ fontSize: 11 }} width={40} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#fff', color: '#1f2937', border: '1px solid #e5e7eb' }}
+                          labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
+                          itemStyle={{ color: '#374151' }}
+                          labelFormatter={(label: string, payload: any[]) => {
+                            const item = payload?.[0]?.payload;
+                            return item?.fullName ? `${item.fullName} (${label})` : label;
+                          }}
+                          formatter={(value: number) => [
+                            `${value}L`,
+                            t("reports.totalLiters")
+                          ]}
+                        />
+                        <Legend />
+                        <Bar dataKey="totalLiters" fill="#3b82f6" name={t("reports.totalLiters")} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Production Average Bar Chart */}
               {getFilteredAnimals().filter(animal => animal.records_count > 0).length > 0 && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <Activity className="h-5 w-5" />
-                      {t("reports.averageProduction")}
+                      Top 10 - {t("reports.averageProduction")}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart
-                        data={getFilteredAnimals()
-                          .filter(animal => animal.records_count > 0)
-                          .sort((a, b) => b.avg_per_record - a.avg_per_record)
-                          .slice(0, 10)
-                          .map(animal => ({
-                            name: animal.name || animal.tag,
-                            avgProduction: Number(animal.avg_per_record.toFixed(1)),
-                            recordsCount: animal.records_count
-                          }))
-                        }
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="name"
-                          angle={-45}
-                          textAnchor="end"
-                          height={100}
-                          interval={0}
-                        />
-                        <YAxis />
-                        <Tooltip
-                          formatter={(value, name) => [
-                            name === 'avgProduction' ? `${value}L` : `${value}`,
-                            name === 'avgProduction' ? t("reports.avgPerRecord") : t("reports.recordsCount")
-                          ]}
-                        />
-                        <Legend />
-                        <Bar dataKey="avgProduction" fill="#10b981" name={t("reports.avgPerRecord")} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <CardContent className="px-1 pb-3 sm:px-6 sm:pb-6">
+                    <div className="w-full h-[280px] sm:h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={getFilteredAnimals()
+                            .filter(animal => animal.records_count > 0)
+                            .sort((a, b) => b.avg_per_record - a.avg_per_record)
+                            .slice(0, 10)
+                            .map(animal => ({
+                              tag: animal.tag || animal.name,
+                              fullName: animal.name || animal.tag,
+                              avgProduction: Number(animal.avg_per_record.toFixed(1)),
+                              recordsCount: animal.records_count
+                            }))
+                          }
+                          margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="tag"
+                            angle={-45}
+                            textAnchor="end"
+                            height={70}
+                            interval={0}
+                            tick={{ fontSize: 11 }}
+                          />
+                          <YAxis tick={{ fontSize: 11 }} width={40} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#fff', color: '#1f2937', border: '1px solid #e5e7eb' }}
+                            labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
+                            itemStyle={{ color: '#374151' }}
+                            labelFormatter={(label: string, payload: any[]) => {
+                              const item = payload?.[0]?.payload;
+                              return item?.fullName ? `${item.fullName} (${label})` : label;
+                            }}
+                            formatter={(value: number, name: string) => [
+                              name === 'avgProduction' ? `${value}L` : `${value}`,
+                              name === 'avgProduction' ? t("reports.avgPerRecord") : t("reports.recordsCount")
+                            ]}
+                          />
+                          <Legend />
+                          <Bar dataKey="avgProduction" fill="#10b981" name={t("reports.avgPerRecord")} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
               )}

@@ -11,8 +11,14 @@ import {
 } from "@/components/ui/table";
 import type { PostpartumAlert } from "@/services/reproductionDashboard";
 
+export interface InseminationInfo {
+  pregnancy_status: string;
+  service_date: string;
+}
+
 interface Props {
   alerts: PostpartumAlert[];
+  inseminationMap: Map<string, InseminationInfo>;
 }
 
 const LEVEL_STYLES: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -21,10 +27,21 @@ const LEVEL_STYLES: Record<string, { variant: "default" | "secondary" | "destruc
   critical: { variant: "destructive", label: "kpiCritical" },
 };
 
-export default function PostpartumAlertTable({ alerts }: Props) {
+const REPRO_STATUS_VARIANTS: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+  CONFIRMED: { variant: "default", label: "confirmed" },
+  PENDING: { variant: "secondary", label: "pending" },
+  OPEN: { variant: "outline", label: "open" },
+  LOST: { variant: "destructive", label: "lost" },
+};
+
+export default function PostpartumAlertTable({ alerts, inseminationMap }: Props) {
   const { t } = useTranslation();
 
-  if (alerts.length === 0) {
+  const filteredAlerts = alerts.filter(
+    (alert) => inseminationMap.get(alert.animal_id)?.pregnancy_status !== "CONFIRMED",
+  );
+
+  if (filteredAlerts.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground text-sm">
         {t("reproduction.kpiNoPostpartumAlerts")}
@@ -45,11 +62,16 @@ export default function PostpartumAlertTable({ alerts }: Props) {
                 {t("reproduction.kpiDaysPostpartum")}
               </TableHead>
               <TableHead>{t("reproduction.kpiAlertLevel")}</TableHead>
+              <TableHead>{t("reproduction.kpiReproductiveStatus")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {alerts.map((alert) => {
+            {filteredAlerts.map((alert) => {
               const style = LEVEL_STYLES[alert.alert_level] || LEVEL_STYLES.optimal;
+              const insemination = inseminationMap.get(alert.animal_id);
+              const reproStyle = insemination
+                ? REPRO_STATUS_VARIANTS[insemination.pregnancy_status]
+                : null;
               return (
                 <TableRow key={alert.animal_id}>
                   <TableCell className="font-medium">
@@ -65,6 +87,17 @@ export default function PostpartumAlertTable({ alerts }: Props) {
                       {t(`reproduction.${style.label}`)}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    {reproStyle ? (
+                      <Badge variant={reproStyle.variant}>
+                        {t(`reproduction.${reproStyle.label}`)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        {t("reproduction.kpiNoInsemination")}
+                      </Badge>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -74,8 +107,12 @@ export default function PostpartumAlertTable({ alerts }: Props) {
 
       {/* Mobile cards */}
       <div className="md:hidden space-y-2">
-        {alerts.map((alert) => {
+        {filteredAlerts.map((alert) => {
           const style = LEVEL_STYLES[alert.alert_level] || LEVEL_STYLES.optimal;
+          const insemination = inseminationMap.get(alert.animal_id);
+          const reproStyle = insemination
+            ? REPRO_STATUS_VARIANTS[insemination.pregnancy_status]
+            : null;
           return (
             <Card key={alert.animal_id}>
               <CardContent className="p-3">
@@ -90,9 +127,20 @@ export default function PostpartumAlertTable({ alerts }: Props) {
                       {alert.days_postpartum}d
                     </p>
                   </div>
-                  <Badge variant={style.variant}>
-                    {t(`reproduction.${style.label}`)}
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    {reproStyle ? (
+                      <Badge variant={reproStyle.variant}>
+                        {t(`reproduction.${reproStyle.label}`)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">
+                        {t("reproduction.kpiNoInsemination")}
+                      </Badge>
+                    )}
+                    <Badge variant={style.variant}>
+                      {t(`reproduction.${style.label}`)}
+                    </Badge>
+                  </div>
                 </div>
               </CardContent>
             </Card>

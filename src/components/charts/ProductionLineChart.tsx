@@ -58,11 +58,11 @@ export default function ProductionLineChart({
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn("h-[200px] sm:h-[300px] w-full", className)}
+      className={cn("h-[200px] sm:h-[300px] w-full aspect-auto sm:aspect-video min-w-0", className)}
     >
       <LineChart
         data={data}
-        margin={{ top: 5, right: 10, left: 0, bottom: 20 }}
+        margin={{ top: 5, right: 2, left: -5, bottom: 20 }}
       >
         <CartesianGrid strokeDasharray="3 3" vertical={false} />
         <XAxis
@@ -72,12 +72,12 @@ export default function ProductionLineChart({
           angle={-45}
           textAnchor="end"
           height={50}
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 10 }}
         />
         <YAxis
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 10 }}
           tickFormatter={(v: number) => `${v}L`}
-          width={45}
+          width={35}
         />
         <ChartTooltip
           content={
