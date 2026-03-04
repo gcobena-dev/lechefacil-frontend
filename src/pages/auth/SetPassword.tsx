@@ -13,6 +13,8 @@ import { CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function SetPassword() {
   const [token, setToken] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +26,7 @@ export default function SetPassword() {
   const location = useLocation();
 
   const { mutateAsync: doSetPassword, isPending, isSuccess } = useMutation({
-    mutationFn: (vars: { token: string; new_password: string }) => apiSetPassword(vars),
+    mutationFn: (vars: { token: string; new_password: string; first_name?: string; last_name?: string }) => apiSetPassword(vars),
   });
 
   useEffect(() => {
@@ -62,7 +64,12 @@ export default function SetPassword() {
     }
 
     try {
-      const result = await doSetPassword({ token, new_password: password });
+      const result = await doSetPassword({
+        token,
+        new_password: password,
+        first_name: firstName || undefined,
+        last_name: lastName || undefined,
+      });
       setSuccessMessage(result.message || t("auth.passwordSetSuccess"));
 
       // Clear any existing session tokens before redirecting to login
@@ -126,6 +133,28 @@ export default function SetPassword() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">{t("auth.firstName")}</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder={t("auth.firstNamePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">{t("auth.lastName")}</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder={t("auth.lastNamePlaceholder")}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.newPasswordLabel")}</Label>
               <div className="relative">

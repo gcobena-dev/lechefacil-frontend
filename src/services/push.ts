@@ -121,9 +121,15 @@ export async function initPushNotifications() {
     });
 
     // Foreground reception (optional: could show a toast or local notification)
-    PushNotifications.addListener("pushNotificationReceived", (_notification) => {
-      console.log("[Push] pushNotificationReceived (foreground)", _notification);
-    });
+    PushNotifications.addListener(
+      "pushNotificationReceived",
+      (_notification) => {
+        console.log(
+          "[Push] pushNotificationReceived (foreground)",
+          _notification
+        );
+      }
+    );
   }
 
   // Register will trigger the 'registration' event with token

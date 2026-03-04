@@ -15,6 +15,8 @@ export default function SignIn() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -23,7 +25,7 @@ export default function SignIn() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { mutateAsync: doSignin, isPending } = useMutation({
-    mutationFn: (vars: { email: string; password: string }) => apiSignin(vars),
+    mutationFn: (vars: { email: string; password: string; first_name?: string; last_name?: string }) => apiSignin(vars),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +35,12 @@ export default function SignIn() {
       return;
     }
     try {
-      await doSignin({ email: formData.email, password: formData.password });
+      await doSignin({
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.firstName || undefined,
+        last_name: formData.lastName || undefined,
+      });
       toast({ title: t("auth.accountCreated"), description: t("auth.accountCreatedDescription") });
       navigate("/login");
     } catch (err: any) {
@@ -58,6 +65,28 @@ export default function SignIn() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">{t("auth.firstName")}</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  placeholder={t("auth.firstNamePlaceholder")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">{t("auth.lastName")}</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  placeholder={t("auth.lastNamePlaceholder")}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.emailLabel")}</Label>
               <Input

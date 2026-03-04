@@ -12,6 +12,8 @@ export interface LoginResponse {
   token_type: string;
   user_id: UUID;
   email: string;
+  first_name?: string | null;
+  last_name?: string | null;
   must_change_password: boolean;
   memberships: Membership[];
   refresh_token?: string | null;
@@ -20,6 +22,8 @@ export interface LoginResponse {
 export interface MeResponse {
   user_id: UUID;
   email: string;
+  first_name?: string | null;
+  last_name?: string | null;
   active_tenant: UUID;
   active_role: "ADMIN" | "WORKER" | "VET" | "MANAGER" | "VETERINARIAN";
   memberships: Membership[];

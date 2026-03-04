@@ -329,8 +329,8 @@ export default function SettingsUsers() {
                       <TableBody>
                         {usersData.users.map((user) => (
                           <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.first_name}</TableCell>
-                            <TableCell>{user.last_name}</TableCell>
+                            <TableCell className="font-medium">{user.first_name || '-'}</TableCell>
+                            <TableCell>{user.last_name || '-'}</TableCell>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>
                               <Badge variant={getRoleBadgeVariant(user.role)}>
@@ -383,7 +383,7 @@ export default function SettingsUsers() {
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1 mr-3">
                           <div className="font-medium text-lg mb-1">
-                            {user.first_name} {user.last_name}
+                            {user.first_name || user.last_name ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : user.email.split("@")[0]}
                           </div>
                           <div className="text-sm text-muted-foreground break-all">
                             {user.email}
@@ -487,7 +487,7 @@ export default function SettingsUsers() {
           {selectedUser && (
             <div className="py-4">
               <div className="mb-4 p-3 bg-muted rounded-lg">
-                <p className="font-medium">{selectedUser.first_name} {selectedUser.last_name}</p>
+                <p className="font-medium">{selectedUser.first_name || selectedUser.last_name ? `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() : selectedUser.email.split("@")[0]}</p>
                 <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 <Badge variant={getRoleBadgeVariant(selectedUser.role)} className="mt-2">
                   {getRoleLabel(selectedUser.role)}
@@ -536,7 +536,7 @@ export default function SettingsUsers() {
           {editingUser && (
             <div className="py-4">
               <div className="mb-4 p-3 bg-muted rounded-lg">
-                <p className="font-medium">{editingUser.first_name} {editingUser.last_name}</p>
+                <p className="font-medium">{editingUser.first_name || editingUser.last_name ? `${editingUser.first_name || ''} ${editingUser.last_name || ''}`.trim() : editingUser.email.split("@")[0]}</p>
                 <p className="text-sm text-muted-foreground">{editingUser.email}</p>
                 <Badge variant={getRoleBadgeVariant(editingUser.role)} className="mt-2">
                   {getRoleLabel(editingUser.role)}

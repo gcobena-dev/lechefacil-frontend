@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,52 +7,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { User, Bell } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { me as apiMe } from "@/services/auth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { me as apiMe, updateProfile as apiUpdateProfile } from "@/services/auth";
 import { useTranslation } from "@/hooks/useTranslation";
-
-interface ProfileData {
-  name: string;
-  email: string;
-  role: 'admin' | 'worker' | 'vet';
-  farmName: string;
-  phone: string;
-  address: string;
-  notifications: boolean;
-}
 
 export default function Profile() {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const [profileData, setProfileData] = useState<ProfileData>({
-    name: "Admin Usuario",
-    email: "admin@farm.com",
-    role: "admin",
-    farmName: "Finca Dos Hermanos",
-    phone: "+1 234 567 8900",
-    address: "",
-    notifications: true,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    toast({
-      title: t("common.profileUpdated"),
-      description: t("common.profileUpdatedDescription"),
-    });
-  };
-
-  const handleInputChange = (field: keyof ProfileData, value: string | boolean) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
-  };
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [farmName, setFarmName] = useState("Finca Dos Hermanos");
+  const [phone, setPhone] = useState("+1 234 567 8900");
+  const [address, setAddress] = useState("");
+  const [notifications, setNotifications] = useState(true);
 
   const { data: meData } = useQuery({ queryKey: ["me"], queryFn: apiMe });
-  const emailValue = meData?.email ?? profileData.email;
-  const displayName = useMemo(() => (emailValue ? emailValue.split("@")[0] : profileData.name), [emailValue, profileData.name]);
+
+  useEffect(() => {
+    if (meData) {
+      setFirstName(meData.first_name || "");
+      setLastName(meData.last_name || "");
+    }
+  }, [meData]);
+
+  const { mutateAsync: doUpdateProfile, isPending } = useMutation({
+    mutationFn: apiUpdateProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+  });
+
+  const emailValue = meData?.email ?? "";
+  const displayName = useMemo(() => {
+    if (firstName || lastName) {
+      return `${firstName} ${lastName}`.trim();
+    }
+    return emailValue ? emailValue.split("@")[0] : "";
+  }, [firstName, lastName, emailValue]);
+
   const roleLabel = useMemo(() => {
-    const r = (meData as any)?.active_role ?? profileData.role;
+    const r = (meData as any)?.active_role ?? "";
     const map: Record<string, string> = {
       ADMIN: t("common.administrator"),
       admin: t("common.administrator"),
@@ -62,7 +58,27 @@ export default function Profile() {
       vet: t("common.veterinarian")
     };
     return map[r] ?? String(r);
-  }, [meData, profileData.role, t]);
+  }, [meData, t]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await doUpdateProfile({
+        first_name: firstName || null,
+        last_name: lastName || null,
+      });
+      toast({
+        title: t("common.profileUpdated"),
+        description: t("common.profileUpdatedDescription"),
+      });
+    } catch {
+      toast({
+        title: t("common.error"),
+        description: t("common.updateError"),
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -79,10 +95,27 @@ export default function Profile() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t("common.name")}</Label>
-                  <Input id="name" value={displayName} disabled />
+                  <Label htmlFor="firstName">{t("auth.firstName")}</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder={t("auth.firstNamePlaceholder")}
+                  />
                 </div>
-                
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">{t("auth.lastName")}</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder={t("auth.lastNamePlaceholder")}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">{t("common.email")}</Label>
                   <Input
@@ -92,45 +125,45 @@ export default function Profile() {
                     disabled
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">{t("common.role")}</Label>
                   <Input id="role" value={roleLabel} disabled />
                 </div>
-                
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t("common.phone")}</Label>
                   <Input
                     id="phone"
-                    value={profileData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="farmName">{t("common.farmName")}</Label>
-                <Input
-                  id="farmName"
-                  value={profileData.farmName}
-                  onChange={(e) => handleInputChange("farmName", e.target.value)}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="farmName">{t("common.farmName")}</Label>
+                  <Input
+                    id="farmName"
+                    value={farmName}
+                    onChange={(e) => setFarmName(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="address">{t("common.address")}</Label>
                 <Textarea
                   id="address"
-                  value={profileData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   rows={3}
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                {t("common.saveChanges")}
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? t("common.loading") : t("common.saveChanges")}
               </Button>
             </form>
           </CardContent>
@@ -154,8 +187,8 @@ export default function Profile() {
                   </p>
                 </div>
                 <Switch
-                  checked={profileData.notifications}
-                  onCheckedChange={(checked) => handleInputChange("notifications", checked)}
+                  checked={notifications}
+                  onCheckedChange={(checked) => setNotifications(checked)}
                 />
               </div>
             </CardContent>

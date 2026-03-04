@@ -59,7 +59,12 @@ export async function registerTenant(payload: {
   );
 }
 
-export async function signin(payload: { email: string; password: string }) {
+export async function signin(payload: {
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+}) {
   return apiFetch<{ user_id: string; email: string }>("/api/v1/auth/signin", {
     method: "POST",
     body: payload,
@@ -122,6 +127,7 @@ export async function performLogout(): Promise<void> {
     // ignore server logout errors (e.g., no cookie); proceed to clear local
   } finally {
     clearLocalSession();
+    localStorage.removeItem("lf_profile_prompt_dismissed");
     try {
       setRefreshToken(null);
     } catch {
@@ -187,11 +193,28 @@ export async function resetPassword(payload: {
 export async function setPassword(payload: {
   token: string;
   new_password: string;
+  first_name?: string;
+  last_name?: string;
 }) {
   return apiFetch<{ status: string; message: string }>(
     "/api/v1/auth/set-password",
     {
       method: "POST",
+      body: payload,
+    }
+  );
+}
+
+export async function updateProfile(payload: {
+  first_name?: string | null;
+  last_name?: string | null;
+}) {
+  return apiFetch<{ first_name: string | null; last_name: string | null; message: string }>(
+    "/api/v1/auth/profile",
+    {
+      method: "PATCH",
+      withAuth: true,
+      withTenant: true,
       body: payload,
     }
   );

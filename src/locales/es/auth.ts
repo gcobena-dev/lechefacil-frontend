@@ -12,6 +12,12 @@ export default {
   noAccount: "¿No tienes cuenta? Crear una",
   forgotPassword: "¿Olvidaste tu contraseña?",
 
+  // Names
+  firstName: "Nombre",
+  lastName: "Apellido",
+  firstNamePlaceholder: "Tu nombre",
+  lastNamePlaceholder: "Tu apellido",
+
   // Register/SignIn
   registerTitle: "Crear Cuenta",
   registerDescription: "Ingresa tus datos para registrarte",
