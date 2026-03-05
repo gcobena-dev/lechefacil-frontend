@@ -279,7 +279,7 @@ export default function ReproductionDashboard() {
               {t("reproduction.kpiPostpartumAlerts")}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
             <PostpartumAlertTable alerts={kpis.postpartum_alerts} inseminationMap={inseminationMap} />
           </CardContent>
         </Card>

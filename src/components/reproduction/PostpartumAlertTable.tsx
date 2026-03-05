@@ -173,7 +173,7 @@ export default function PostpartumAlertTable({ alerts, inseminationMap }: Props)
       </div>
 
       {/* Mobile cards */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-3 overflow-hidden">
         {filteredAlerts.map((alert) => {
           const style = LEVEL_STYLES[alert.alert_level] || LEVEL_STYLES.optimal;
           const insemination = inseminationMap.get(alert.animal_id);
@@ -183,29 +183,29 @@ export default function PostpartumAlertTable({ alerts, inseminationMap }: Props)
             <Card key={alert.animal_id} className="overflow-hidden">
               <CardContent className="p-0">
                 {/* Header: animal name + alert badge */}
-                <div className="flex items-center justify-between px-3 pt-3 pb-2">
-                  <p className="text-sm font-semibold truncate mr-2">
+                <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
+                  <p className="text-sm font-semibold truncate min-w-0">
                     {alert.animal_tag}
                     {alert.animal_name ? ` - ${alert.animal_name}` : ""}
                   </p>
-                  <Badge variant={style.variant} className="shrink-0">
+                  <Badge variant={style.variant} className="shrink-0 text-[10px] px-1.5">
                     {t(`reproduction.${style.label}`)}
                   </Badge>
                 </div>
 
                 {/* Info rows */}
                 <div className="px-3 pb-2 space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{t("reproduction.kpiCalvingDate")}</span>
-                    <span>{formatDate(alert.calving_date)}</span>
+                  <div className="flex items-center justify-between text-xs gap-2">
+                    <span className="text-muted-foreground shrink-0">{t("reproduction.kpiCalvingDate")}</span>
+                    <span className="truncate">{formatDate(alert.calving_date)}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{t("reproduction.kpiDaysPostpartum")}</span>
+                  <div className="flex items-center justify-between text-xs gap-2">
+                    <span className="text-muted-foreground shrink-0">{t("reproduction.kpiDaysPostpartum")}</span>
                     <span className="font-medium">{alert.days_postpartum}d</span>
                   </div>
                   {repro.serviceDate && (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">{t("reproduction.kpiLastService")}</span>
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      <span className="text-muted-foreground shrink-0">{t("reproduction.kpiLastService")}</span>
                       <span>{repro.serviceDate}</span>
                     </div>
                   )}
@@ -219,15 +219,15 @@ export default function PostpartumAlertTable({ alerts, inseminationMap }: Props)
                       ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800"
                       : "bg-muted/50"
                 }`}>
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
                     {!insemination ? (
                       <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
                     ) : (
                       <Syringe className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                     )}
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium">{repro.label}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                    <div className="min-w-0 overflow-hidden">
+                      <p className="text-xs font-medium break-words">{repro.label}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight break-words">
                         {repro.hint}
                       </p>
                     </div>

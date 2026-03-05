@@ -282,7 +282,7 @@ export default function SettingsUsers() {
       {/* Users Management - Admin Only */}
       <AdminOnly hideOnForbidden>
         <Card>
-          <CardHeader>
+          <CardHeader className="space-y-4 px-3 sm:px-6">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-5 w-5" />
@@ -301,7 +301,7 @@ export default function SettingsUsers() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 sm:px-6">
 
             {loadingUsers ? (
               <div className="text-center py-4">{t("common.loading")}</div>
@@ -312,13 +312,12 @@ export default function SettingsUsers() {
             ) : (
               <div className="space-y-4">
                 {/* Desktop Table */}
-                <div className="hidden md:block">
+                <div className="hidden lg:block">
                   <div className="rounded-md border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{t("common.firstName")}</TableHead>
-                          <TableHead>{t("common.lastName")}</TableHead>
+                          <TableHead>{t("common.name")}</TableHead>
                           <TableHead>{t("common.email")}</TableHead>
                           <TableHead>{t("common.role")}</TableHead>
                           <TableHead>{t("common.lastLogin")}</TableHead>
@@ -329,16 +328,19 @@ export default function SettingsUsers() {
                       <TableBody>
                         {usersData.users.map((user) => (
                           <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.first_name || '-'}</TableCell>
-                            <TableCell>{user.last_name || '-'}</TableCell>
-                            <TableCell>{user.email}</TableCell>
+                            <TableCell className="font-medium max-w-[160px] truncate">
+                              {user.first_name || user.last_name
+                                ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                                : '-'}
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate">{user.email}</TableCell>
                             <TableCell>
                               <Badge variant={getRoleBadgeVariant(user.role)}>
                                 {getRoleLabel(user.role)}
                               </Badge>
                             </TableCell>
-                            <TableCell>{formatDate(user.last_login)}</TableCell>
-                            <TableCell>{formatDate(user.created_at)}</TableCell>
+                            <TableCell className="text-sm whitespace-nowrap">{formatDate(user.last_login)}</TableCell>
+                            <TableCell className="text-sm whitespace-nowrap">{formatDate(user.created_at)}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
                                 <Button
@@ -376,34 +378,44 @@ export default function SettingsUsers() {
                   </div>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-3">
+                {/* Mobile/Tablet Cards */}
+                <div className="lg:hidden space-y-3">
                   {usersData.users.map((user) => (
-                    <div key={user.id} className="border border-border rounded-lg p-4 bg-card">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1 mr-3">
-                          <div className="font-medium text-lg mb-1">
-                            {user.first_name || user.last_name ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : user.email.split("@")[0]}
-                          </div>
-                          <div className="text-sm text-muted-foreground break-all">
-                            {user.email}
-                          </div>
-                          <div className="mt-2">
-                            <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {getRoleLabel(user.role)}
-                            </Badge>
-                          </div>
+                    <div key={user.id} className="border border-border rounded-lg bg-card overflow-hidden">
+                      {/* Name + email – full width */}
+                      <div className="px-3 pt-3 pb-2 overflow-hidden">
+                        <p className="font-medium text-sm truncate">
+                          {user.first_name || user.last_name ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : user.email.split("@")[0]}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {user.email}
+                        </p>
+                      </div>
+
+                      {/* Info rows */}
+                      <div className="px-3 pb-2 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{t("common.lastLogin")}</span>
+                          <span>{formatDate(user.last_login)}</span>
                         </div>
-                        <div className="flex-shrink-0 flex gap-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{t("common.createdAt")}</span>
+                          <span>{formatDate(user.created_at)}</span>
+                        </div>
+                      </div>
+
+                      {/* Footer: role badge + action buttons */}
+                      <div className="flex items-center justify-between px-3 py-2 border-t border-border/50 bg-muted/30">
+                        <Badge variant={getRoleBadgeVariant(user.role)}>
+                          {getRoleLabel(user.role)}
+                        </Badge>
+                        <div className="flex gap-1">
                           <Button
                             variant="outline"
                             size="sm"
+                            className={`h-8 w-8 p-0 ${user.id === currentUserId ? "text-muted-foreground cursor-not-allowed" : ""}`}
                             onClick={() => openEditRoleDialog(user)}
                             disabled={user.id === currentUserId}
-                            className={user.id === currentUserId
-                              ? "text-muted-foreground cursor-not-allowed"
-                              : ""
-                            }
                             title={user.id === currentUserId ? t("common.cannotEditOwnRole") : t("common.editRole")}
                           >
                             <Pencil className="h-4 w-4" />
@@ -411,30 +423,13 @@ export default function SettingsUsers() {
                           <Button
                             variant="outline"
                             size="sm"
+                            className={`h-8 w-8 p-0 ${user.id === currentUserId ? "text-muted-foreground cursor-not-allowed" : "text-destructive hover:text-destructive"}`}
                             onClick={() => openDeleteDialog(user)}
                             disabled={user.id === currentUserId}
-                            className={user.id === currentUserId
-                              ? "text-muted-foreground cursor-not-allowed"
-                              : "text-destructive hover:text-destructive"
-                            }
                             title={user.id === currentUserId ? t("common.cannotDeleteSelf") : t("common.removeUser")}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 text-sm pt-2 border-t border-border/50">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground text-xs">{t("common.lastLogin")}:</span>
-                          <span className="font-medium text-xs">
-                            {formatDate(user.last_login)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground text-xs">{t("common.createdAt")}:</span>
-                          <span className="font-medium text-xs">
-                            {formatDate(user.created_at)}
-                          </span>
                         </div>
                       </div>
                     </div>

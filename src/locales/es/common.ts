@@ -114,6 +114,7 @@ export default {
   profileConfigTitle: "Configuración del Perfil",
   personalInformation: "Información Personal",
   name: "Nombre",
+  photo: "Foto",
   email: "Email",
   role: "Rol",
   phone: "Teléfono",
