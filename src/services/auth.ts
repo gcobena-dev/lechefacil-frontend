@@ -209,13 +209,14 @@ export async function updateProfile(payload: {
   first_name?: string | null;
   last_name?: string | null;
 }) {
-  return apiFetch<{ first_name: string | null; last_name: string | null; message: string }>(
-    "/api/v1/auth/profile",
-    {
-      method: "PATCH",
-      withAuth: true,
-      withTenant: true,
-      body: payload,
-    }
-  );
+  return apiFetch<{
+    first_name: string | null;
+    last_name: string | null;
+    message: string;
+  }>("/api/v1/auth/profile", {
+    method: "PATCH",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
 }

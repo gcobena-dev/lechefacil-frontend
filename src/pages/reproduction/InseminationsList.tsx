@@ -216,9 +216,9 @@ export default function InseminationsList() {
                   <TableHead>{renderHeader(t("reproduction.serviceDate"), "service_date")}</TableHead>
                   <TableHead>{renderHeader(t("reproduction.method"), "method")}</TableHead>
                   <TableHead>{renderHeader(t("reproduction.technician"), "technician")}</TableHead>
-                  <TableHead>{renderHeader(t("reproduction.pregnancyStatus"), "pregnancy_status")}</TableHead>
-                  <TableHead>{renderHeader(t("reproduction.daysSinceService"), "service_date")}</TableHead>
-                  <TableHead>{renderHeader(t("reproduction.expectedCalvingDate"), "expected_calving_date")}</TableHead>
+                  <TableHead className="text-center">{renderHeader(t("reproduction.pregnancyStatus"), "pregnancy_status")}</TableHead>
+                  <TableHead className="text-center">{renderHeader(t("reproduction.daysSinceService"), "service_date")}</TableHead>
+                  <TableHead className="text-center">{renderHeader(t("reproduction.expectedCalvingDate"), "expected_calving_date")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -238,20 +238,20 @@ export default function InseminationsList() {
                       </TableCell>
                       <TableCell>{t(`reproduction.method${ins.method}`)}</TableCell>
                       <TableCell>{ins.technician || "-"}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Badge variant={STATUS_VARIANTS[ins.pregnancy_status] || "secondary"}>
                           {t(`reproduction.${ins.pregnancy_status.toLowerCase()}`)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{daysSince}d</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">{daysSince}d</TableCell>
+                      <TableCell className="text-center">
                         {ins.expected_calving_date
                           ? new Date(ins.expected_calving_date).toLocaleDateString()
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          {ins.pregnancy_status === "PENDING" && (
+                        <div className="flex items-center justify-end gap-1">
+                          {ins.pregnancy_status === "PENDING" ? (
                             <Button
                               variant="outline"
                               size="sm"
@@ -259,6 +259,8 @@ export default function InseminationsList() {
                             >
                               {t("reproduction.recordCheck")}
                             </Button>
+                          ) : (
+                            <div className="w-[120px]" />
                           )}
                           {isAdmin && (
                             <>

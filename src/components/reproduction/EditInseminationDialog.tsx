@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { SireSelector } from "@/components/reproduction/SireSelector";
+import { TechnicianAutocomplete } from "@/components/reproduction/TechnicianAutocomplete";
 
 interface EditInseminationDialogProps {
   open: boolean;
@@ -37,6 +39,7 @@ export default function EditInseminationDialog({
   const [protocol, setProtocol] = useState("");
   const [heatDetected, setHeatDetected] = useState(false);
   const [notes, setNotes] = useState("");
+  const [sireId, setSireId] = useState("");
 
   const mutation = useUpdateInsemination();
 
@@ -46,6 +49,7 @@ export default function EditInseminationDialog({
       setProtocol(insemination.protocol ?? "");
       setHeatDetected(insemination.heat_detected);
       setNotes(insemination.notes ?? "");
+      setSireId(insemination.sire_catalog_id ?? "");
     }
   }, [insemination, open]);
 
@@ -60,6 +64,7 @@ export default function EditInseminationDialog({
           protocol: protocol || undefined,
           heat_detected: heatDetected,
           notes: notes || undefined,
+          sire_catalog_id: sireId || null,
         },
       });
       toast({ title: t("reproduction.inseminationUpdated") });
@@ -82,11 +87,16 @@ export default function EditInseminationDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
+            <Label>{t("reproduction.selectSire")}</Label>
+            <SireSelector value={sireId} onValueChange={setSireId} />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="edit-technician">{t("reproduction.technician")}</Label>
-            <Input
+            <TechnicianAutocomplete
               id="edit-technician"
               value={technician}
-              onChange={(e) => setTechnician(e.target.value)}
+              onChange={setTechnician}
               placeholder={t("reproduction.technicianPlaceholder")}
             />
           </div>

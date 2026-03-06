@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { SireSelector } from "@/components/reproduction/SireSelector";
+import { TechnicianAutocomplete } from "@/components/reproduction/TechnicianAutocomplete";
 import SearchableAnimalSelect from "@/components/milk/SearchableAnimalSelect";
 
 const METHODS = [
@@ -175,9 +176,9 @@ export default function InseminationForm() {
           {/* Technician */}
           <div className="space-y-2">
             <Label>{t("reproduction.technician")}</Label>
-            <Input
+            <TechnicianAutocomplete
               value={technician}
-              onChange={(e) => setTechnician(e.target.value)}
+              onChange={setTechnician}
               placeholder={t("reproduction.technicianPlaceholder")}
             />
           </div>

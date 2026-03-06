@@ -124,7 +124,8 @@ export default {
   profileUpdated: "Perfil actualizado",
   profileUpdatedDescription: "Los cambios han sido guardados exitosamente",
   completeProfileTitle: "Completa tu perfil",
-  completeProfileMessage: "Aún no has agregado tu nombre. Completa tu perfil para que otros usuarios puedan identificarte fácilmente.",
+  completeProfileMessage:
+    "Aún no has agregado tu nombre. Completa tu perfil para que otros usuarios puedan identificarte fácilmente.",
   goToProfile: "Ir al perfil",
   later: "Más tarde",
   darkMode: "Modo Oscuro",

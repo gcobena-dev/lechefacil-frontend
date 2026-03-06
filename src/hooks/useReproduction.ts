@@ -24,6 +24,7 @@ import {
   deleteInsemination,
   recordPregnancyCheck,
   getPendingPregnancyChecks,
+  getDistinctTechnicians,
   type CreateInseminationPayload,
   type PregnancyCheckPayload,
 } from "@/services/inseminations";
@@ -183,6 +184,7 @@ export function useUpdateInsemination() {
         notes?: string;
         heat_detected?: boolean;
         protocol?: string;
+        sire_catalog_id?: string | null;
       };
     }) => updateInsemination(id, payload),
     onSuccess: () => {
@@ -225,5 +227,13 @@ export function usePendingPregnancyChecks(params?: {
   return useQuery({
     queryKey: ["pending-checks", params],
     queryFn: () => getPendingPregnancyChecks(params),
+  });
+}
+
+export function useTechnicians() {
+  return useQuery({
+    queryKey: ["insemination-technicians"],
+    queryFn: () => getDistinctTechnicians(),
+    staleTime: 5 * 60 * 1000,
   });
 }

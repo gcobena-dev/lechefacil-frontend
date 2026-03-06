@@ -157,19 +157,25 @@ export default {
   kpiOptimal: "Óptimo",
   kpiWarning: "Atención",
   kpiCritical: "Crítico",
-  kpiOptimalHint: "Dentro del período voluntario de espera. No requiere acción inmediata.",
-  kpiWarningHint: "Se acerca el límite ideal para preñar. Considere inseminar pronto.",
-  kpiCriticalHint: "Superó el tiempo ideal sin preñez. Requiere atención urgente.",
+  kpiOptimalHint:
+    "Dentro del período voluntario de espera. No requiere acción inmediata.",
+  kpiWarningHint:
+    "Se acerca el límite ideal para preñar. Considere inseminar pronto.",
+  kpiCriticalHint:
+    "Superó el tiempo ideal sin preñez. Requiere atención urgente.",
   kpiNoPostpartumAlerts: "Sin alertas posparto activas",
   kpiPostpartumReproStatus: "Situación Reproductiva",
   kpiNoInsemination: "Sin inseminar",
   kpiNoInseminationHint: "No se ha registrado inseminación desde el parto",
   kpiInseminatedPending: "Inseminada - Esperando diagnóstico",
-  kpiInseminatedPendingHint: "Inseminada el {date}. Pendiente chequeo de preñez.",
+  kpiInseminatedPendingHint:
+    "Inseminada el {date}. Pendiente chequeo de preñez.",
   kpiInseminatedOpen: "Inseminada - Vacía",
-  kpiInseminatedOpenHint: "Inseminada el {date}, pero resultado: vacía. Requiere re-servicio.",
+  kpiInseminatedOpenHint:
+    "Inseminada el {date}, pero resultado: vacía. Requiere re-servicio.",
   kpiInseminatedLost: "Inseminada - Pérdida",
-  kpiInseminatedLostHint: "Inseminada el {date}. Preñez perdida. Requiere re-servicio.",
+  kpiInseminatedLostHint:
+    "Inseminada el {date}. Preñez perdida. Requiere re-servicio.",
   kpiLastService: "Últ. inseminación",
 
   // Date filter

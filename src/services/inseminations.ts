@@ -103,6 +103,13 @@ export async function createInsemination(payload: CreateInseminationPayload) {
   });
 }
 
+export async function getDistinctTechnicians() {
+  return apiFetch<string[]>("/api/v1/reproduction/inseminations/technicians", {
+    withAuth: true,
+    withTenant: true,
+  });
+}
+
 export async function updateInsemination(
   id: string,
   payload: {
@@ -110,6 +117,7 @@ export async function updateInsemination(
     notes?: string;
     heat_detected?: boolean;
     protocol?: string;
+    sire_catalog_id?: string | null;
   }
 ) {
   return apiFetch<InseminationResponse>(
