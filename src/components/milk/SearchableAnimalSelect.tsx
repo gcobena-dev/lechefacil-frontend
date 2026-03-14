@@ -12,12 +12,14 @@ interface SearchableAnimalSelectProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
+  statusCodes?: string;
 }
 
 export default function SearchableAnimalSelect({
   value,
   onValueChange,
-  placeholder = "Seleccionar animal..."
+  placeholder = "Seleccionar animal...",
+  statusCodes = "LACTATING",
 }: SearchableAnimalSelectProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -33,7 +35,7 @@ export default function SearchableAnimalSelect({
   const resetAndLoad = async (q: string) => {
     setLoading(true);
     try {
-      const res = await listAnimals({ status_codes: "LACTATING", limit: 20, q });
+      const res = await listAnimals({ status_codes: statusCodes, limit: 20, q });
       setItems(res.items || []);
       setCursor(res.next_cursor ?? null);
       setHasMore(Boolean(res.next_cursor));
@@ -46,7 +48,7 @@ export default function SearchableAnimalSelect({
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const res = await listAnimals({ status_codes: "LACTATING", limit: 20, cursor, q: searchQuery });
+      const res = await listAnimals({ status_codes: statusCodes, limit: 20, cursor, q: searchQuery });
       setItems(prev => [...prev, ...(res.items || [])]);
       setCursor(res.next_cursor ?? null);
       setHasMore(Boolean(res.next_cursor));

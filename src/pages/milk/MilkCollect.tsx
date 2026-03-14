@@ -182,6 +182,17 @@ export default function MilkCollect() {
       }
       setPendingProductionType("single");
     }
+
+    // Warn if offline (e.g. still connected to "Balanza" WiFi)
+    if (!navigator.onLine) {
+      toast({
+        title: t("milk.deviceSyncOfflineTitle"),
+        description: t("milk.deviceSyncOfflineDesc"),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setConfirmProductionOpen(true);
   };
 

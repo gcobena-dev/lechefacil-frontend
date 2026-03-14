@@ -98,6 +98,7 @@ export default function InseminationForm() {
               value={animalId}
               onValueChange={setAnimalId}
               placeholder={t("reproduction.selectAnimal")}
+              statusCodes="LACTATING,HEIFER,DRY"
             />
           </div>
 

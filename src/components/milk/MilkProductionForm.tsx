@@ -13,6 +13,7 @@ import BulkAnimalSelection from "./BulkAnimalSelection";
 import SearchableAnimalSelect from "./SearchableAnimalSelect";
 import ConfigurationInfo from "./ConfigurationInfo";
 import OcrPhotoUpload from "./OcrPhotoUpload";
+import DeviceSyncButton from "./DeviceSyncButton";
 import type { MilkCollectionFormData } from "@/hooks/useMilkCollectionForm";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -179,6 +180,13 @@ export default function MilkProductionForm({
                 <OcrPhotoUpload
                   key={String(ocrResetKey ?? '')}
                   onResultsProcessed={handleOcrResults}
+                  disabled={creating || creatingBulk}
+                  resetKey={ocrResetKey}
+                />
+
+                <DeviceSyncButton
+                  onResultsProcessed={handleOcrResults}
+                  animals={activeAnimals}
                   disabled={creating || creatingBulk}
                   resetKey={ocrResetKey}
                 />

@@ -240,6 +240,26 @@ export default {
   newVolume: "Nuevo volumen (L)",
   save: "Guardar",
 
+  // Device Sync (Balanza)
+  deviceSync: "Sincronizar desde balanza",
+  deviceSyncStep1Title: "Sincronizar desde Balanza",
+  deviceSyncStep1Desc:
+    'Conecta tu celular al WiFi "Balanza" y presiona Sincronizar',
+  deviceSyncing: "Conectando con balanza...",
+  deviceSyncSuccess: "{{count}} registros cargados desde la balanza",
+  deviceSyncUnmatched: "{{count}} códigos no encontrados",
+  deviceSyncDuplicates: "{{count}} registros ya importados (omitidos)",
+  deviceSyncNoRecords: "No se encontraron registros en la balanza",
+  deviceSyncError:
+    'No se pudo conectar. Verifica que estés conectado al WiFi "Balanza"',
+  deviceSyncReconnect:
+    "Reconecta tu WiFi o datos móviles para enviar los registros",
+  deviceSyncRetry: "Reintentar",
+  deviceSyncAccept: "Aceptar",
+  deviceSyncOfflineTitle: "Sin conexión a internet",
+  deviceSyncOfflineDesc:
+    "Reconecta tu WiFi o datos móviles antes de guardar los registros",
+
   // Sorting
   sortBy: "Ordenar por",
   mostRecent: "Más reciente",
