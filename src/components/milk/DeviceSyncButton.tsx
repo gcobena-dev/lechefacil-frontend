@@ -8,9 +8,9 @@ import {
   markAsImported,
   getDeviceBuffer,
   clearDeviceBuffer,
-  hasDeviceBuffer,
   matchDeviceRecords,
   getUidsFromRecords,
+  isDeviceSyncAvailable,
 } from "@/services/deviceSync";
 import { fetchAllLactatingAnimals } from "@/services/animals";
 import DeviceSyncWizard from "./DeviceSyncWizard";
@@ -41,6 +41,8 @@ export default function DeviceSyncButton({
   const [importing, setImporting] = useState(false);
   const pendingUidsRef = useRef<string[]>([]);
   const initialResetKey = useRef(resetKey);
+
+  const available = isDeviceSyncAvailable();
 
   // Check buffer on mount and when wizard closes
   const refreshBufferCount = useCallback(() => {
@@ -135,6 +137,8 @@ export default function DeviceSyncButton({
       setImporting(false);
     }
   }, [onResultsProcessed, refreshBufferCount, toast, t]);
+
+  if (!available) return null;
 
   return (
     <>

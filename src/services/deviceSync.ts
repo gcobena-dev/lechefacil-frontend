@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { getPref, setPref } from "@/utils/prefs";
 
 // --- Types ---
@@ -91,7 +92,17 @@ export function markAsImported(uids: string[]): void {
   setPref(IMPORTED_KEY, trimmed, { session: false });
 }
 
-// --- HTTP fetch from device ---
+// --- Platform check ---
+
+export function isDeviceSyncAvailable(): boolean {
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+}
+
+// --- HTTP fetch from device (native only) ---
 
 function promiseTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -106,88 +117,53 @@ function promiseTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function nativeHttpGet(
-  url: string,
-  timeoutMs: number
-): Promise<{ ok: boolean; text?: string; status?: number }> {
-  const { CapacitorHttp } = await import("@capacitor/core");
-  const res = await CapacitorHttp.request({
-    url,
-    method: "GET",
-    connectTimeout: timeoutMs,
-    readTimeout: timeoutMs,
-    headers: { Accept: "application/json, text/plain" },
-  });
-  const data = res.data;
-  const text =
-    typeof data === "object" ? JSON.stringify(data) : String(data ?? "");
-  return {
-    ok: res.status >= 200 && res.status < 300,
-    text: text.trim(),
-    status: res.status,
-  };
-}
-
-async function webFetchGet(
-  url: string,
-  timeoutMs: number
-): Promise<{ ok: boolean; text?: string; status?: number }> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    const text = await res.text();
-    return { ok: res.ok, text, status: res.status };
-  } finally {
-    clearTimeout(id);
-  }
-}
-
 export async function fetchDeviceRecords(
   host = "http://192.168.4.1",
   timeoutMs = 10000
 ): Promise<DeviceSyncResult> {
-  const url = `${host.replace(/\/+$/, "")}/data`;
-
-  // Try native HTTP first, then web fetch
-  let text: string | undefined;
-  let fetched = false;
-
-  try {
-    const res = await promiseTimeout(nativeHttpGet(url, timeoutMs), timeoutMs);
-    if (res.ok && res.text) {
-      text = res.text;
-      fetched = true;
-    }
-  } catch {
-    // Fall through to web fetch
-  }
-
-  if (!fetched) {
-    try {
-      const res = await promiseTimeout(webFetchGet(url, timeoutMs), timeoutMs);
-      if (res.ok && res.text) {
-        text = res.text;
-        fetched = true;
-      }
-    } catch (e: any) {
-      const msg = String(e?.message || "").toLowerCase();
-      if (msg.includes("timeout") || msg.includes("abort")) {
-        return { ok: false, error: "timeout", errorType: "timeout" };
-      }
-      return { ok: false, error: msg, errorType: "network" };
-    }
-  }
-
-  if (!fetched || !text) {
+  if (!isDeviceSyncAvailable()) {
     return {
       ok: false,
-      error: "No se pudo conectar con la balanza",
+      error: "Esta función solo está disponible en la app móvil",
       errorType: "network",
     };
+  }
+
+  const url = `${host.replace(/\/+$/, "")}/data`;
+
+  let text: string | undefined;
+
+  try {
+    const { CapacitorHttp } = await import("@capacitor/core");
+    const res = await promiseTimeout(
+      CapacitorHttp.request({
+        url,
+        method: "GET",
+        connectTimeout: timeoutMs,
+        readTimeout: timeoutMs,
+        headers: { Accept: "application/json, text/plain" },
+      }),
+      timeoutMs
+    );
+
+    const data = res.data;
+    text =
+      typeof data === "object" ? JSON.stringify(data) : String(data ?? "");
+    text = text.trim();
+
+    if (res.status < 200 || res.status >= 300 || !text) {
+      return {
+        ok: false,
+        error: "No se pudo conectar con la balanza",
+        errorType: "network",
+      };
+    }
+  } catch (e: unknown) {
+    const msg = String(e instanceof Error ? e.message : "").toLowerCase();
+    if (msg.includes("timeout") || msg.includes("abort")) {
+      return { ok: false, error: "timeout", errorType: "timeout" };
+    }
+    return { ok: false, error: msg || "No se pudo conectar con la balanza", errorType: "network" };
   }
 
   // Parse response
