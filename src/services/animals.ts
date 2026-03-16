@@ -33,6 +33,35 @@ export async function listAnimals(params?: {
   });
 }
 
+export async function fetchAllLactatingAnimals(): Promise<
+  Array<{ id: string; name: string; tag: string }>
+> {
+  const pageSize = 100;
+  const first = await listAnimals({
+    status_codes: "LACTATING",
+    page: 1,
+    limit: pageSize,
+  });
+  const items = [...(first.items ?? [])];
+  const total = first.total ?? items.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  for (let p = 2; p <= totalPages; p++) {
+    const res = await listAnimals({
+      status_codes: "LACTATING",
+      page: p,
+      limit: pageSize,
+    });
+    items.push(...(res.items ?? []));
+  }
+
+  return items.map((a) => ({
+    id: a.id,
+    name: a.name ?? a.tag ?? "",
+    tag: a.tag ?? "",
+  }));
+}
+
 export async function getAnimal(id: string) {
   return apiFetch<AnimalResponse>(`/api/v1/animals/${id}`, {
     withAuth: true,

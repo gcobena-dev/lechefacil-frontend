@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Loader2, CheckCircle, AlertTriangle, AlertCircle, Info } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -12,54 +12,31 @@ import {
 } from "@/components/ui/dialog";
 import {
   fetchDeviceRecords,
-  matchDeviceRecords,
-  getUidsFromRecords,
-  type MatchResult,
-  type DeviceRecord,
+  saveDeviceBuffer,
 } from "@/services/deviceSync";
-
-interface OcrResult {
-  animalId: string | null;
-  animalName: string;
-  liters: number;
-  matchConfidence: number;
-  extractedName: string;
-}
-
-interface Animal {
-  id: string;
-  name: string;
-  tag: string;
-}
 
 interface DeviceSyncWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onResultsProcessed: (results: OcrResult[]) => void;
-  onPendingUids: (uids: string[]) => void;
-  animals: Animal[];
+  onBufferSaved: () => void;
 }
 
-type WizardStep = "instructions" | "syncing" | "results";
+type WizardStep = "instructions" | "syncing" | "result";
 
 export default function DeviceSyncWizard({
   open,
   onOpenChange,
-  onResultsProcessed,
-  onPendingUids,
-  animals,
+  onBufferSaved,
 }: DeviceSyncWizardProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState<WizardStep>("instructions");
   const [error, setError] = useState<string | null>(null);
-  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
-  const [allRecords, setAllRecords] = useState<DeviceRecord[]>([]);
+  const [recordCount, setRecordCount] = useState(0);
 
   const reset = useCallback(() => {
     setStep("instructions");
     setError(null);
-    setMatchResult(null);
-    setAllRecords([]);
+    setRecordCount(0);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -82,37 +59,20 @@ export default function DeviceSyncWizard({
       } else {
         setError(t("milk.deviceSyncError"));
       }
-      setStep("syncing"); // Stay on syncing step to show error + retry
+      setStep("syncing"); // Stay to show error + retry
       return;
     }
 
-    const matched = matchDeviceRecords(result.records, animals);
-    setMatchResult(matched);
-    setAllRecords(result.records);
-    setStep("results");
-  }, [animals, t]);
+    // Phase 1: Save raw records to local buffer
+    saveDeviceBuffer(result.records);
+    setRecordCount(result.records.length);
+    setStep("result");
+    onBufferSaved();
+  }, [t, onBufferSaved]);
 
-  const handleAccept = useCallback(() => {
-    if (!matchResult || !allRecords.length) {
-      handleOpenChange(false);
-      return;
-    }
-
-    // Convert matched records to OcrResult format
-    const ocrResults: OcrResult[] = matchResult.matched.map((m) => ({
-      animalId: m.animalId,
-      animalName: m.animalName,
-      liters: m.quantity,
-      matchConfidence: 1,
-      extractedName: m.tag,
-    }));
-
-    // Pass UIDs to parent for deferred marking (only after successful submit)
-    onPendingUids(getUidsFromRecords(allRecords));
-
-    onResultsProcessed(ocrResults);
+  const handleClose = useCallback(() => {
     handleOpenChange(false);
-  }, [matchResult, allRecords, onResultsProcessed, onPendingUids, handleOpenChange]);
+  }, [handleOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -171,58 +131,26 @@ export default function DeviceSyncWizard({
           </div>
         )}
 
-        {/* Step 3: Results */}
-        {step === "results" && matchResult && (
+        {/* Step 3: Result - records saved to buffer */}
+        {step === "result" && (
           <div className="space-y-4">
-            {matchResult.matched.length > 0 && (
-              <Alert className="border-green-200 bg-green-50 text-green-900">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  {t("milk.deviceSyncSuccess", { count: matchResult.matched.length })}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {matchResult.unmatched.length > 0 && (
-              <Alert className="border-yellow-200 bg-yellow-50 text-yellow-900">
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <AlertDescription className="text-yellow-800">
-                  <p className="font-medium">
-                    {t("milk.deviceSyncUnmatched", { count: matchResult.unmatched.length })}
-                  </p>
-                  <p className="text-xs mt-1">
-                    {matchResult.unmatched.map((u) => u.codigo).join(", ")}
-                  </p>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {matchResult.duplicates > 0 && (
-              <Alert className="border-gray-200 bg-gray-50 text-gray-700">
-                <Info className="h-4 w-4 text-gray-500" />
-                <AlertDescription className="text-gray-600">
-                  {t("milk.deviceSyncDuplicates", { count: matchResult.duplicates })}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {matchResult.matched.length === 0 && matchResult.unmatched.length === 0 && matchResult.duplicates === 0 && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{t("milk.deviceSyncNoRecords")}</AlertDescription>
-              </Alert>
-            )}
+            <Alert className="border-green-200 bg-green-50 text-green-900">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                {t("milk.deviceSyncBufferSaved", { count: recordCount })}
+              </AlertDescription>
+            </Alert>
 
             <Alert className="border-blue-200 bg-blue-50 text-blue-900">
               <Info className="h-4 w-4 text-blue-500" />
               <AlertDescription className="text-blue-800 text-xs">
-                {t("milk.deviceSyncReconnect")}
+                {t("milk.deviceSyncReconnectToImport")}
               </AlertDescription>
             </Alert>
 
             <div className="flex justify-end">
-              <Button onClick={handleAccept}>
-                {t("milk.deviceSyncAccept")}
+              <Button onClick={handleClose}>
+                {t("common.close")}
               </Button>
             </div>
           </div>

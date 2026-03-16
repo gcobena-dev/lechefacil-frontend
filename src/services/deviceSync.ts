@@ -40,6 +40,33 @@ export interface MatchResult {
   duplicates: number;
 }
 
+// --- Device buffer (Phase 1: raw data from balanza) ---
+
+const BUFFER_KEY = "lf_device_sync_buffer";
+
+export function saveDeviceBuffer(records: DeviceRecord[]): void {
+  setPref(BUFFER_KEY, records, { session: false });
+}
+
+export function getDeviceBuffer(): DeviceRecord[] | null {
+  const data = getPref<DeviceRecord[] | null>(BUFFER_KEY, null, {
+    session: false,
+  });
+  return data && data.length > 0 ? data : null;
+}
+
+export function clearDeviceBuffer(): void {
+  try {
+    window.localStorage.removeItem(BUFFER_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function hasDeviceBuffer(): boolean {
+  return getDeviceBuffer() !== null;
+}
+
 // --- Imported IDs persistence ---
 
 const IMPORTED_KEY = "lf_device_sync_imported";

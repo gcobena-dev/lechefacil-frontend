@@ -256,6 +256,15 @@ export default {
     "Reconecta tu WiFi o datos móviles para enviar los registros",
   deviceSyncRetry: "Reintentar",
   deviceSyncAccept: "Aceptar",
+  deviceSyncBufferSaved: "{{count}} registros obtenidos de la balanza",
+  deviceSyncReconnectToImport:
+    "Reconecta tu WiFi o datos móviles y presiona \"Importar datos\" para cargarlos",
+  deviceSyncImport: "Importar datos",
+  deviceSyncImportNeedsInternet:
+    "Necesitas conexión a internet para importar los datos de la balanza",
+  deviceSyncImportError:
+    "Error al importar datos. Verifica tu conexión e intenta nuevamente",
+  deviceSyncNoMatches: "No se encontraron coincidencias",
   deviceSyncOfflineTitle: "Sin conexión a internet",
   deviceSyncOfflineDesc:
     "Reconecta tu WiFi o datos móviles antes de guardar los registros",

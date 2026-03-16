@@ -186,7 +186,6 @@ export default function MilkProductionForm({
 
                 <DeviceSyncButton
                   onResultsProcessed={handleOcrResults}
-                  animals={activeAnimals}
                   disabled={creating || creatingBulk}
                   resetKey={ocrResetKey}
                 />
