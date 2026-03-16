@@ -10,6 +10,9 @@ const config: CapacitorConfig = {
     androidScheme: 'https'
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true
+    },
     Camera: {
       presentationStyle: 'fullscreen'
     }
