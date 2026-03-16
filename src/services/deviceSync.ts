@@ -163,38 +163,59 @@ function parseDeviceResponse(text: string): DeviceSyncResult {
 // --- USB Serial: Native (Android) ---
 
 async function fetchViaUsbNative(timeoutMs: number): Promise<DeviceSyncResult> {
-  const { getDeviceHandlers } = await import("capacitor-usb-serial");
+  const { SerialPort } = await import("@leonardojc/capacitor-serial-port");
 
-  const handlers = await getDeviceHandlers();
-  if (handlers.length === 0) {
+  // List available ports and find the ESP32
+  const { ports } = await SerialPort.listPorts();
+  if (ports.length === 0) {
     return {
       ok: false,
-      error: "No se detectó ningún dispositivo USB. Verifica la conexión por cable.",
+      error:
+        "No se detectó ningún dispositivo USB. Verifica la conexión por cable.",
       errorType: "network",
     };
   }
 
-  const device = handlers[0];
+  const port = ports[0];
+
   try {
-    await device.connect();
+    // Setup permissions and open port
+    await SerialPort.setupPermissions({ portPath: port.path });
+    const openResult = await SerialPort.openPort({
+      path: port.path,
+      baudRate: 115200,
+      dataBits: 8,
+      stopBits: 1,
+      parity: "none",
+    });
 
-    // Send DATA command and read response
-    const response = await promiseTimeout(
-      device.write("DATA\n"),
-      timeoutMs
-    );
-
-    let text = response.data?.trim() ?? "";
-
-    // If write didn't return data, try explicit read
-    if (!text) {
-      // Small delay for ESP32 to process
-      await new Promise((r) => setTimeout(r, 200));
-      const readRes = await promiseTimeout(device.read(), timeoutMs);
-      text = readRes.data?.trim() ?? "";
+    if (!openResult.success) {
+      return {
+        ok: false,
+        error: openResult.message || "No se pudo abrir el puerto serial",
+        errorType: "network",
+      };
     }
 
-    await device.disconnect();
+    // Send DATA command
+    await SerialPort.writeData({ data: "DATA\n" });
+
+    // Read response with retries (ESP32 may need time to respond)
+    let text = "";
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 150));
+      const readRes = await SerialPort.readData();
+      if (readRes.success && readRes.data) {
+        text += readRes.data;
+      }
+      // JSON array ends with ]
+      if (text.includes("]")) break;
+    }
+
+    await SerialPort.closePort();
+    text = text.trim();
 
     if (!text) {
       return {
@@ -206,7 +227,11 @@ async function fetchViaUsbNative(timeoutMs: number): Promise<DeviceSyncResult> {
 
     return parseDeviceResponse(text);
   } catch (e: unknown) {
-    try { await device.disconnect(); } catch { /* ignore */ }
+    try {
+      await SerialPort.closePort();
+    } catch {
+      /* ignore */
+    }
     const msg = String(e instanceof Error ? e.message : "").toLowerCase();
     if (msg.includes("timeout")) {
       return { ok: false, error: "timeout", errorType: "timeout" };
@@ -275,7 +300,11 @@ async function fetchViaWebSerial(timeoutMs: number): Promise<DeviceSyncResult> {
 
     return parseDeviceResponse(text);
   } catch (e: unknown) {
-    try { if (port) await port.close(); } catch { /* ignore */ }
+    try {
+      if (port) await port.close();
+    } catch {
+      /* ignore */
+    }
     const msg = String(e instanceof Error ? e.message : "");
     // User cancelled the port picker
     if (msg.includes("No port selected") || msg.includes("cancelled")) {
