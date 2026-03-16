@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Wifi, Download, Loader2 } from "lucide-react";
+import { Usb, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -150,7 +150,7 @@ export default function DeviceSyncButton({
           disabled={disabled}
           onClick={() => setWizardOpen(true)}
         >
-          <Wifi className="h-4 w-4 mr-2" />
+          <Usb className="h-4 w-4 mr-2" />
           {t("milk.deviceSync")}
         </Button>
 

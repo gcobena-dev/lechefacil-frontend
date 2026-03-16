@@ -34,3 +34,6 @@ project(':capgo-capacitor-native-biometric').projectDir = new File('../node_modu
 
 include ':capgo-capacitor-updater'
 project(':capgo-capacitor-updater').projectDir = new File('../node_modules/@capgo/capacitor-updater/android')
+
+include ':capacitor-usb-serial'
+project(':capacitor-usb-serial').projectDir = new File('../node_modules/capacitor-usb-serial/android')
