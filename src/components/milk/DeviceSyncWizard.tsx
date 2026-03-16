@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Info, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -31,11 +31,15 @@ export default function DeviceSyncWizard({
   const { t } = useTranslation();
   const [step, setStep] = useState<WizardStep>("instructions");
   const [error, setError] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [recordCount, setRecordCount] = useState(0);
 
   const reset = useCallback(() => {
     setStep("instructions");
     setError(null);
+    setErrorDetail(null);
+    setCopied(false);
     setRecordCount(0);
   }, []);
 
@@ -47,9 +51,22 @@ export default function DeviceSyncWizard({
     [onOpenChange, reset]
   );
 
+  const handleCopyError = useCallback(async () => {
+    if (!errorDetail) return;
+    try {
+      await navigator.clipboard.writeText(errorDetail);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for environments without clipboard API
+    }
+  }, [errorDetail]);
+
   const handleSync = useCallback(async () => {
     setStep("syncing");
     setError(null);
+    setErrorDetail(null);
+    setCopied(false);
 
     const result = await fetchDeviceRecords();
 
@@ -58,6 +75,7 @@ export default function DeviceSyncWizard({
         setError(t("milk.deviceSyncNoRecords"));
       } else {
         setError(t("milk.deviceSyncError"));
+        setErrorDetail(`[${result.errorType}] ${result.error}`);
       }
       setStep("syncing"); // Stay to show error + retry
       return;
@@ -118,6 +136,26 @@ export default function DeviceSyncWizard({
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
+                {errorDetail && (
+                  <div className="relative rounded-md bg-muted p-3">
+                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap break-all pr-8">
+                      {errorDetail}
+                    </pre>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1.5 right-1.5 h-7 w-7"
+                      onClick={handleCopyError}
+                    >
+                      {copied ? (
+                        <Check className="h-3.5 w-3.5 text-green-600" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                )}
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={() => handleOpenChange(false)}>
                     {t("milk.cancelLabel")}
