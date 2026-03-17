@@ -1,22 +1,38 @@
-import { Capacitor } from "@capacitor/core";
 import { getPref, setPref } from "@/utils/prefs";
+import { apiFetch } from "./client";
 
 // --- Types ---
 
 export interface DeviceRecord {
-  id: number;
+  id: string;
+  device_record_id: number;
   codigo: string;
   peso: string;
   fecha: string;
   hora: string;
   turno: string;
+  status: string;
+  matched_animal_id: string | null;
+  batch_id: string;
+  created_at: string;
 }
 
-export interface DeviceSyncResult {
-  ok: boolean;
-  records?: DeviceRecord[];
-  error?: string;
-  errorType?: "network" | "parse" | "timeout" | "empty";
+export interface ScaleDevice {
+  id: string;
+  tenant_id: string;
+  name: string;
+  api_key_masked: string;
+  api_key?: string;
+  is_active: boolean;
+  last_seen_at: string | null;
+  firmware_version: string | null;
+  wifi_ssid: string | null;
+  created_at: string;
+}
+
+export interface PendingRecordsResponse {
+  items: DeviceRecord[];
+  total: number;
 }
 
 export interface MatchedDeviceRecord {
@@ -24,7 +40,7 @@ export interface MatchedDeviceRecord {
   animalName: string;
   tag: string;
   quantity: number;
-  deviceRecord: DeviceRecord;
+  deviceRecordId: string;
 }
 
 export interface UnmatchedDeviceRecord {
@@ -38,46 +54,12 @@ export interface UnmatchedDeviceRecord {
 export interface MatchResult {
   matched: MatchedDeviceRecord[];
   unmatched: UnmatchedDeviceRecord[];
-  duplicates: number;
 }
 
-export type SyncMethod = "usb" | "wifi";
-
-// --- Device buffer (Phase 1: raw data from balanza) ---
-
-const BUFFER_KEY = "lf_device_sync_buffer";
-
-export function saveDeviceBuffer(records: DeviceRecord[]): void {
-  setPref(BUFFER_KEY, records, { session: false });
-}
-
-export function getDeviceBuffer(): DeviceRecord[] | null {
-  const data = getPref<DeviceRecord[] | null>(BUFFER_KEY, null, {
-    session: false,
-  });
-  return data && data.length > 0 ? data : null;
-}
-
-export function clearDeviceBuffer(): void {
-  try {
-    window.localStorage.removeItem(BUFFER_KEY);
-  } catch {
-    // ignore
-  }
-}
-
-export function hasDeviceBuffer(): boolean {
-  return getDeviceBuffer() !== null;
-}
-
-// --- Imported IDs persistence ---
+// --- Imported IDs persistence (to track what's been imported in UI) ---
 
 const IMPORTED_KEY = "lf_device_sync_imported";
 const MAX_IMPORTED = 1000;
-
-function makeUid(r: DeviceRecord): string {
-  return `${r.id}::${r.codigo}::${r.fecha}::${r.hora}`;
-}
 
 export function getImportedIds(): string[] {
   return getPref<string[]>(IMPORTED_KEY, [], { session: false });
@@ -93,321 +75,85 @@ export function markAsImported(uids: string[]): void {
   setPref(IMPORTED_KEY, trimmed, { session: false });
 }
 
-// --- Platform checks ---
+// --- Scale Devices API ---
 
-function isNative(): boolean {
-  try {
-    return Capacitor.isNativePlatform();
-  } catch {
-    return false;
-  }
+export async function listScaleDevices(): Promise<ScaleDevice[]> {
+  const res = await apiFetch("/api/v1/scale-devices/");
+  return res.items ?? res;
 }
 
-export function isWebSerialSupported(): boolean {
-  return "serial" in navigator;
-}
-
-export function isUsbSyncAvailable(): boolean {
-  return isNative() || isWebSerialSupported();
-}
-
-export function isWifiSyncAvailable(): boolean {
-  return isNative();
-}
-
-export function isDeviceSyncAvailable(): boolean {
-  return isUsbSyncAvailable() || isWifiSyncAvailable();
-}
-
-export function getAvailableSyncMethods(): SyncMethod[] {
-  const methods: SyncMethod[] = [];
-  if (isUsbSyncAvailable()) methods.push("usb");
-  if (isWifiSyncAvailable()) methods.push("wifi");
-  return methods;
-}
-
-// --- Shared helpers ---
-
-function promiseTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("timeout")), ms);
-    p.then((v) => {
-      clearTimeout(t);
-      resolve(v);
-    }).catch((e) => {
-      clearTimeout(t);
-      reject(e);
-    });
+export async function createScaleDevice(payload: {
+  name: string;
+  wifi_ssid?: string;
+  wifi_password?: string;
+}): Promise<ScaleDevice> {
+  return apiFetch("/api/v1/scale-devices/", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }
 
-function parseDeviceResponse(text: string): DeviceSyncResult {
-  try {
-    const parsed = JSON.parse(text);
-    const records: DeviceRecord[] = Array.isArray(parsed)
-      ? parsed
-      : parsed.records ?? parsed.data ?? [];
-    if (records.length === 0) {
-      return { ok: false, error: "empty", errorType: "empty" };
-    }
-    return { ok: true, records };
-  } catch {
-    return {
-      ok: false,
-      error: "Respuesta inválida del dispositivo",
-      errorType: "parse",
-    };
-  }
+export async function getScaleDevice(deviceId: string): Promise<ScaleDevice> {
+  return apiFetch(`/api/v1/scale-devices/${deviceId}`);
 }
 
-// --- USB Serial: Native (Android) ---
-
-async function fetchViaUsbNative(timeoutMs: number): Promise<DeviceSyncResult> {
-  const { SerialPort } = await import("@leonardojc/capacitor-serial-port");
-
-  // List available ports and find the ESP32
-  const { ports } = await SerialPort.listPorts();
-  if (ports.length === 0) {
-    return {
-      ok: false,
-      error:
-        "No se detectó ningún dispositivo USB. Verifica la conexión por cable.",
-      errorType: "network",
-    };
+export async function updateScaleDevice(
+  deviceId: string,
+  payload: {
+    name?: string;
+    wifi_ssid?: string;
+    wifi_password?: string;
+    is_active?: boolean;
   }
+): Promise<ScaleDevice> {
+  return apiFetch(`/api/v1/scale-devices/${deviceId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
 
-  const port = ports[0];
+export async function regenerateDeviceKey(
+  deviceId: string
+): Promise<ScaleDevice> {
+  return apiFetch(`/api/v1/scale-devices/${deviceId}/regenerate-key`, {
+    method: "POST",
+  });
+}
 
-  try {
-    // Setup permissions and open port
-    await SerialPort.setupPermissions({ portPath: port.path });
-    const openResult = await SerialPort.openPort({
-      path: port.path,
-      baudRate: 115200,
-      dataBits: 8,
-      stopBits: 1,
-      parity: "none",
+// --- Pending Records API ---
+
+export async function getPendingRecords(
+  deviceId: string,
+  params?: { status?: string; limit?: number; offset?: number }
+): Promise<PendingRecordsResponse> {
+  const query = new URLSearchParams();
+  if (params?.status) query.set("status", params.status);
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.offset) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiFetch(
+    `/api/v1/scale-devices/${deviceId}/records${qs ? `?${qs}` : ""}`
+  );
+}
+
+export async function fetchAllPendingRecords(): Promise<DeviceRecord[]> {
+  // Get all devices, then all pending records
+  const devices = await listScaleDevices();
+  const activeDevices = devices.filter((d) => d.is_active);
+  if (activeDevices.length === 0) return [];
+
+  const allRecords: DeviceRecord[] = [];
+  for (const device of activeDevices) {
+    const res = await getPendingRecords(device.id, {
+      status: "pending",
+      limit: 200,
     });
-
-    if (!openResult.success) {
-      return {
-        ok: false,
-        error: openResult.message || "No se pudo abrir el puerto serial",
-        errorType: "network",
-      };
-    }
-
-    // Send DATA command
-    await SerialPort.writeData({ data: "DATA\n" });
-
-    // Read response with retries (ESP32 may need time to respond)
-    let text = "";
-    const deadline = Date.now() + timeoutMs;
-
-    while (Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 150));
-      const readRes = await SerialPort.readData();
-      if (readRes.success && readRes.data) {
-        text += readRes.data;
-      }
-      // JSON array ends with ]
-      if (text.includes("]")) break;
-    }
-
-    await SerialPort.closePort();
-    text = text.trim();
-
-    if (!text) {
-      return {
-        ok: false,
-        error: "El dispositivo no respondió",
-        errorType: "network",
-      };
-    }
-
-    return parseDeviceResponse(text);
-  } catch (e: unknown) {
-    try {
-      await SerialPort.closePort();
-    } catch {
-      /* ignore */
-    }
-    const msg = String(e instanceof Error ? e.message : "").toLowerCase();
-    if (msg.includes("timeout")) {
-      return { ok: false, error: "timeout", errorType: "timeout" };
-    }
-    return { ok: false, error: msg || "Error USB", errorType: "network" };
+    allRecords.push(...res.items);
   }
+  return allRecords;
 }
 
-// --- USB Serial: Web Serial API (Chrome/Edge) ---
-
-async function fetchViaWebSerial(timeoutMs: number): Promise<DeviceSyncResult> {
-  if (!("serial" in navigator)) {
-    return {
-      ok: false,
-      error: "Web Serial API no disponible en este navegador",
-      errorType: "network",
-    };
-  }
-
-  let port: SerialPort | null = null;
-
-  try {
-    // Prompt user to select the ESP32 serial device
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
-
-    const writer = port.writable?.getWriter();
-    const reader = port.readable?.getReader();
-
-    if (!writer || !reader) {
-      throw new Error("No se pudo abrir lectura/escritura del puerto serial");
-    }
-
-    // Send DATA command
-    const encoder = new TextEncoder();
-    await writer.write(encoder.encode("DATA\n"));
-    writer.releaseLock();
-
-    // Read response with timeout
-    const decoder = new TextDecoder();
-    let text = "";
-    const deadline = Date.now() + timeoutMs;
-
-    while (Date.now() < deadline) {
-      const { value, done } = await promiseTimeout(
-        reader.read(),
-        Math.max(deadline - Date.now(), 100)
-      );
-      if (done) break;
-      if (value) text += decoder.decode(value, { stream: true });
-      // JSON array ends with ]
-      if (text.includes("]")) break;
-    }
-
-    reader.releaseLock();
-    await port.close();
-
-    text = text.trim();
-    if (!text) {
-      return {
-        ok: false,
-        error: "El dispositivo no respondió",
-        errorType: "network",
-      };
-    }
-
-    return parseDeviceResponse(text);
-  } catch (e: unknown) {
-    try {
-      if (port) await port.close();
-    } catch {
-      /* ignore */
-    }
-    const msg = String(e instanceof Error ? e.message : "");
-    // User cancelled the port picker
-    if (msg.includes("No port selected") || msg.includes("cancelled")) {
-      return {
-        ok: false,
-        error: "No se seleccionó un puerto serial",
-        errorType: "network",
-      };
-    }
-    if (msg.toLowerCase().includes("timeout")) {
-      return { ok: false, error: "timeout", errorType: "timeout" };
-    }
-    return { ok: false, error: msg || "Error serial", errorType: "network" };
-  }
-}
-
-// --- USB: dispatch to native or web ---
-
-export async function fetchDeviceRecordsUsb(
-  timeoutMs = 10000
-): Promise<DeviceSyncResult> {
-  if (isNative()) {
-    return fetchViaUsbNative(timeoutMs);
-  }
-  if (isWebSerialSupported()) {
-    return fetchViaWebSerial(timeoutMs);
-  }
-  return {
-    ok: false,
-    error: "USB serial no disponible en esta plataforma",
-    errorType: "network",
-  };
-}
-
-// --- WiFi HTTP fetch (native only) ---
-
-export async function fetchDeviceRecordsWifi(
-  host = "http://192.168.4.1",
-  timeoutMs = 10000
-): Promise<DeviceSyncResult> {
-  if (!isNative()) {
-    return {
-      ok: false,
-      error: "WiFi sync solo disponible en la app móvil",
-      errorType: "network",
-    };
-  }
-
-  const url = `${host.replace(/\/+$/, "")}/data`;
-
-  try {
-    const { CapacitorHttp } = await import("@capacitor/core");
-    const res = await promiseTimeout(
-      CapacitorHttp.request({
-        url,
-        method: "GET",
-        connectTimeout: timeoutMs,
-        readTimeout: timeoutMs,
-        headers: { Accept: "application/json, text/plain" },
-      }),
-      timeoutMs
-    );
-
-    const data = res.data;
-    let text =
-      typeof data === "object" ? JSON.stringify(data) : String(data ?? "");
-    text = text.trim();
-
-    if (res.status < 200 || res.status >= 300 || !text) {
-      return {
-        ok: false,
-        error: "No se pudo conectar con la balanza",
-        errorType: "network",
-      };
-    }
-
-    return parseDeviceResponse(text);
-  } catch (e: unknown) {
-    const msg = String(e instanceof Error ? e.message : "").toLowerCase();
-    if (msg.includes("timeout") || msg.includes("abort")) {
-      return { ok: false, error: "timeout", errorType: "timeout" };
-    }
-    return {
-      ok: false,
-      error: msg || "No se pudo conectar con la balanza",
-      errorType: "network",
-    };
-  }
-}
-
-// --- Unified fetch by method ---
-
-export async function fetchDeviceRecords(
-  method: SyncMethod = "usb",
-  timeoutMs = 10000
-): Promise<DeviceSyncResult> {
-  if (method === "usb") {
-    return fetchDeviceRecordsUsb(timeoutMs);
-  }
-  return fetchDeviceRecordsWifi(undefined, timeoutMs);
-}
-
-// --- Matching logic ---
+// --- Matching logic (code → animal) ---
 
 interface MatchAnimal {
   id: string;
@@ -419,17 +165,6 @@ export function matchDeviceRecords(
   records: DeviceRecord[],
   animals: MatchAnimal[]
 ): MatchResult {
-  const importedIds = new Set(getImportedIds());
-  let duplicates = 0;
-
-  const fresh = records.filter((r) => {
-    if (importedIds.has(makeUid(r))) {
-      duplicates++;
-      return false;
-    }
-    return true;
-  });
-
   const tagMap = new Map<string, MatchAnimal>();
   for (const a of animals) {
     if (a.tag) {
@@ -440,7 +175,7 @@ export function matchDeviceRecords(
   const matchedByAnimal = new Map<string, MatchedDeviceRecord>();
   const unmatched: UnmatchedDeviceRecord[] = [];
 
-  for (const r of fresh) {
+  for (const r of records) {
     const code = (r.codigo || "").toLowerCase().trim();
     const animal = tagMap.get(code);
 
@@ -455,7 +190,7 @@ export function matchDeviceRecords(
           animalName: animal.name,
           tag: animal.tag,
           quantity: peso,
-          deviceRecord: r,
+          deviceRecordId: r.id,
         });
       }
     } else {
@@ -472,10 +207,12 @@ export function matchDeviceRecords(
   return {
     matched: Array.from(matchedByAnimal.values()),
     unmatched,
-    duplicates,
   };
 }
 
-export function getUidsFromRecords(records: DeviceRecord[]): string[] {
-  return records.map(makeUid);
+// --- Check if sync is available (any active devices exist) ---
+
+export function isDeviceSyncAvailable(): boolean {
+  // Always available now - it's just an API call
+  return true;
 }
