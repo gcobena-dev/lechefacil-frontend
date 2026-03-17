@@ -77,9 +77,14 @@ export function markAsImported(uids: string[]): void {
 
 // --- Scale Devices API ---
 
+const authOpts = { withAuth: true, withTenant: true } as const;
+
 export async function listScaleDevices(): Promise<ScaleDevice[]> {
-  const res = await apiFetch("/api/v1/scale-devices/");
-  return res.items ?? res;
+  const res = await apiFetch<ScaleDevice[] | { items: ScaleDevice[] }>(
+    "/api/v1/scale-devices/",
+    authOpts
+  );
+  return Array.isArray(res) ? res : res.items;
 }
 
 export async function createScaleDevice(payload: {
@@ -88,13 +93,14 @@ export async function createScaleDevice(payload: {
   wifi_password?: string;
 }): Promise<ScaleDevice> {
   return apiFetch("/api/v1/scale-devices/", {
+    ...authOpts,
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export async function getScaleDevice(deviceId: string): Promise<ScaleDevice> {
-  return apiFetch(`/api/v1/scale-devices/${deviceId}`);
+  return apiFetch(`/api/v1/scale-devices/${deviceId}`, authOpts);
 }
 
 export async function updateScaleDevice(
@@ -107,6 +113,7 @@ export async function updateScaleDevice(
   }
 ): Promise<ScaleDevice> {
   return apiFetch(`/api/v1/scale-devices/${deviceId}`, {
+    ...authOpts,
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -116,6 +123,7 @@ export async function regenerateDeviceKey(
   deviceId: string
 ): Promise<ScaleDevice> {
   return apiFetch(`/api/v1/scale-devices/${deviceId}/regenerate-key`, {
+    ...authOpts,
     method: "POST",
   });
 }
@@ -132,7 +140,8 @@ export async function getPendingRecords(
   if (params?.offset) query.set("offset", String(params.offset));
   const qs = query.toString();
   return apiFetch(
-    `/api/v1/scale-devices/${deviceId}/records${qs ? `?${qs}` : ""}`
+    `/api/v1/scale-devices/${deviceId}/records${qs ? `?${qs}` : ""}`,
+    authOpts
   );
 }
 
