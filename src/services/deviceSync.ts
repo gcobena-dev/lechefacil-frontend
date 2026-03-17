@@ -102,7 +102,7 @@ export async function createScaleDevice(payload: {
   return apiFetch("/api/v1/scale-devices/", {
     ...authOpts,
     method: "POST",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
@@ -122,7 +122,7 @@ export async function updateScaleDevice(
   return apiFetch(`/api/v1/scale-devices/${deviceId}`, {
     ...authOpts,
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
