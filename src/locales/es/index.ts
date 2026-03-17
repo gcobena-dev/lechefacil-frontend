@@ -9,6 +9,7 @@ import reports from "./reports";
 import updates from "./updates";
 import notifications from "./notifications";
 import reproduction from "./reproduction";
+import devices from "./devices";
 
 export default {
   common,
@@ -22,4 +23,5 @@ export default {
   updates,
   notifications,
   reproduction,
+  devices,
 };

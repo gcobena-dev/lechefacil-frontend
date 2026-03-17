@@ -1,0 +1,45 @@
+export default {
+  title: "Dispositivos",
+  titleShort: "Disp.",
+  addDevice: "Agregar Dispositivo",
+  addDeviceDesc:
+    "Registra una nueva balanza para sincronizar pesajes automáticamente.",
+  deviceName: "Nombre del dispositivo",
+  deviceNamePlaceholder: "Ej: Balanza Corral 1",
+  noDevices: "No hay dispositivos registrados",
+  noDevicesHint:
+    "Agrega un dispositivo para obtener su API Key y configurar la balanza.",
+  status: "Estado",
+  firmware: "Firmware",
+  lastSeen: "Última conexión",
+  apiKeyTitle: "API Key del Dispositivo",
+  apiKeyWarning:
+    "Esta clave solo se muestra una vez. Cópiala ahora para configurar tu balanza.",
+  apiKeyCopyReminder:
+    "Guarda esta clave en un lugar seguro. No podrás verla de nuevo después de cerrar este diálogo.",
+  understood: "Entendido",
+  regenerateKey: "Regenerar API Key",
+  regenerateKeyShort: "Regenerar",
+  regenerateKeyDesc: "Se generará una nueva API Key para este dispositivo.",
+  regenerateWarning:
+    "La clave anterior dejará de funcionar. Deberás reconfigurar la balanza con la nueva clave.",
+  currentKey: "Clave actual",
+  deactivateDevice: "Desactivar Dispositivo",
+  deactivateDeviceDesc:
+    "El dispositivo dejará de poder sincronizar datos. Esta acción se puede revertir.",
+  deactivate: "Desactivar",
+  deviceDeactivated: "Dispositivo desactivado",
+  deviceDeactivatedDesc: "El dispositivo ya no podrá sincronizar pesajes.",
+  couldNotCreate: "No se pudo crear el dispositivo.",
+  couldNotRegenerate: "No se pudo regenerar la clave.",
+  couldNotDeactivate: "No se pudo desactivar el dispositivo.",
+  pairingPin: "PIN de emparejamiento",
+  pairingPinDesc: "Ingresa este PIN en el teclado de la balanza.",
+  pairingPinExpires: "Expira en",
+  pairingPinExpired: "PIN expirado",
+  generateNewPin: "Generar nuevo PIN",
+  pairDevice: "Emparejar",
+  enterPinOnDevice: "Ingresa este código en el teclado de tu balanza",
+  advancedApiKey: "Avanzado: API Key manual",
+  couldNotGeneratePin: "No se pudo generar el PIN.",
+};

@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Settings as SettingsIcon, Users, Building2, Layers3, DollarSign } from "lucide-react";
+import { Settings as SettingsIcon, Users, Building2, Layers3, DollarSign, Smartphone } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SettingsUsers from "./SettingsUsers";
 import TenantSettings from "@/components/settings/TenantSettings";
 import Catalogs from "@/components/settings/Catalogs";
 import MilkPrices from "@/pages/milk/MilkPrices";
+import DeviceSettings from "@/components/settings/DeviceSettings";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { requestPushPermissionsManually } from "@/services/push";
@@ -17,7 +18,7 @@ export default function Settings() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && ["users", "prices", "tenant", "catalogs"].includes(tab)) {
+    if (tab && ["users", "prices", "tenant", "catalogs", "dispositivos"].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -33,7 +34,7 @@ export default function Settings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 h-auto p-1">
           <TabsTrigger value="users" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
             <Users className="h-4 w-4 flex-shrink-0" />
             <span className="hidden sm:inline">{t("common.usersTitle")}</span>
@@ -54,6 +55,11 @@ export default function Settings() {
             <span className="hidden sm:inline">{t("animals.catalogs")}</span>
             <span className="sm:hidden text-xs truncate">{t("animals.catalogsShort")}</span>
           </TabsTrigger>
+          <TabsTrigger value="dispositivos" className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
+            <Smartphone className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">{t("devices.title")}</span>
+            <span className="sm:hidden text-xs">{t("devices.title")}</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="mt-6">
@@ -67,6 +73,9 @@ export default function Settings() {
         </TabsContent>
         <TabsContent value="catalogs" className="mt-6">
           <Catalogs />
+        </TabsContent>
+        <TabsContent value="dispositivos" className="mt-6">
+          <DeviceSettings />
         </TabsContent>
         {/* Removed manual push permission button for mobile UX */}
       </Tabs>

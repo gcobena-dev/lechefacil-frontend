@@ -23,11 +23,18 @@ export interface ScaleDevice {
   name: string;
   api_key_masked: string;
   api_key?: string;
+  pairing_pin?: string;
+  pairing_pin_expires_at?: string;
   is_active: boolean;
   last_seen_at: string | null;
   firmware_version: string | null;
   wifi_ssid: string | null;
   created_at: string;
+}
+
+export interface PairingPinResponse {
+  pin: string;
+  expires_at: string;
 }
 
 export interface PendingRecordsResponse {
@@ -123,6 +130,15 @@ export async function regenerateDeviceKey(
   deviceId: string
 ): Promise<ScaleDevice> {
   return apiFetch(`/api/v1/scale-devices/${deviceId}/regenerate-key`, {
+    ...authOpts,
+    method: "POST",
+  });
+}
+
+export async function generatePairingPin(
+  deviceId: string
+): Promise<PairingPinResponse> {
+  return apiFetch(`/api/v1/scale-devices/${deviceId}/generate-pin`, {
     ...authOpts,
     method: "POST",
   });
