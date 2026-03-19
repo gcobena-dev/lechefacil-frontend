@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { Loader2, CheckCircle, AlertCircle, Info, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -19,6 +19,7 @@ import {
   type UnmatchedDeviceRecord,
 } from "@/services/deviceSync";
 import { fetchAllLactatingAnimals } from "@/services/animals";
+import { convertToLiters } from "@/lib/mock-data";
 
 interface OcrResult {
   animalId: string | null;
@@ -32,6 +33,9 @@ interface DeviceSyncWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onResultsProcessed: (results: OcrResult[]) => void;
+  inputUnit: string;
+  density: number;
+  date: string;
 }
 
 type WizardStep = "loading" | "result" | "error" | "empty";
@@ -40,6 +44,9 @@ export default function DeviceSyncWizard({
   open,
   onOpenChange,
   onResultsProcessed,
+  inputUnit,
+  density,
+  date,
 }: DeviceSyncWizardProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState<WizardStep>("loading");
@@ -53,7 +60,7 @@ export default function DeviceSyncWizard({
     setError(null);
 
     try {
-      const pendingRecords = await fetchAllPendingRecords();
+      const pendingRecords = await fetchAllPendingRecords(date);
 
       if (pendingRecords.length === 0) {
         setStep("empty");
@@ -72,7 +79,7 @@ export default function DeviceSyncWizard({
       setError(e instanceof Error ? e.message : "Error al obtener registros");
       setStep("error");
     }
-  }, []);
+  }, [date]);
 
   useEffect(() => {
     if (open) doFetch();
@@ -93,6 +100,35 @@ export default function DeviceSyncWizard({
     onResultsProcessed(ocrResults);
     onOpenChange(false);
   }, [matched, records, onResultsProcessed, onOpenChange]);
+
+  const [sortField, setSortField] = useState<"tag" | "quantity">("tag");
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const sortedMatched = useMemo(() => {
+    const sorted = [...matched].sort((a, b) => {
+      if (sortField === "tag") {
+        return a.tag.localeCompare(b.tag, undefined, { numeric: true });
+      }
+      return a.quantity - b.quantity;
+    });
+    return sortAsc ? sorted : sorted.reverse();
+  }, [matched, sortField, sortAsc]);
+
+  const handleSort = (field: "tag" | "quantity") => {
+    if (sortField === field) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
+  const totals = useMemo(() => {
+    const totalWeight = matched.reduce((sum, m) => sum + m.quantity, 0);
+    const unit = inputUnit.toUpperCase() as "L" | "KG" | "LB";
+    const totalLiters = convertToLiters(totalWeight, unit, density);
+    return { totalWeight, totalLiters };
+  }, [matched, inputUnit, density]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -156,21 +192,48 @@ export default function DeviceSyncWizard({
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
                 {matched.length} registros coinciden con animales
+                <span className="block text-xs mt-1">
+                  Total: {totals.totalWeight.toFixed(2)} {inputUnit.toUpperCase()}
+                  {inputUnit.toUpperCase() !== "L" && (
+                    <span className="text-green-700 ml-1">
+                      ({totals.totalLiters.toFixed(2)} L)
+                    </span>
+                  )}
+                </span>
               </AlertDescription>
             </Alert>
 
             {/* Matched list */}
             {matched.length > 0 && (
-              <div className="max-h-48 overflow-y-auto space-y-1">
-                {matched.map((m) => (
-                  <div
-                    key={m.animalId}
-                    className="flex justify-between text-sm px-2 py-1 bg-muted rounded"
-                  >
-                    <span className="font-medium">{m.animalName}</span>
-                    <span>{m.quantity} kg</span>
-                  </div>
-                ))}
+              <div>
+                <div className="flex justify-between text-xs font-medium text-muted-foreground px-2 py-1 border-b">
+                  <button type="button" className="flex items-center gap-1 hover:text-foreground" onClick={() => handleSort("tag")}>
+                    Animal
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                  <button type="button" className="flex items-center gap-1 hover:text-foreground" onClick={() => handleSort("quantity")}>
+                    Peso
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="max-h-48 overflow-y-auto space-y-1 mt-1">
+                  {sortedMatched.map((m) => (
+                    <div
+                      key={m.animalId}
+                      className="flex justify-between text-sm px-2 py-1 bg-muted rounded"
+                    >
+                      <span className="font-medium">{m.tag} - {m.animalName}</span>
+                      <span>
+                        {Number(m.quantity).toFixed(2)} {inputUnit.toUpperCase()}
+                        {inputUnit.toUpperCase() !== "L" && (
+                          <span className="text-muted-foreground ml-1">
+                            ({convertToLiters(m.quantity, inputUnit.toUpperCase() as "L" | "KG" | "LB", density).toFixed(2)} L)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

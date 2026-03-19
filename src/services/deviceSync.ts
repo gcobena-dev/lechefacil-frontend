@@ -148,12 +148,13 @@ export async function generatePairingPin(
 
 export async function getPendingRecords(
   deviceId: string,
-  params?: { status?: string; limit?: number; offset?: number }
+  params?: { status?: string; limit?: number; offset?: number; fecha?: string }
 ): Promise<PendingRecordsResponse> {
   const query = new URLSearchParams();
   if (params?.status) query.set("status", params.status);
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
+  if (params?.fecha) query.set("fecha", params.fecha);
   const qs = query.toString();
   return apiFetch(
     `/api/v1/scale-devices/${deviceId}/records${qs ? `?${qs}` : ""}`,
@@ -161,7 +162,7 @@ export async function getPendingRecords(
   );
 }
 
-export async function fetchAllPendingRecords(): Promise<DeviceRecord[]> {
+export async function fetchAllPendingRecords(fecha?: string): Promise<DeviceRecord[]> {
   // Get all devices, then all pending records
   const devices = await listScaleDevices();
   const activeDevices = devices.filter((d) => d.is_active);
@@ -172,6 +173,7 @@ export async function fetchAllPendingRecords(): Promise<DeviceRecord[]> {
     const res = await getPendingRecords(device.id, {
       status: "pending",
       limit: 200,
+      fecha,
     });
     allRecords.push(...res.items);
   }

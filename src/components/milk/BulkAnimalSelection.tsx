@@ -181,6 +181,7 @@ export default function BulkAnimalSelection({
           </div>
           <div className="flex items-center gap-2">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => isServerPaginated ? onPageChange?.(Math.max(1, currentPg - 1)) : setLocalPage(p => Math.max(1, p - 1))}
@@ -192,6 +193,7 @@ export default function BulkAnimalSelection({
               {currentPg} / {totalPages}
             </span>
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => isServerPaginated ? onPageChange?.(Math.min(totalPages, currentPg + 1)) : setLocalPage(p => Math.min(totalPages, p + 1))}

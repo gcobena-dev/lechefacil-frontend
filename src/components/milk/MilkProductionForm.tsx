@@ -188,6 +188,9 @@ export default function MilkProductionForm({
                   onResultsProcessed={handleOcrResults}
                   disabled={creating || creatingBulk}
                   resetKey={ocrResetKey}
+                  inputUnit={formData.inputUnit}
+                  density={parseFloat(formData.density)}
+                  date={formData.date}
                 />
 
                 {/* Bulk Animal Selection */}

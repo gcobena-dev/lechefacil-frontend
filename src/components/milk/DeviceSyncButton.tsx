@@ -16,11 +16,17 @@ interface DeviceSyncButtonProps {
   onResultsProcessed: (results: OcrResult[]) => void;
   disabled?: boolean;
   resetKey?: string | number;
+  inputUnit: string;
+  density: number;
+  date: string;
 }
 
 export default function DeviceSyncButton({
   onResultsProcessed,
   disabled,
+  inputUnit,
+  density,
+  date,
 }: DeviceSyncButtonProps) {
   const { t } = useTranslation();
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -42,6 +48,9 @@ export default function DeviceSyncButton({
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         onResultsProcessed={onResultsProcessed}
+        inputUnit={inputUnit}
+        density={density}
+        date={date}
       />
     </>
   );
