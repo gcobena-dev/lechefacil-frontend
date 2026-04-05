@@ -99,6 +99,7 @@ export function NotificationBell() {
       onClick={() => {
         if (isMobile) {
           setMobileOpen(true);
+          if (unreadCount > 0) markAllAsRead();
         }
       }}
     >
@@ -203,7 +204,10 @@ export function NotificationBell() {
   }
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (isOpen && unreadCount > 0) markAllAsRead();
+    }}>
       <DropdownMenuTrigger asChild>
         {BellButton}
       </DropdownMenuTrigger>

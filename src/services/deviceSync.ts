@@ -162,7 +162,9 @@ export async function getPendingRecords(
   );
 }
 
-export async function fetchAllPendingRecords(fecha?: string): Promise<DeviceRecord[]> {
+export async function fetchAllPendingRecords(
+  fecha?: string
+): Promise<DeviceRecord[]> {
   // Get all devices, then all pending records
   const devices = await listScaleDevices();
   const activeDevices = devices.filter((d) => d.is_active);
