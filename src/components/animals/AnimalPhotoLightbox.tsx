@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import type { ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
 import { listAnimalPhotos } from "@/services/animals";
 import { getAnimalImageUrl } from "@/utils/animals";
 import clsx from "clsx";
@@ -58,9 +60,16 @@ export function AnimalPhotoLightbox({
   }, [animalId, open, photos.length, loading, initialUrl, fallbackUrl]);
 
   const current = photos[index] || initialUrl;
+  const zoomRef = useRef<ReactZoomPanPinchRef>(null);
 
-  const next = () => setIndex((prev) => (prev + 1) % photos.length);
-  const prev = () => setIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  const next = () => {
+    zoomRef.current?.resetTransform(0);
+    setIndex((prev) => (prev + 1) % photos.length);
+  };
+  const prev = () => {
+    zoomRef.current?.resetTransform(0);
+    setIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
 
   return (
     <>
@@ -140,11 +149,26 @@ export function AnimalPhotoLightbox({
               {loading ? (
                 <Loader2 className="h-8 w-8 animate-spin text-white" />
               ) : (
-                <img
-                  src={current || fallbackUrl}
-                  alt={alt}
-                  className="max-h-[80vh] max-w-full object-contain"
-                />
+                <TransformWrapper
+                  ref={zoomRef}
+                  initialScale={1}
+                  minScale={1}
+                  maxScale={5}
+                  doubleClick={{ mode: "toggle", step: 2 }}
+                  pinch={{ step: 5 }}
+                  key={current}
+                >
+                  <TransformComponent
+                    wrapperStyle={{ width: "100%", height: "100%" }}
+                    contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}
+                  >
+                    <img
+                      src={current || fallbackUrl}
+                      alt={alt}
+                      className="max-h-[80vh] max-w-full object-contain"
+                    />
+                  </TransformComponent>
+                </TransformWrapper>
               )}
             </div>
 
