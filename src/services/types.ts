@@ -5,6 +5,8 @@ export type UUID = string;
 export interface Membership {
   tenant_id: UUID;
   role: string;
+  tenant_name: string;
+  tenant_location?: string | null;
 }
 
 export interface LoginResponse {
@@ -28,6 +30,41 @@ export interface MeResponse {
   active_role: "ADMIN" | "WORKER" | "VET" | "MANAGER" | "VETERINARIAN";
   memberships: Membership[];
   claims: Record<string, unknown>;
+  is_super_admin?: boolean;
+}
+
+export interface UserProfileResponse {
+  user_id: UUID;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  is_super_admin: boolean;
+}
+
+export type AccessRequestStatus = "pending" | "approved" | "rejected";
+
+export interface AccessRequestDetail {
+  id: UUID;
+  full_name: string;
+  email: string;
+  phone_number: string | null;
+  farm_name: string;
+  farm_location: string | null;
+  requested_role: string;
+  message: string | null;
+  status: AccessRequestStatus;
+  requester_user_id: UUID | null;
+  decided_by_user_id: UUID | null;
+  decided_at: string | null;
+  decision_notes: string | null;
+  created_tenant_id: UUID | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AccessRequestList {
+  items: AccessRequestDetail[];
+  total: number;
 }
 
 export interface AnimalResponse {

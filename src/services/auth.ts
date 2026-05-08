@@ -6,7 +6,7 @@ import {
   setRefreshToken,
 } from "./config";
 import { isMobileClient } from "@/utils/device";
-import { LoginResponse, MeResponse, Membership } from "./types";
+import { LoginResponse, MeResponse, Membership, UserProfileResponse } from "./types";
 
 export async function login(payload: {
   email: string;
@@ -41,6 +41,12 @@ export async function me(): Promise<MeResponse> {
 
 export async function myTenants(): Promise<Membership[]> {
   return apiFetch<Membership[]>("/api/v1/auth/my-tenants", {
+    withAuth: true,
+  });
+}
+
+export async function getProfile(): Promise<UserProfileResponse> {
+  return apiFetch<UserProfileResponse>("/api/v1/auth/profile", {
     withAuth: true,
   });
 }

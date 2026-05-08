@@ -8,6 +8,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/auth/RequireAuth";
 import { RequirePasswordChange } from "./components/auth/RequirePasswordChange";
 import { RequireTenant } from "./components/auth/RequireTenant";
+import { RequireSuperAdmin } from "./components/auth/RequireSuperAdmin";
 import { UpdateChecker } from "./components/updates/UpdateChecker";
 // Auth pages
 import Login from "./pages/auth/Login";
@@ -57,6 +58,10 @@ import Account from "./pages/account/Account";
 import Settings from "./pages/settings/Settings";
 import NotificationsPage from "./pages/notifications/Notifications";
 
+// Admin pages
+import AccessRequestsList from "./pages/admin/AccessRequestsList";
+import AccessRequestDetail from "./pages/admin/AccessRequestDetail";
+
 // Other pages
 import NotFound from "./pages/NotFound";
 import { useSilentRefresh } from "./hooks/useSilentRefresh";
@@ -103,6 +108,22 @@ const App = () => (
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="account" element={<Account />} />
             <Route path="settings" element={<Settings />} />
+            <Route
+              path="admin/requests"
+              element={
+                <RequireSuperAdmin>
+                  <AccessRequestsList />
+                </RequireSuperAdmin>
+              }
+            />
+            <Route
+              path="admin/requests/:id"
+              element={
+                <RequireSuperAdmin>
+                  <AccessRequestDetail />
+                </RequireSuperAdmin>
+              }
+            />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/signin" element={<SignIn />} />

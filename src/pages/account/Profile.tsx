@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Bell } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { me as apiMe, updateProfile as apiUpdateProfile } from "@/services/auth";
+import { getTenantIdentity, updateTenantIdentity } from "@/services/tenantSettings";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Profile() {
@@ -18,12 +19,16 @@ export default function Profile() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [farmName, setFarmName] = useState("Finca Dos Hermanos");
   const [phone, setPhone] = useState("+1 234 567 8900");
   const [address, setAddress] = useState("");
   const [notifications, setNotifications] = useState(true);
+  const [farmName, setFarmName] = useState("");
 
   const { data: meData } = useQuery({ queryKey: ["me"], queryFn: apiMe });
+  const { data: tenantIdentity } = useQuery({
+    queryKey: ["tenant-identity"],
+    queryFn: getTenantIdentity,
+  });
 
   useEffect(() => {
     if (meData) {
@@ -32,12 +37,30 @@ export default function Profile() {
     }
   }, [meData]);
 
-  const { mutateAsync: doUpdateProfile, isPending } = useMutation({
+  useEffect(() => {
+    if (tenantIdentity) {
+      setFarmName(tenantIdentity.name || "");
+    }
+  }, [tenantIdentity]);
+
+  const canEditFarm = ((meData as any)?.active_role ?? "").toUpperCase() === "ADMIN";
+
+  const { mutateAsync: doUpdateProfile, isPending: isProfilePending } = useMutation({
     mutationFn: apiUpdateProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
+
+  const { mutateAsync: doUpdateTenantIdentity, isPending: isFarmPending } = useMutation({
+    mutationFn: updateTenantIdentity,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenant-identity"] });
+      queryClient.invalidateQueries({ queryKey: ["my-tenants"] });
+    },
+  });
+
+  const isPending = isProfilePending || isFarmPending;
 
   const emailValue = meData?.email ?? "";
   const displayName = useMemo(() => {
@@ -62,11 +85,18 @@ export default function Profile() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const farmNameChanged =
+      canEditFarm &&
+      farmName.trim().length > 0 &&
+      farmName.trim() !== (tenantIdentity?.name ?? "");
     try {
       await doUpdateProfile({
         first_name: firstName || null,
         last_name: lastName || null,
       });
+      if (farmNameChanged) {
+        await doUpdateTenantIdentity({ name: farmName.trim() });
+      }
       toast({
         title: t("common.profileUpdated"),
         description: t("common.profileUpdatedDescription"),
@@ -148,6 +178,7 @@ export default function Profile() {
                     id="farmName"
                     value={farmName}
                     onChange={(e) => setFarmName(e.target.value)}
+                    disabled={!canEditFarm}
                   />
                 </div>
               </div>

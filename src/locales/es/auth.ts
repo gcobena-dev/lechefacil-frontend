@@ -130,6 +130,7 @@ export default {
   requestSentDescription:
     "Tu solicitud de acceso ha sido enviada. Te contactaremos pronto.",
   requestError: "No se pudo enviar tu solicitud",
+  requestErrorPendingExists: "Ya tienes una solicitud pendiente con este correo. Espera la respuesta o contacta al administrador.",
   alreadyHaveAccount: "¿Ya tienes una cuenta?",
   signIn: "Iniciar sesión",
 

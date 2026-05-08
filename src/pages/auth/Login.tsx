@@ -9,7 +9,7 @@ import { Fingerprint, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMutation } from "@tanstack/react-query";
 import { login as apiLogin } from "@/services/auth";
-import { setToken, setMustChangePassword } from "@/services/config";
+import { setToken, setMustChangePassword, setTenantId } from "@/services/config";
 import { biometricService } from "@/services/biometricService";
 import { BiometryType } from "@capgo/capacitor-native-biometric";
 import { VersionLabel } from "@/components/updates/VersionLabel";
@@ -114,7 +114,7 @@ export default function Login() {
         if (count === 0) {
           navigate("/request-access");
         } else if (count === 1) {
-          localStorage.setItem("lf_tenant_id", res.memberships[0].tenant_id);
+          setTenantId(res.memberships[0].tenant_id);
           navigate(res.must_change_password ? "/force-change-password" : "/dashboard");
         } else {
           navigate("/select-farm");
@@ -142,7 +142,7 @@ export default function Login() {
       let targetRoute = "/request-access";
 
       if (count === 1) {
-        localStorage.setItem("lf_tenant_id", res.memberships[0].tenant_id);
+        setTenantId(res.memberships[0].tenant_id);
         targetRoute = res.must_change_password ? "/force-change-password" : "/dashboard";
       } else if (count > 1) {
         targetRoute = "/select-farm";

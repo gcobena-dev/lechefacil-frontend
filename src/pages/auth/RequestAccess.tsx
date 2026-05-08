@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { performLogout } from "@/services/auth";
+import { performLogout, getProfile } from "@/services/auth";
+import { submitAccessRequest } from "@/services/accessRequests";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { Mail, Send, User, Building, Home } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Mail, Send, User, Building, MapPin } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const RequestAccess = () => {
@@ -21,35 +22,44 @@ const RequestAccess = () => {
     phoneNumber: "",
     farmName: "",
     farmLocation: "",
-    requestedRole: "",
+    requestedRole: "admin",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  const { data: profile } = useQuery({
+    queryKey: ["auth-profile"],
+    queryFn: getProfile,
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!profile) return;
+    setFormData((prev) => ({
+      ...prev,
+      fullName:
+        prev.fullName ||
+        [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim(),
+      email: prev.email || profile.email || "",
+    }));
+  }, [profile]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const { mutateAsync: submitAccess, isPending } = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const base = import.meta.env.VITE_API_URL as string;
-      const res = await fetch(new URL("/api/v1/access-requests/", base).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          full_name: data.fullName,
-          email: data.email,
-          phone_number: data.phoneNumber || null,
-          farm_name: data.farmName,
-          farm_location: data.farmLocation,
-          requested_role: data.requestedRole,
-          message: data.message || null,
-        }),
-      });
-      if (!res.ok) throw new Error("failed");
-      return res.json();
-    },
+    mutationFn: async (data: typeof formData) =>
+      submitAccessRequest({
+        full_name: data.fullName,
+        email: data.email,
+        phone_number: data.phoneNumber || null,
+        farm_name: data.farmName,
+        farm_location: data.farmLocation || null,
+        requested_role: data.requestedRole,
+        message: data.message || null,
+      }),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,8 +80,12 @@ const RequestAccess = () => {
         requestedRole: "",
         message: "",
       });
-    } catch (err) {
-      toast({ title: t('common.error'), description: t('auth.requestError'), variant: "destructive" });
+    } catch (err: any) {
+      const description =
+        err?.status === 409
+          ? err?.details?.message ?? t('auth.requestErrorPendingExists')
+          : t('auth.requestError');
+      toast({ title: t('common.error'), description, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -157,7 +171,10 @@ const RequestAccess = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="farmLocation">{t('auth.farmLocation')}</Label>
+                  <Label htmlFor="farmLocation" className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    {t('auth.farmLocation')}
+                  </Label>
                   <Input
                     id="farmLocation"
                     type="text"

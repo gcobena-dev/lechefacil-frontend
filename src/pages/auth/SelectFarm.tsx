@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building, MapPin, Users, Calendar, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { myTenants } from "@/services/auth";
-import { setTenantId } from "@/services/config";
 import { performLogout } from "@/services/auth";
+import { useSwitchTenant } from "@/hooks/useSwitchTenant";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface Farm {
@@ -23,6 +23,7 @@ interface Farm {
 const SelectFarm = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const switchTenant = useSwitchTenant();
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
 
   const { data: memberships } = useQuery({
@@ -30,11 +31,10 @@ const SelectFarm = () => {
     queryFn: myTenants,
   });
 
-  // Map memberships to simple farms list for UI (no names available yet)
   const userFarms: Farm[] = (memberships ?? []).map((m) => ({
     id: m.tenant_id,
-    name: "Finca Dos Hermanos",
-    location: t('auth.farmLocationPlaceholder'),
+    name: m.tenant_name,
+    location: m.tenant_location ?? t('auth.farmLocationPlaceholder'),
     role: m.role.toLowerCase(),
     animalsCount: 0,
     lastAccess: new Date().toISOString(),
@@ -69,13 +69,10 @@ const SelectFarm = () => {
 
   const handleSelectFarm = (farmId: string) => {
     setSelectedFarm(farmId);
-    setTenantId(farmId);
-
-    // Redirigir al dashboard después de un breve delay
+    const must = localStorage.getItem('lf_must_change_password') === 'true';
     setTimeout(() => {
-      const must = localStorage.getItem('lf_must_change_password') === 'true';
-      navigate(must ? "/force-change-password" : "/dashboard");
-    }, 500);
+      switchTenant(farmId, { redirectTo: must ? "/force-change-password" : "/dashboard" });
+    }, 300);
   };
 
   return (

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { User, UserCircle } from "lucide-react";
+import { Check, ChevronDown, ShieldCheck, User, UserCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
@@ -11,13 +11,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
-import { performLogout } from "@/services/auth";
+import { useQuery } from "@tanstack/react-query";
+import { myTenants, performLogout } from "@/services/auth";
+import { getTenantId } from "@/services/config";
+import { useSwitchTenant } from "@/hooks/useSwitchTenant";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useTranslation } from "@/hooks/useTranslation";
 import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const switchTenant = useSwitchTenant();
+  const { isSuperAdmin } = useIsSuperAdmin();
+
+  const { data: memberships } = useQuery({
+    queryKey: ["my-tenants"],
+    queryFn: myTenants,
+  });
+  const activeTenantId = getTenantId();
+  const currentTenant = memberships?.find((m) => m.tenant_id === activeTenantId);
+  const hasMultiple = (memberships?.length ?? 0) > 1;
+  const farmName = currentTenant?.tenant_name ?? "...";
+
   return (
     <header className="sticky top-0 z-50 border-b bg-card/50 backdrop-blur-sm">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
@@ -29,9 +45,44 @@ export function Header() {
             <img src="/logo.png" alt="LecheFácil" className="h-8 w-8 object-contain" />
           </Link>
           <div className="hidden md:block">
-            <h1 className="text-lg font-semibold text-foreground">
-              Finca Dos Hermanos
-            </h1>
+            {hasMultiple ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 group">
+                    <h1 className="text-lg font-semibold text-foreground">{farmName}</h1>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[240px]">
+                  <DropdownMenuLabel>{t("common.changeFarm") || "Cambiar finca"}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {memberships!.map((m) => {
+                    const isActive = m.tenant_id === activeTenantId;
+                    return (
+                      <DropdownMenuItem
+                        key={m.tenant_id}
+                        className="cursor-pointer flex items-start gap-2"
+                        onClick={() => {
+                          if (!isActive) switchTenant(m.tenant_id);
+                        }}
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium">{m.tenant_name}</div>
+                          {m.tenant_location && (
+                            <div className="text-xs text-muted-foreground">
+                              {m.tenant_location}
+                            </div>
+                          )}
+                        </div>
+                        {isActive && <Check className="h-4 w-4 text-primary mt-1" />}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <h1 className="text-lg font-semibold text-foreground">{farmName}</h1>
+            )}
             <p className="text-sm text-muted-foreground">
               {t("common.milkManagementSystem")}
             </p>
@@ -59,6 +110,15 @@ export function Header() {
                 <UserCircle className="mr-2 h-4 w-4" />
                 {t("common.myAccount")}
               </DropdownMenuItem>
+              {isSuperAdmin && (
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => navigate("/admin/requests")}
+                >
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Solicitudes de acceso
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="text-destructive cursor-pointer"
                 onClick={async () => {

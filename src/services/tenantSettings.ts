@@ -28,3 +28,28 @@ export async function updateTenantSettings(
     body: payload,
   });
 }
+
+export interface TenantIdentity {
+  tenant_id: string;
+  name: string;
+  location: string | null;
+}
+
+export async function getTenantIdentity(): Promise<TenantIdentity> {
+  return apiFetch<TenantIdentity>("/api/v1/settings/tenant", {
+    withAuth: true,
+    withTenant: true,
+  });
+}
+
+export async function updateTenantIdentity(payload: {
+  name?: string;
+  location?: string | null;
+}): Promise<TenantIdentity> {
+  return apiFetch<TenantIdentity>("/api/v1/settings/tenant", {
+    method: "PATCH",
+    withAuth: true,
+    withTenant: true,
+    body: payload,
+  });
+}
