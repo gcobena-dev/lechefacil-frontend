@@ -228,7 +228,11 @@ export default function InseminationsList() {
                     (Date.now() - new Date(ins.service_date).getTime()) / (1000 * 60 * 60 * 24)
                   );
                   return (
-                    <TableRow key={ins.id}>
+                    <TableRow
+                      key={ins.id}
+                      className={isAdmin ? "cursor-pointer hover:bg-muted/50" : undefined}
+                      onClick={isAdmin ? () => setEditingInsemination(ins) : undefined}
+                    >
                       <TableCell className="font-medium">
                         {ins.animal_tag || "-"}{ins.animal_name ? ` - ${ins.animal_name}` : ""}
                       </TableCell>
@@ -255,7 +259,10 @@ export default function InseminationsList() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setCheckDialogId(ins.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCheckDialogId(ins.id);
+                              }}
                             >
                               {t("reproduction.recordCheck")}
                             </Button>
@@ -268,7 +275,10 @@ export default function InseminationsList() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => setEditingInsemination(ins)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingInsemination(ins);
+                                }}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -276,7 +286,10 @@ export default function InseminationsList() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
-                                onClick={() => setDeletingId(ins.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeletingId(ins.id);
+                                }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -333,7 +346,11 @@ export default function InseminationsList() {
                 (Date.now() - new Date(ins.service_date).getTime()) / (1000 * 60 * 60 * 24)
               );
               return (
-                <Card key={ins.id}>
+                <Card
+                  key={ins.id}
+                  className={isAdmin ? "cursor-pointer active:bg-muted/50" : undefined}
+                  onClick={isAdmin ? () => setEditingInsemination(ins) : undefined}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
@@ -365,7 +382,10 @@ export default function InseminationsList() {
                             variant="outline"
                             size="sm"
                             className="text-xs"
-                            onClick={() => setCheckDialogId(ins.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCheckDialogId(ins.id);
+                            }}
                           >
                             {t("reproduction.recordCheck")}
                           </Button>
@@ -376,7 +396,10 @@ export default function InseminationsList() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => setEditingInsemination(ins)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingInsemination(ins);
+                              }}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -384,7 +407,10 @@ export default function InseminationsList() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive"
-                              onClick={() => setDeletingId(ins.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingId(ins.id);
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

@@ -2,365 +2,290 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useInseminations, usePendingPregnancyChecks } from "@/hooks/useReproduction";
-import { useReproductionKPIs } from "@/hooks/useReproductionDashboard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useReproductionKPIs, useReproductiveAnimals } from "@/hooks/useReproductionDashboard";
+import { useSires, useSemenStock } from "@/hooks/useReproduction";
+import { myTenants } from "@/services/auth";
+import { getTenantId } from "@/services/config";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Heart,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Plus,
-  AlertCircle,
   ClipboardCheck,
   Package,
   Syringe,
-  Users,
   TrendingUp,
   Baby,
-  XCircle,
-  HelpCircle,
   BarChart3,
+  Users,
+  Calendar,
+  FileText,
+  ChevronDown,
 } from "lucide-react";
-import DateRangeFilter from "@/components/reproduction/DateRangeFilter";
+import CompactPeriodSelector, {
+  rangeForPeriod,
+} from "@/components/reproduction/CompactPeriodSelector";
+import CriticalAlertBanner from "@/components/reproduction/CriticalAlertBanner";
+import KpiCard from "@/components/reproduction/KpiCard";
+import ReproductiveStatusTabs from "@/components/reproduction/ReproductiveStatusTabs";
+import ReproductiveAnimalsTable from "@/components/reproduction/ReproductiveAnimalsTable";
+import ReproductionShortcutCard from "@/components/reproduction/ReproductionShortcutCard";
 import ReproductiveStatusChart from "@/components/charts/ReproductiveStatusChart";
 import ServicesPerCowChart from "@/components/charts/ServicesPerCowChart";
 import InseminationActivityChart from "@/components/charts/InseminationActivityChart";
-import MonthlyTrendChart from "@/components/charts/MonthlyTrendChart";
-import PostpartumAlertTable from "@/components/reproduction/PostpartumAlertTable";
-import type { InseminationInfo } from "@/components/reproduction/PostpartumAlertTable";
-import { listInseminations } from "@/services/inseminations";
+import type { ReproductiveBucket } from "@/services/reproductionDashboard";
 
-const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "secondary",
-  CONFIRMED: "default",
-  OPEN: "outline",
-  LOST: "destructive",
-};
-
-function formatDefaultDateFrom(): string {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - 1);
-  return d.toISOString().split("T")[0];
-}
-
-function formatToday(): string {
-  return new Date().toISOString().split("T")[0];
-}
+type PeriodKey = "3m" | "6m" | "12m" | "year";
 
 export default function ReproductionDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [dateFrom, setDateFrom] = useState(formatDefaultDateFrom);
-  const [dateTo, setDateTo] = useState(formatToday);
+  const [period, setPeriod] = useState<PeriodKey>("12m");
+  const [dateFrom, dateTo] = useMemo(() => rangeForPeriod(period), [period]);
+  const [bucket, setBucket] = useState<ReproductiveBucket>("alertas");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
-  const { data: kpis, isLoading: kpisLoading } = useReproductionKPIs(dateFrom, dateTo);
-  const { data: inseminationsData } = useInseminations({ limit: 5 });
-  const { data: pendingChecks } = usePendingPregnancyChecks();
+  // Tenant name (reuses cached query from Header)
+  const { data: memberships } = useQuery({
+    queryKey: ["my-tenants"],
+    queryFn: myTenants,
+  });
+  const activeTenantId = getTenantId();
+  const tenantName = memberships?.find((m) => m.tenant_id === activeTenantId)?.tenant_name ?? "";
 
-  const postpartumAnimalIds = useMemo(
-    () => kpis?.postpartum_alerts.map((a) => a.animal_id) ?? [],
-    [kpis?.postpartum_alerts],
+  const { data: kpis } = useReproductionKPIs(dateFrom, dateTo);
+  const { data: animalsData, isFetching: animalsLoading } = useReproductiveAnimals({
+    filter: bucket,
+    sort: "postpartum",
+    sort_dir: "desc",
+    search: search || undefined,
+    limit: pageSize,
+    offset: page * pageSize,
+  });
+  const { data: siresData } = useSires({ active_only: true, limit: 100 });
+  const { data: semenData } = useSemenStock({ in_stock_only: true, limit: 1 });
+
+  const sireCount = siresData?.items.length ?? 0;
+  const strawsCount = semenData?.total ?? 0;
+  const breedsCount = semenData?.breeds_count ?? 0;
+  const bucketCounts = animalsData?.bucket_counts ?? {
+    alertas: 0,
+    inseminadas: 0,
+    prenadas: 0,
+    vacias: 0,
+    sin_inseminar: 0,
+    todas: 0,
+  };
+
+  const warningCount = useMemo(
+    () => kpis?.postpartum_alerts.filter((a) => a.alert_level === "warning").length ?? 0,
+    [kpis],
   );
 
-  const inseminationQueries = useQuery({
-    queryKey: ["inseminations-postpartum", postpartumAnimalIds],
-    queryFn: () =>
-      Promise.all(
-        postpartumAnimalIds.map((id) =>
-          listInseminations({ animal_id: id, limit: 1, sort_by: "service_date", sort_dir: "desc" }),
-        ),
-      ),
-    enabled: postpartumAnimalIds.length > 0,
-  });
-
-  const inseminationMap = useMemo(() => {
-    const map = new Map<string, InseminationInfo>();
-    if (!inseminationQueries.data) return map;
-    inseminationQueries.data.forEach((res, i) => {
-      const item = res.items[0];
-      if (item) {
-        map.set(postpartumAnimalIds[i], {
-          pregnancy_status: item.pregnancy_status,
-          service_date: item.service_date,
-        });
-      }
-    });
-    return map;
-  }, [inseminationQueries.data, postpartumAnimalIds]);
-
-  const pendingCount = pendingChecks?.length ?? 0;
-  const recentInseminations = inseminationsData?.items ?? [];
+  const prev = kpis?.previous_period ?? null;
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 min-w-0 max-w-full overflow-x-hidden">
       {/* 1. Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Heart className="h-6 w-6" />
-          {t("reproduction.dashboard")}
-        </h1>
-        <Button className="w-full md:w-auto" onClick={() => navigate("/reproduction/inseminations/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("reproduction.newInsemination")}
-        </Button>
-      </div>
-
-      {/* 2. Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-auto py-2 flex-col gap-1"
-          onClick={() => navigate("/reproduction/inseminations/new")}
-        >
-          <Plus className="h-4 w-4" />
-          <span className="text-[10px] leading-tight text-center">{t("reproduction.recordInsemination")}</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-auto py-2 flex-col gap-1"
-          onClick={() => navigate("/reproduction/pregnancy-checks")}
-        >
-          <ClipboardCheck className="h-4 w-4" />
-          <span className="text-[10px] leading-tight text-center">{t("reproduction.pregnancyChecks")}</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-auto py-2 flex-col gap-1"
-          onClick={() => navigate("/reproduction/sires")}
-        >
-          <Heart className="h-4 w-4" />
-          <span className="text-[10px] leading-tight text-center">{t("reproduction.sireCatalog")}</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-auto py-2 flex-col gap-1"
-          onClick={() => navigate("/reproduction/semen")}
-        >
-          <Package className="h-4 w-4" />
-          <span className="text-[10px] leading-tight text-center">{t("reproduction.semenInventory")}</span>
-        </Button>
-      </div>
-
-      {/* 3. Date Range Filter */}
-      <hr className="border-border" />
-      <DateRangeFilter
-        dateFrom={dateFrom}
-        dateTo={dateTo}
-        onChange={(f, to) => { setDateFrom(f); setDateTo(to); }}
-      />
-
-      {/* 4. KPI Cards */}
-      {kpisLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-3">
-                <Skeleton className="h-4 w-16 mb-2" />
-                <Skeleton className="h-8 w-12" />
-              </CardContent>
-            </Card>
-          ))}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between min-w-0">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl md:text-3xl font-bold">{t("reproduction.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1 truncate">
+            {t("reproduction.dashboardSubtitle")}
+            {tenantName && ` · ${tenantName}`}
+          </p>
         </div>
-      ) : kpis ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Syringe className="h-4 w-4 text-pink-500" />
-                <span className="text-[11px] text-muted-foreground">{t("reproduction.kpiCowsInseminated")}</span>
-              </div>
-              <p className="text-2xl font-bold">{kpis.cows_inseminated}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Package className="h-4 w-4 text-blue-500" />
-                <span className="text-[11px] text-muted-foreground">{t("reproduction.kpiStrawsUsed")}</span>
-              </div>
-              <p className="text-2xl font-bold">{kpis.straws_used}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <BarChart3 className="h-4 w-4 text-purple-500" />
-                <span className="text-[11px] text-muted-foreground">{t("reproduction.kpiServicesPerCow")}</span>
-              </div>
-              <p className="text-2xl font-bold">{kpis.services_per_cow}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Baby className="h-4 w-4 text-green-500" />
-                <span className="text-[11px] text-muted-foreground">{t("reproduction.kpiPregnantPct")}</span>
-              </div>
-              <p className="text-2xl font-bold">{kpis.pregnant_pct}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <XCircle className="h-4 w-4 text-red-500" />
-                <span className="text-[11px] text-muted-foreground">{t("reproduction.kpiOpenPct")}</span>
-              </div>
-              <p className="text-2xl font-bold">{kpis.open_pct}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp className="h-4 w-4 text-emerald-500" />
-                <span className="text-[11px] text-muted-foreground">{t("reproduction.kpiConceptionRate")}</span>
-              </div>
-              <p className="text-2xl font-bold">{kpis.conception_rate}%</p>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {/* 5. Chart Row 1: Donut + Bar */}
-      {kpis && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{t("reproduction.kpiReproductiveStatus")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ReproductiveStatusChart data={kpis.status_breakdown} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{t("reproduction.kpiServicesDistribution")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ServicesPerCowChart data={kpis.services_distribution} />
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* 6. Chart Row 2: Activity + Trends */}
-      {kpis && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{t("reproduction.kpiInseminationActivity")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InseminationActivityChart data={kpis.monthly_activity} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{t("reproduction.kpiMonthlyTrends")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MonthlyTrendChart data={kpis.monthly_trends} />
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* 7. Postpartum Alert Table */}
-      {kpis && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
-              {t("reproduction.kpiPostpartumAlerts")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-2 sm:px-6">
-            <PostpartumAlertTable alerts={kpis.postpartum_alerts} inseminationMap={inseminationMap} />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 8. Pending Checks Alert */}
-      {pendingCount > 0 && (
-        <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2 text-orange-700 dark:text-orange-400">
-              <AlertCircle className="h-5 w-5" />
-              {t("reproduction.pendingPregnancyChecks")} ({pendingCount})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="flex flex-col gap-2 w-full md:w-auto md:flex-row md:items-center md:flex-wrap min-w-0">
+          <div className="w-full md:w-auto">
+            <CompactPeriodSelector value={period} onChange={setPeriod} />
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 md:flex-none min-w-0"
               onClick={() => navigate("/reproduction/pregnancy-checks")}
             >
-              {t("reproduction.viewAll")}
+              <ClipboardCheck className="mr-2 h-4 w-4 shrink-0" />
+              <span className="truncate">{t("reproduction.pregnancyCheck")}</span>
             </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 9. Recent Inseminations */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
-              {t("reproduction.recentInseminations")}
-            </CardTitle>
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => navigate("/reproduction/inseminations")}
+              className="flex-1 md:flex-none min-w-0"
+              onClick={() => navigate("/reproduction/inseminations/new")}
             >
-              {t("reproduction.viewAll")}
+              <Plus className="mr-2 h-4 w-4 shrink-0" />
+              <span className="truncate">{t("reproduction.newInsemination")}</span>
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {recentInseminations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Heart className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p>{t("reproduction.noInseminations")}</p>
-              <p className="text-sm mt-1">
-                {t("reproduction.startByRecording")}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentInseminations.map((ins) => (
-                <div
-                  key={ins.id}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
-                >
-                  <div>
-                    <p className="text-sm font-medium">
-                      {ins.animal_tag || "-"}{ins.animal_name ? ` - ${ins.animal_name}` : ""}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(ins.service_date).toLocaleDateString()} -{" "}
-                      {t(`reproduction.method${ins.method}`)}
-                    </p>
-                    {ins.sire_name && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("reproduction.sire")}: {ins.sire_name}
-                      </p>
-                    )}
-                  </div>
-                  <Badge variant={STATUS_VARIANTS[ins.pregnancy_status] || "secondary"}>
-                    {t(`reproduction.${ins.pregnancy_status.toLowerCase()}`)}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+        </div>
+      </div>
+
+      {/* 2. Critical banner */}
+      <CriticalAlertBanner
+        criticalCount={bucketCounts.alertas}
+        warningCount={warningCount}
+        onReview={() => setBucket("alertas")}
+      />
+
+      {/* 3. KPIs with deltas */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <KpiCard
+          icon={Syringe}
+          iconClassName="text-pink-500"
+          label={t("reproduction.kpiCowsInseminated")}
+          value={kpis?.cows_inseminated ?? 0}
+          delta={prev ? (kpis!.cows_inseminated - prev.cows_inseminated) : null}
+        />
+        <KpiCard
+          icon={Package}
+          iconClassName="text-blue-500"
+          label={t("reproduction.kpiStrawsUsed")}
+          value={kpis?.straws_used ?? 0}
+          delta={prev ? (kpis!.straws_used - prev.straws_used) : null}
+        />
+        <KpiCard
+          icon={BarChart3}
+          iconClassName="text-purple-500"
+          label={t("reproduction.kpiServicesPerCow")}
+          value={kpis?.services_per_cow ?? 0}
+          delta={prev ? Number((kpis!.services_per_cow - prev.services_per_cow).toFixed(2)) : null}
+        />
+        <KpiCard
+          icon={Baby}
+          iconClassName="text-green-500"
+          label={t("reproduction.kpiPregnantPct")}
+          value={`${kpis?.pregnant_pct ?? 0}%`}
+          delta={prev ? Number((kpis!.pregnant_pct - prev.pregnant_pct).toFixed(1)) : null}
+          unit="pp"
+        />
+        <KpiCard
+          icon={TrendingUp}
+          iconClassName="text-emerald-500"
+          label={t("reproduction.kpiConceptionRate")}
+          value={`${kpis?.conception_rate ?? 0}%`}
+          delta={prev ? Number((kpis!.conception_rate - prev.conception_rate).toFixed(1)) : null}
+          unit="pp"
+        />
+      </div>
+
+      {/* 4. Tabs + Unified Table */}
+      <div className="space-y-3">
+        <ReproductiveStatusTabs
+          active={bucket}
+          counts={bucketCounts}
+          onChange={(b) => {
+            setBucket(b);
+            setPage(0);
+          }}
+        />
+        <ReproductiveAnimalsTable
+          items={animalsData?.items ?? []}
+          total={animalsData?.total ?? 0}
+          isLoading={animalsLoading}
+          search={search}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(0);
+          }}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
+      </div>
+
+      {/* 5. Shortcut cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <ReproductionShortcutCard
+          icon={Users}
+          title={t("reproduction.shortcutSireCatalog")}
+          subtitle={t("reproduction.shortcutSireCatalogSubtitle").replace(
+            "{count}",
+            String(sireCount),
           )}
-        </CardContent>
-      </Card>
+          onClick={() => navigate("/reproduction/sires")}
+        />
+        <ReproductionShortcutCard
+          icon={Package}
+          title={t("reproduction.shortcutSemenInventory")}
+          subtitle={t("reproduction.shortcutSemenInventorySubtitle")
+            .replace("{straws}", String(strawsCount))
+            .replace("{breeds}", String(breedsCount))}
+          onClick={() => navigate("/reproduction/semen")}
+        />
+        <ReproductionShortcutCard
+          icon={Calendar}
+          title={t("reproduction.shortcutCalendar")}
+          subtitle={t("reproduction.shortcutCalendarSubtitle")}
+          disabled
+        />
+        <ReproductionShortcutCard
+          icon={FileText}
+          title={t("reproduction.shortcutReport")}
+          subtitle={t("reproduction.shortcutReportSubtitle")}
+          disabled
+        />
+      </div>
+
+      {/* 6. Analysis accordion */}
+      {kpis && (
+        <Accordion type="single" collapsible defaultValue="analysis">
+          <AccordionItem value="analysis" className="border-none">
+            <AccordionTrigger className="hover:no-underline rounded-md border bg-card px-4 py-3 [&>svg]:hidden">
+              <div className="flex items-center gap-2 flex-1">
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+                <span className="text-base font-semibold">
+                  {t("reproduction.analysisSection")}
+                </span>
+                <span className="text-xs text-muted-foreground ml-1">
+                  · {t("reproduction.chartsCount").replace("{n}", "3")}
+                </span>
+              </div>
+              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 [&[data-state=open]]:rotate-180" />
+            </AccordionTrigger>
+            <AccordionContent className="pt-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground mb-3 uppercase">
+                      {t("reproduction.kpiReproductiveStatus")}
+                    </p>
+                    <ReproductiveStatusChart data={kpis.status_breakdown} />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground mb-3 uppercase">
+                      {t("reproduction.kpiServicesDistribution")}
+                    </p>
+                    <ServicesPerCowChart data={kpis.services_distribution} />
+                  </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground mb-3 uppercase">
+                      {t("reproduction.kpiInseminationActivity")}
+                    </p>
+                    <InseminationActivityChart
+                      data={kpis.monthly_activity}
+                      trends={kpis.monthly_trends}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
     </div>
   );
 }

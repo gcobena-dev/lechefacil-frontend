@@ -87,7 +87,11 @@ export default function SemenInventory() {
               </TableHeader>
               <TableBody>
                 {items.map((stock) => (
-                  <TableRow key={stock.id}>
+                  <TableRow
+                    key={stock.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/reproduction/sires/${stock.sire_catalog_id}`)}
+                  >
                     <TableCell className="font-medium">{stock.batch_code || "-"}</TableCell>
                     <TableCell>{stock.tank_id || "-"}</TableCell>
                     <TableCell>
@@ -112,7 +116,10 @@ export default function SemenInventory() {
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
-                        onClick={() => handleDelete(stock.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(stock.id);
+                        }}
                       >
                         {t("reproduction.delete")}
                       </Button>
@@ -126,7 +133,11 @@ export default function SemenInventory() {
           {/* Mobile Cards */}
           <div className="md:hidden space-y-3">
             {items.map((stock) => (
-              <Card key={stock.id}>
+              <Card
+                key={stock.id}
+                className="cursor-pointer active:bg-muted/50"
+                onClick={() => navigate(`/reproduction/sires/${stock.sire_catalog_id}`)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">

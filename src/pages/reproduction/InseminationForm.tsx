@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useCreateInsemination, useSemenStock } from "@/hooks/useReproduction";
 import { useToast } from "@/hooks/use-toast";
@@ -31,10 +31,11 @@ const METHODS = [
 export default function InseminationForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const mutation = useCreateInsemination();
 
-  const [animalId, setAnimalId] = useState("");
+  const [animalId, setAnimalId] = useState(() => searchParams.get("animal_id") ?? "");
   const [sireId, setSireId] = useState("");
   const [serviceDate, setServiceDate] = useState(
     new Date().toISOString().slice(0, 16)

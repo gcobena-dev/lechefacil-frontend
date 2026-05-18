@@ -42,7 +42,11 @@ export default function PendingPregnancyChecks() {
               (Date.now() - new Date(ins.service_date).getTime()) / (1000 * 60 * 60 * 24)
             );
             return (
-              <Card key={ins.id}>
+              <Card
+                key={ins.id}
+                className="cursor-pointer hover:border-primary/50 active:bg-muted/50 transition-colors"
+                onClick={() => setCheckDialogId(ins.id)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
@@ -72,7 +76,10 @@ export default function PendingPregnancyChecks() {
                       </Badge>
                       <Button
                         size="sm"
-                        onClick={() => setCheckDialogId(ins.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCheckDialogId(ins.id);
+                        }}
                       >
                         {t("reproduction.recordCheck")}
                       </Button>

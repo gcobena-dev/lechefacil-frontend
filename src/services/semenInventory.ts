@@ -25,6 +25,7 @@ export interface SemenInventoryListResponse {
   total: number;
   limit: number;
   offset: number;
+  breeds_count: number;
 }
 
 export interface CreateSemenStockPayload {
