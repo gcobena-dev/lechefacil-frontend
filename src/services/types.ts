@@ -7,6 +7,7 @@ export interface Membership {
   role: string;
   tenant_name: string;
   tenant_location?: string | null;
+  animals_count: number;
 }
 
 export interface LoginResponse {

@@ -36,7 +36,7 @@ const SelectFarm = () => {
     name: m.tenant_name,
     location: m.tenant_location ?? t('auth.farmLocationPlaceholder'),
     role: m.role.toLowerCase(),
-    animalsCount: 0,
+    animalsCount: m.animals_count,
     lastAccess: new Date().toISOString(),
     isActive: true,
   }));

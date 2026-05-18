@@ -23,7 +23,7 @@ import SearchableAnimalSelect from "@/components/milk/SearchableAnimalSelect";
 
 const METHODS = [
   { value: "AI", labelKey: "reproduction.methodAI" },
-  { value: "NATURAL", labelKey: "reproduction.methodNatural" },
+  { value: "NATURAL", labelKey: "reproduction.methodNATURAL" },
   { value: "ET", labelKey: "reproduction.methodET" },
   { value: "IATF", labelKey: "reproduction.methodIATF" },
 ];

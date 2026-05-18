@@ -119,6 +119,7 @@ export default {
   role: "Rol",
   phone: "Teléfono",
   farmName: "Nombre de la Granja",
+  changeFarm: "Cambiar finca",
   address: "Dirección",
   saveChanges: "Guardar Cambios",
   profileUpdated: "Perfil actualizado",

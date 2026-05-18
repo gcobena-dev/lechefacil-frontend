@@ -44,17 +44,17 @@ export function Header() {
           <Link to="/dashboard" className="flex items-center">
             <img src="/logo.png" alt="LecheFácil" className="h-8 w-8 object-contain" />
           </Link>
-          <div className="hidden md:block">
+          <div>
             {hasMultiple ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-1 group">
-                    <h1 className="text-lg font-semibold text-foreground">{farmName}</h1>
+                    <h1 className="text-base md:text-lg font-semibold text-foreground truncate max-w-[160px] md:max-w-none">{farmName}</h1>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="min-w-[240px]">
-                  <DropdownMenuLabel>{t("common.changeFarm") || "Cambiar finca"}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("common.changeFarm")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {memberships!.map((m) => {
                     const isActive = m.tenant_id === activeTenantId;
@@ -81,9 +81,9 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <h1 className="text-lg font-semibold text-foreground">{farmName}</h1>
+              <h1 className="text-base md:text-lg font-semibold text-foreground truncate max-w-[160px] md:max-w-none">{farmName}</h1>
             )}
-            <p className="text-sm text-muted-foreground">
+            <p className="hidden md:block text-sm text-muted-foreground">
               {t("common.milkManagementSystem")}
             </p>
           </div>

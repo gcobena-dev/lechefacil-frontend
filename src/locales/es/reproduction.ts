@@ -26,7 +26,7 @@ export default {
   serviceDate: "Fecha de servicio",
   method: "Método",
   methodAI: "Inseminación Artificial",
-  methodNatural: "Monta Natural",
+  methodNATURAL: "Monta Natural",
   methodET: "Transferencia Embrionaria",
   methodIATF: "IATF",
   technician: "Técnico/Inseminador",
