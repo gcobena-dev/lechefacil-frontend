@@ -34,10 +34,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ReproductiveAnimalRow } from "@/services/reproductionDashboard";
+import type { ReproductiveAnimalRow, ReproductiveBucket } from "@/services/reproductionDashboard";
 
 interface Props {
   items: ReproductiveAnimalRow[];
+  bucket: ReproductiveBucket;
   total: number;
   isLoading: boolean;
   search: string;
@@ -58,6 +59,14 @@ const ALERT_VARIANT: Record<string, "default" | "secondary" | "destructive" | "o
 function formatDate(s: string | null): string {
   if (!s) return "—";
   return new Date(s).toLocaleDateString();
+}
+
+// Formats an ISO date (YYYY-MM-DD) as DD/MM/YY without timezone shifts.
+function formatShortDate(s: string | null): string {
+  if (!s) return "—";
+  const [y, m, d] = s.slice(0, 10).split("-");
+  if (!y || !m || !d) return "—";
+  return `${d}/${m}/${y.slice(2)}`;
 }
 
 function eventLabel(type: string | null, t: (k: string) => string): string {
@@ -82,6 +91,7 @@ function alertLabel(level: string, t: (k: string) => string): string {
 
 export default function ReproductiveAnimalsTable({
   items,
+  bucket,
   total,
   isLoading,
   search,
@@ -109,6 +119,31 @@ export default function ReproductiveAnimalsTable({
       // Tiene inseminación PENDING o CONFIRMED: ver detalle
       setResultDialogId(row.last_insemination_id);
     }
+  };
+
+  // The days column adapts: gestation days on the "pregnant" tab,
+  // postpartum days elsewhere, generic on the mixed "all" tab.
+  const daysColLabel =
+    bucket === "prenadas"
+      ? t("reproduction.colDaysPregnant")
+      : bucket === "todas"
+        ? t("reproduction.colDays")
+        : t("reproduction.colDaysPostpartum");
+
+  const renderDaysCell = (row: ReproductiveAnimalRow) => {
+    if (row.bucket === "prenadas") {
+      return (
+        <div className="flex flex-col items-end leading-tight">
+          <span>{row.days_pregnant != null ? `${row.days_pregnant} d` : "—"}</span>
+          {row.expected_calving_date && (
+            <span className="text-xs text-muted-foreground">
+              {t("reproduction.calvingOn")} ~{formatShortDate(row.expected_calving_date)}
+            </span>
+          )}
+        </div>
+      );
+    }
+    return <span>{row.days_postpartum != null ? `${row.days_postpartum} d` : "—"}</span>;
   };
 
   const renderRowMenu = (row: ReproductiveAnimalRow) => {
@@ -223,7 +258,7 @@ export default function ReproductiveAnimalsTable({
               <TableRow>
                 <TableHead>{t("reproduction.colId")}</TableHead>
                 <TableHead>{t("reproduction.colCow")}</TableHead>
-                <TableHead className="text-right">{t("reproduction.colDaysPostpartum")}</TableHead>
+                <TableHead className="text-right">{daysColLabel}</TableHead>
                 <TableHead>{t("reproduction.colState")}</TableHead>
                 <TableHead>{t("reproduction.colSituation")}</TableHead>
                 <TableHead>{t("reproduction.colLastEvent")}</TableHead>
@@ -247,7 +282,7 @@ export default function ReproductiveAnimalsTable({
                     <TableCell className="text-muted-foreground">#{row.tag}</TableCell>
                     <TableCell className="font-medium">{row.name || "—"}</TableCell>
                     <TableCell className="text-right">
-                      {row.days_postpartum != null ? `${row.days_postpartum} d` : "—"}
+                      {renderDaysCell(row)}
                     </TableCell>
                     <TableCell>
                       <Badge variant={ALERT_VARIANT[row.alert_level] ?? "outline"}>
@@ -308,7 +343,11 @@ export default function ReproductiveAnimalsTable({
                     <p className="font-medium truncate">{row.name || `#${row.tag}`}</p>
                     <p className="text-xs text-muted-foreground truncate">
                       #{row.tag}
-                      {row.days_postpartum != null && ` · ${row.days_postpartum}d posparto`}
+                      {row.bucket === "prenadas"
+                        ? row.days_pregnant != null &&
+                          ` · ${row.days_pregnant}d ${t("reproduction.unitPregnant")}`
+                        : row.days_postpartum != null &&
+                          ` · ${row.days_postpartum}d ${t("reproduction.unitPostpartum")}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">

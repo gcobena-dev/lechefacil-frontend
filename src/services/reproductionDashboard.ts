@@ -75,6 +75,8 @@ export interface ReproductiveAnimalRow {
   name: string | null;
   days_postpartum: number | null;
   last_calving_date: string | null;
+  days_pregnant: number | null;
+  expected_calving_date: string | null;
   alert_level: "optimal" | "warning" | "critical" | "none";
   bucket: "prenadas" | "inseminadas" | "vacias" | "sin_inseminar";
   situation_label: string;

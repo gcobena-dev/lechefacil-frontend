@@ -189,6 +189,7 @@ export default function ReproductionDashboard() {
         />
         <ReproductiveAnimalsTable
           items={animalsData?.items ?? []}
+          bucket={bucket}
           total={animalsData?.total ?? 0}
           isLoading={animalsLoading}
           search={search}
