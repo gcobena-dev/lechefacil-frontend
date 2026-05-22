@@ -34,6 +34,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ReproductiveAnimalsFilters, {
+  type ReproFilterState,
+} from "@/components/reproduction/ReproductiveAnimalsFilters";
 import type { ReproductiveAnimalRow, ReproductiveBucket } from "@/services/reproductionDashboard";
 
 interface Props {
@@ -43,6 +46,8 @@ interface Props {
   isLoading: boolean;
   search: string;
   onSearchChange: (v: string) => void;
+  filters: ReproFilterState;
+  onFiltersChange: (filters: ReproFilterState) => void;
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
@@ -96,6 +101,8 @@ export default function ReproductiveAnimalsTable({
   isLoading,
   search,
   onSearchChange,
+  filters,
+  onFiltersChange,
   page,
   pageSize,
   onPageChange,
@@ -231,20 +238,27 @@ export default function ReproductiveAnimalsTable({
     <Card>
       <CardContent className="p-0">
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-b">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={t("reproduction.searchPlaceholder")}
-              className="pl-8"
-            />
+        <div className="flex flex-col gap-3 p-4 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder={t("reproduction.searchPlaceholder")}
+                className="pl-8"
+              />
+            </div>
+            <div className="text-xs text-muted-foreground whitespace-nowrap">
+              <span className="font-medium text-foreground">{total}</span>{" "}
+              {t("reproduction.results")}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground whitespace-nowrap">
-            <span className="font-medium text-foreground">{total}</span>{" "}
-            {t("reproduction.results")}
-          </div>
+          <ReproductiveAnimalsFilters
+            bucket={bucket}
+            filters={filters}
+            onChange={onFiltersChange}
+          />
         </div>
 
         {/* Desktop table */}

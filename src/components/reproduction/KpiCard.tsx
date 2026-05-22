@@ -1,5 +1,16 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, type LucideIcon } from "lucide-react";
+import {
+  HelpCircle,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface Props {
@@ -10,6 +21,8 @@ interface Props {
   delta?: number | null;
   unit?: "" | "pp" | string;
   invertColor?: boolean;
+  /** Optional explanation shown in a popover when the info icon is clicked. */
+  info?: string;
 }
 
 function formatDelta(delta: number, unit: string): string {
@@ -27,6 +40,7 @@ export default function KpiCard({
   delta,
   unit = "",
   invertColor = false,
+  info,
 }: Props) {
   const { t } = useTranslation();
   const hasDelta = delta !== undefined && delta !== null && !Number.isNaN(delta);
@@ -46,7 +60,31 @@ export default function KpiCard({
       <CardContent className="p-3 sm:p-4">
         <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2 min-w-0">
           <Icon className={`h-4 w-4 shrink-0 ${iconClassName ?? "text-muted-foreground"}`} />
-          <span className="text-[11px] sm:text-xs text-muted-foreground truncate">{label}</span>
+          <span className="text-[11px] sm:text-xs text-muted-foreground truncate min-w-0">
+            {label}
+          </span>
+          {info && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={t("reproduction.kpiInfoAria")}
+                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:text-foreground"
+                >
+                  <HelpCircle className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="w-64 p-3"
+              >
+                <p className="text-xs font-semibold mb-1">{label}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {info}
+                </p>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
         <p className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">{value}</p>
         {hasDelta && (

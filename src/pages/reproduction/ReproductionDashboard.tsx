@@ -34,6 +34,10 @@ import CriticalAlertBanner from "@/components/reproduction/CriticalAlertBanner";
 import KpiCard from "@/components/reproduction/KpiCard";
 import ReproductiveStatusTabs from "@/components/reproduction/ReproductiveStatusTabs";
 import ReproductiveAnimalsTable from "@/components/reproduction/ReproductiveAnimalsTable";
+import {
+  EMPTY_REPRO_FILTERS,
+  type ReproFilterState,
+} from "@/components/reproduction/ReproductiveAnimalsFilters";
 import ReproductionShortcutCard from "@/components/reproduction/ReproductionShortcutCard";
 import ReproductiveStatusChart from "@/components/charts/ReproductiveStatusChart";
 import ServicesPerCowChart from "@/components/charts/ServicesPerCowChart";
@@ -50,8 +54,29 @@ export default function ReproductionDashboard() {
   const [dateFrom, dateTo] = useMemo(() => rangeForPeriod(period), [period]);
   const [bucket, setBucket] = useState<ReproductiveBucket>("alertas");
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<ReproFilterState>(EMPTY_REPRO_FILTERS);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
+  // Filter state (string arrays) translated into the API query shape.
+  const filterParams = useMemo(
+    () => ({
+      alert_level: filters.alert_level.length ? filters.alert_level : undefined,
+      method: filters.method.length ? filters.method : undefined,
+      pregnancy_status: filters.pregnancy_status.length
+        ? filters.pregnancy_status
+        : undefined,
+      technician: filters.technician.length ? filters.technician : undefined,
+      heat_detected:
+        filters.heat_detected.length === 1
+          ? filters.heat_detected[0] === "true"
+          : undefined,
+      last_event_type: filters.last_event_type.length
+        ? filters.last_event_type
+        : undefined,
+    }),
+    [filters],
+  );
 
   // Tenant name (reuses cached query from Header)
   const { data: memberships } = useQuery({
@@ -67,6 +92,7 @@ export default function ReproductionDashboard() {
     sort: "postpartum",
     sort_dir: "desc",
     search: search || undefined,
+    ...filterParams,
     limit: pageSize,
     offset: page * pageSize,
   });
@@ -133,7 +159,11 @@ export default function ReproductionDashboard() {
       <CriticalAlertBanner
         criticalCount={bucketCounts.alertas}
         warningCount={warningCount}
-        onReview={() => setBucket("alertas")}
+        onReview={() => {
+          setBucket("alertas");
+          setPage(0);
+          setFilters(EMPTY_REPRO_FILTERS);
+        }}
       />
 
       {/* 3. KPIs with deltas */}
@@ -144,6 +174,7 @@ export default function ReproductionDashboard() {
           label={t("reproduction.kpiCowsInseminated")}
           value={kpis?.cows_inseminated ?? 0}
           delta={prev ? (kpis!.cows_inseminated - prev.cows_inseminated) : null}
+          info={t("reproduction.kpiCowsInseminatedInfo")}
         />
         <KpiCard
           icon={Package}
@@ -151,6 +182,7 @@ export default function ReproductionDashboard() {
           label={t("reproduction.kpiStrawsUsed")}
           value={kpis?.straws_used ?? 0}
           delta={prev ? (kpis!.straws_used - prev.straws_used) : null}
+          info={t("reproduction.kpiStrawsUsedInfo")}
         />
         <KpiCard
           icon={BarChart3}
@@ -158,6 +190,7 @@ export default function ReproductionDashboard() {
           label={t("reproduction.kpiServicesPerCow")}
           value={kpis?.services_per_cow ?? 0}
           delta={prev ? Number((kpis!.services_per_cow - prev.services_per_cow).toFixed(2)) : null}
+          info={t("reproduction.kpiServicesPerCowInfo")}
         />
         <KpiCard
           icon={Baby}
@@ -166,6 +199,7 @@ export default function ReproductionDashboard() {
           value={`${kpis?.pregnant_pct ?? 0}%`}
           delta={prev ? Number((kpis!.pregnant_pct - prev.pregnant_pct).toFixed(1)) : null}
           unit="pp"
+          info={t("reproduction.kpiPregnantPctInfo")}
         />
         <KpiCard
           icon={TrendingUp}
@@ -174,6 +208,7 @@ export default function ReproductionDashboard() {
           value={`${kpis?.conception_rate ?? 0}%`}
           delta={prev ? Number((kpis!.conception_rate - prev.conception_rate).toFixed(1)) : null}
           unit="pp"
+          info={t("reproduction.kpiConceptionRateInfo")}
         />
       </div>
 
@@ -185,6 +220,8 @@ export default function ReproductionDashboard() {
           onChange={(b) => {
             setBucket(b);
             setPage(0);
+            // Filters are tab-specific; reset them when switching tabs.
+            setFilters(EMPTY_REPRO_FILTERS);
           }}
         />
         <ReproductiveAnimalsTable
@@ -195,6 +232,11 @@ export default function ReproductionDashboard() {
           search={search}
           onSearchChange={(v) => {
             setSearch(v);
+            setPage(0);
+          }}
+          filters={filters}
+          onFiltersChange={(f) => {
+            setFilters(f);
             setPage(0);
           }}
           page={page}

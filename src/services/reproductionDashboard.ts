@@ -84,6 +84,18 @@ export interface ReproductiveAnimalRow {
   last_event_date: string | null;
   last_insemination_id: string | null;
   last_insemination_status: "PENDING" | "CONFIRMED" | "OPEN" | "LOST" | null;
+  method: "AI" | "NATURAL" | "ET" | "IATF" | null;
+  technician: string | null;
+  heat_detected: boolean | null;
+}
+
+export interface ReproductiveAnimalFilters {
+  alert_level?: string[];
+  method?: string[];
+  pregnancy_status?: string[];
+  technician?: string[];
+  heat_detected?: boolean;
+  last_event_type?: string[];
 }
 
 export interface BucketCounts {
@@ -103,14 +115,17 @@ export interface ReproductiveAnimalsResponse {
   offset: number;
 }
 
-export async function listReproductiveAnimals(params: {
-  filter?: ReproductiveBucket;
-  sort?: "postpartum" | "tag" | "name";
-  sort_dir?: "asc" | "desc";
-  search?: string;
-  limit?: number;
-  offset?: number;
-}) {
+export async function listReproductiveAnimals(
+  params: {
+    filter?: ReproductiveBucket;
+    sort?: "postpartum" | "tag" | "name";
+    sort_dir?: "asc" | "desc";
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } & ReproductiveAnimalFilters,
+) {
+  const csv = (a?: string[]) => (a && a.length ? a.join(",") : undefined);
   return apiFetch<ReproductiveAnimalsResponse>(
     "/api/v1/dashboard/reproductive-animals",
     {
@@ -121,6 +136,12 @@ export async function listReproductiveAnimals(params: {
         sort: params.sort,
         sort_dir: params.sort_dir,
         search: params.search,
+        alert_level: csv(params.alert_level),
+        method: csv(params.method),
+        pregnancy_status: csv(params.pregnancy_status),
+        technician: csv(params.technician),
+        heat_detected: params.heat_detected,
+        last_event_type: csv(params.last_event_type),
         limit: params.limit,
         offset: params.offset,
       },

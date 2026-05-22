@@ -142,6 +142,19 @@ export default {
   kpiThreePlusServices: "3+ Servicios",
   kpiCowsInseminatedShort: "Vacas",
 
+  // KPI info popovers (cómo se calcula cada indicador)
+  kpiInfoAria: "Cómo se calcula este indicador",
+  kpiCowsInseminatedInfo:
+    "Número de vacas distintas que recibieron al menos un servicio (inseminación o monta) durante el período seleccionado. Si una vaca se sirvió varias veces, se cuenta una sola vez.",
+  kpiStrawsUsedInfo:
+    "Total de pajuelas de semen consumidas en servicios de inseminación artificial, IATF y transferencia embrionaria del período. No incluye montas naturales, ya que no usan pajuela.",
+  kpiServicesPerCowInfo:
+    "Promedio de servicios por vaca = total de servicios ÷ vacas inseminadas. Un valor cercano a 1 indica que la mayoría quedó preñada al primer intento.",
+  kpiPregnantPctInfo:
+    "Porcentaje de vacas con diagnóstico confirmado de preñez sobre el total de vacas con resultado registrado en el período.",
+  kpiConceptionRateInfo:
+    "Porcentaje de servicios que resultaron en preñez confirmada = servicios confirmados ÷ total de servicios del período.",
+
   // Dashboard charts
   kpiReproductiveStatus: "Estado Reproductivo",
   kpiServicesDistribution: "Distribución de Servicios",
@@ -214,6 +227,19 @@ export default {
   searchPlaceholder: "Buscar por # o nombre…",
   filters: "Filtros",
   order: "Orden",
+
+  // Table filters
+  filterAlertLevel: "Estado",
+  filterMethod: "Método",
+  filterResult: "Resultado",
+  filterTechnician: "Técnico",
+  filterHeat: "Celo",
+  filterLastEvent: "Último evento",
+  filtersMore: "Más filtros",
+  filtersLess: "Menos filtros",
+  filtersClear: "Limpiar",
+  filterClearOne: "Quitar selección",
+  filterNoOptions: "Sin opciones disponibles",
   results: "resultados",
   exportLabel: "Exportar",
   showing: "Mostrando",

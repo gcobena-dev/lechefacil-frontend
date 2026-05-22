@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   getReproductionKPIs,
   listReproductiveAnimals,
+  type ReproductiveAnimalFilters,
   type ReproductiveBucket,
 } from "@/services/reproductionDashboard";
 
@@ -13,14 +14,16 @@ export function useReproductionKPIs(dateFrom: string, dateTo: string) {
   });
 }
 
-export function useReproductiveAnimals(params: {
-  filter: ReproductiveBucket;
-  sort?: "postpartum" | "tag" | "name";
-  sort_dir?: "asc" | "desc";
-  search?: string;
-  limit?: number;
-  offset?: number;
-}) {
+export function useReproductiveAnimals(
+  params: {
+    filter: ReproductiveBucket;
+    sort?: "postpartum" | "tag" | "name";
+    sort_dir?: "asc" | "desc";
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } & ReproductiveAnimalFilters,
+) {
   return useQuery({
     queryKey: ["reproductive-animals", params],
     queryFn: () => listReproductiveAnimals(params),
