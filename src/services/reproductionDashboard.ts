@@ -87,6 +87,7 @@ export interface ReproductiveAnimalRow {
   method: "AI" | "NATURAL" | "ET" | "IATF" | null;
   technician: string | null;
   heat_detected: boolean | null;
+  labels: string[];
 }
 
 export interface ReproductiveAnimalFilters {
@@ -96,6 +97,7 @@ export interface ReproductiveAnimalFilters {
   technician?: string[];
   heat_detected?: boolean;
   last_event_type?: string[];
+  labels?: string[];
 }
 
 export interface BucketCounts {
@@ -142,6 +144,7 @@ export async function listReproductiveAnimals(
         technician: csv(params.technician),
         heat_detected: params.heat_detected,
         last_event_type: csv(params.last_event_type),
+        labels: csv(params.labels),
         limit: params.limit,
         offset: params.offset,
       },

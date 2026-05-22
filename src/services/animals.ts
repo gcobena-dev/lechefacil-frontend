@@ -16,7 +16,13 @@ export async function listAnimals(params?: {
   status_codes?: string;
   sort_by?: string;
   sort_dir?: "asc" | "desc";
+  breed_ids?: string[];
+  lot_ids?: string[];
+  sex?: string[];
+  labels?: string[];
+  in_milk_withdrawal?: boolean;
 }) {
+  const csv = (a?: string[]) => (a && a.length ? a.join(",") : undefined);
   return apiFetch<AnimalsListResponse>("/api/v1/animals/", {
     withAuth: true,
     withTenant: true,
@@ -29,6 +35,11 @@ export async function listAnimals(params?: {
       status_codes: params?.status_codes,
       sort_by: params?.sort_by,
       sort_dir: params?.sort_dir,
+      breed_ids: csv(params?.breed_ids),
+      lot_ids: csv(params?.lot_ids),
+      sex: csv(params?.sex),
+      labels: csv(params?.labels),
+      in_milk_withdrawal: params?.in_milk_withdrawal,
     },
   });
 }

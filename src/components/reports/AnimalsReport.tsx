@@ -16,6 +16,17 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getStatusKeyFromCode } from "@/utils/animals";
+import SortableHeader from "@/components/reports/SortableHeader";
+import { useSortableTable } from "@/components/reports/useSortableTable";
+
+type AnimalRow = AnimalsReportData["animals"][number];
+type AnimalSortKey =
+  | "name"
+  | "tag"
+  | "status"
+  | "total_liters"
+  | "records_count"
+  | "avg_per_record";
 
 interface AnimalsFilters {
   date_from: string;
@@ -250,6 +261,39 @@ export default function AnimalsReport() {
         : 0
     };
   };
+
+  // Sortable table state for the "Tablas" tab.
+  const getAnimalValue = useCallback(
+    (animal: AnimalRow, key: AnimalSortKey): string | number => {
+      switch (key) {
+        case "name":
+          return animal.name ?? "";
+        case "tag":
+          return animal.tag ?? "";
+        case "status":
+          return animal.status ?? "";
+        case "total_liters":
+          return animal.total_liters;
+        case "records_count":
+          return animal.records_count;
+        case "avg_per_record":
+          return animal.avg_per_record;
+      }
+    },
+    [],
+  );
+  const {
+    sortedRows: sortedAnimals,
+    sortKey: animalSortKey,
+    sortDir: animalSortDir,
+    toggleSort: toggleAnimalSort,
+  } = useSortableTable<AnimalRow, AnimalSortKey>(
+    getFilteredAnimals(),
+    getAnimalValue,
+    "total_liters",
+    "desc",
+  );
+  const handleAnimalSort = (key: string) => toggleAnimalSort(key as AnimalSortKey);
 
   // Load data on component mount and when filters change
   useEffect(() => {
@@ -788,18 +832,58 @@ export default function AnimalsReport() {
                     <table className="w-full border-collapse border border-border">
                       <thead>
                         <tr className="bg-muted/50">
-                          <th className="border border-border p-2 text-left">{t("common.name")}</th>
-                          <th className="border border-border p-2 text-left">Tag</th>
-                          <th className="border border-border p-2 text-center">{t("reports.animalStatus")}</th>
-                          <th className="border border-border p-2 text-right">{t("reports.totalLiters")}</th>
-                          <th className="border border-border p-2 text-right">{t("reports.recordsCount")}</th>
-                          <th className="border border-border p-2 text-right">{t("reports.avgPerRecord")}</th>
+                          <SortableHeader
+                            label={t("common.name")}
+                            sortKey="name"
+                            activeKey={animalSortKey}
+                            direction={animalSortDir}
+                            onSort={handleAnimalSort}
+                            align="left"
+                          />
+                          <SortableHeader
+                            label="Tag"
+                            sortKey="tag"
+                            activeKey={animalSortKey}
+                            direction={animalSortDir}
+                            onSort={handleAnimalSort}
+                            align="left"
+                          />
+                          <SortableHeader
+                            label={t("reports.animalStatus")}
+                            sortKey="status"
+                            activeKey={animalSortKey}
+                            direction={animalSortDir}
+                            onSort={handleAnimalSort}
+                            align="center"
+                          />
+                          <SortableHeader
+                            label={t("reports.totalLiters")}
+                            sortKey="total_liters"
+                            activeKey={animalSortKey}
+                            direction={animalSortDir}
+                            onSort={handleAnimalSort}
+                            align="right"
+                          />
+                          <SortableHeader
+                            label={t("reports.recordsCount")}
+                            sortKey="records_count"
+                            activeKey={animalSortKey}
+                            direction={animalSortDir}
+                            onSort={handleAnimalSort}
+                            align="right"
+                          />
+                          <SortableHeader
+                            label={t("reports.avgPerRecord")}
+                            sortKey="avg_per_record"
+                            activeKey={animalSortKey}
+                            direction={animalSortDir}
+                            onSort={handleAnimalSort}
+                            align="right"
+                          />
                         </tr>
                       </thead>
                       <tbody>
-                        {getFilteredAnimals()
-                          .sort((a, b) => b.total_liters - a.total_liters)
-                          .map((animal) => (
+                        {sortedAnimals.map((animal) => (
                             <tr key={animal.tag} className="hover:bg-muted/30">
                               <td className="border border-border p-2 font-medium">{animal.name}</td>
                               <td className="border border-border p-2 text-muted-foreground">{animal.tag}</td>
@@ -874,9 +958,7 @@ export default function AnimalsReport() {
                     </div>
                   </div>
 
-                  {getFilteredAnimals()
-                    .sort((a, b) => b.total_liters - a.total_liters)
-                    .map((animal) => (
+                  {sortedAnimals.map((animal) => (
                       <div key={animal.tag} className="border border-border rounded-lg p-3 bg-card">
                         <div className="flex justify-between items-start mb-3">
                           <div>

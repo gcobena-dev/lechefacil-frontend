@@ -235,6 +235,7 @@ export default {
   filterTechnician: "Técnico",
   filterHeat: "Celo",
   filterLastEvent: "Último evento",
+  filterLabels: "Etiquetas",
   filtersMore: "Más filtros",
   filtersLess: "Menos filtros",
   filtersClear: "Limpiar",

@@ -74,6 +74,7 @@ export default function ReproductionDashboard() {
       last_event_type: filters.last_event_type.length
         ? filters.last_event_type
         : undefined,
+      labels: filters.labels.length ? filters.labels : undefined,
     }),
     [filters],
   );

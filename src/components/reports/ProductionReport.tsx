@@ -18,6 +18,26 @@ import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
 import { getAnimalStatuses } from "@/services/animals";
 import DailyDetailReport from "./DailyDetailReport";
+import SortableHeader from "@/components/reports/SortableHeader";
+import { useSortableTable } from "@/components/reports/useSortableTable";
+
+interface ProdTableRow {
+  date: string;
+  dayName: string;
+  originalDate: string;
+  producidos: number;
+  entregados: number;
+  ingresos: number;
+  ingresos_producidos: number;
+}
+
+type ProdSortKey =
+  | "date"
+  | "dayName"
+  | "producidos"
+  | "entregados"
+  | "ingresos_producidos"
+  | "ingresos";
 
 interface ProductionFilters {
   date_from: string;
@@ -239,6 +259,36 @@ export default function ProductionReport() {
       recordCount: data.length
     };
   };
+
+  // Sortable table state for the "Tablas" tab.
+  const getProdValue = (row: ProdTableRow, key: ProdSortKey): string | number => {
+    switch (key) {
+      case "date":
+        return parseDateString(row.originalDate).getTime();
+      case "dayName":
+        return row.dayName;
+      case "producidos":
+        return row.producidos;
+      case "entregados":
+        return row.entregados;
+      case "ingresos_producidos":
+        return row.ingresos_producidos;
+      case "ingresos":
+        return row.ingresos;
+    }
+  };
+  const {
+    sortedRows: sortedProdRows,
+    sortKey: prodSortKey,
+    sortDir: prodSortDir,
+    toggleSort: toggleProdSort,
+  } = useSortableTable<ProdTableRow, ProdSortKey>(
+    prepareChartData(),
+    getProdValue,
+    "date",
+    "desc",
+  );
+  const handleProdSort = (key: string) => toggleProdSort(key as ProdSortKey);
 
   const downloadPDF = async () => {
     try {
@@ -974,20 +1024,58 @@ export default function ProductionReport() {
                     <table className="w-full border-collapse border border-border">
                       <thead>
                         <tr className="bg-muted/50">
-                          <th className="border border-border p-2 text-left">{t("reports.dateLabel")}</th>
-                          <th className="border border-border p-2 text-left">{t("reports.dayOfWeek")}</th>
-                          <th className="border border-border p-2 text-right">{t("reports.produced")} (L)</th>
-                          <th className="border border-border p-2 text-right">{t("reports.delivered")} (L)</th>
-                          <th className="border border-border p-2 text-right">{t("reports.produced")} ({tenantSettings?.default_currency || 'USD'})</th>
-                          <th className="border border-border p-2 text-right">{t("reports.delivered")} ({tenantSettings?.default_currency || 'USD'})</th>
+                          <SortableHeader
+                            label={t("reports.dateLabel")}
+                            sortKey="date"
+                            activeKey={prodSortKey}
+                            direction={prodSortDir}
+                            onSort={handleProdSort}
+                            align="left"
+                          />
+                          <SortableHeader
+                            label={t("reports.dayOfWeek")}
+                            sortKey="dayName"
+                            activeKey={prodSortKey}
+                            direction={prodSortDir}
+                            onSort={handleProdSort}
+                            align="left"
+                          />
+                          <SortableHeader
+                            label={`${t("reports.produced")} (L)`}
+                            sortKey="producidos"
+                            activeKey={prodSortKey}
+                            direction={prodSortDir}
+                            onSort={handleProdSort}
+                            align="right"
+                          />
+                          <SortableHeader
+                            label={`${t("reports.delivered")} (L)`}
+                            sortKey="entregados"
+                            activeKey={prodSortKey}
+                            direction={prodSortDir}
+                            onSort={handleProdSort}
+                            align="right"
+                          />
+                          <SortableHeader
+                            label={`${t("reports.produced")} (${tenantSettings?.default_currency || 'USD'})`}
+                            sortKey="ingresos_producidos"
+                            activeKey={prodSortKey}
+                            direction={prodSortDir}
+                            onSort={handleProdSort}
+                            align="right"
+                          />
+                          <SortableHeader
+                            label={`${t("reports.delivered")} (${tenantSettings?.default_currency || 'USD'})`}
+                            sortKey="ingresos"
+                            activeKey={prodSortKey}
+                            direction={prodSortDir}
+                            onSort={handleProdSort}
+                            align="right"
+                          />
                         </tr>
                       </thead>
                       <tbody>
-                        {prepareChartData()
-                          .sort((a, b) => {
-                            return parseDateString(b.originalDate).getTime() - parseDateString(a.originalDate).getTime();
-                          })
-                          .map((row) => (
+                        {sortedProdRows.map((row) => (
                             <tr key={row.originalDate} className="hover:bg-muted/30">
                               <td className="border border-border p-2">{row.date}</td>
                               <td className="border border-border p-2 text-muted-foreground capitalize">{row.dayName}</td>
@@ -1062,11 +1150,7 @@ export default function ProductionReport() {
                     </div>
                   </div>
 
-                  {prepareChartData()
-                    .sort((a, b) => {
-                      return parseDateString(b.originalDate).getTime() - parseDateString(a.originalDate).getTime();
-                    })
-                    .map((row) => (
+                  {sortedProdRows.map((row) => (
                       <div key={row.originalDate} className="border border-border rounded-lg p-3 bg-card">
                         <div className="flex justify-between items-start mb-3">
                           <div>

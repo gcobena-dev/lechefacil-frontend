@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   Plus,
@@ -20,24 +20,30 @@ import {
   Milk,
   ChevronLeft,
   ChevronRight,
+  ArrowUp,
+  ArrowDown,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { listAnimals } from "@/services/animals";
-import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getAnimalImageUrl, getStatusKeyFromCode } from "@/utils/animals";
 import { AnimalPhotoLightbox } from "@/components/animals/AnimalPhotoLightbox";
+import AnimalsFilters, {
+  EMPTY_ANIMAL_FILTERS,
+  type AnimalFilterState,
+} from "@/components/animals/AnimalsFilters";
 import { getPref, setPref } from "@/utils/prefs";
 
 export default function Animals() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState(() => getPref<string>('prefs:animals:search', '', { session: true }));
-  const [statusFilter, setStatusFilter] = useState<string>(() => getPref<string>('prefs:animals:status', 'all', { session: true }));
-  const [lotFilter, setLotFilter] = useState<string>(() => getPref<string>('prefs:animals:lot', '', { session: true }));
+  const [filters, setFilters] = useState<AnimalFilterState>(() =>
+    getPref<AnimalFilterState>('prefs:animals:filters', EMPTY_ANIMAL_FILTERS, { session: true }),
+  );
   const [pageSize, setPageSize] = useState<number>(() => getPref<number>('prefs:animals:pageSize', 10, { session: true }));
   const [page, setPage] = useState<number>(() => getPref<number>('prefs:animals:page', 0, { session: true }));
   const [sortBy, setSortBy] = useState<string>(() => getPref<string>('prefs:animals:sortBy', 'tag', { session: true }));
@@ -45,34 +51,38 @@ export default function Animals() {
 
   // Persist changes during the session
   useEffect(() => { setPref('prefs:animals:search', searchTerm, { session: true }); }, [searchTerm]);
-  useEffect(() => { setPref('prefs:animals:status', statusFilter, { session: true }); }, [statusFilter]);
-  useEffect(() => { setPref('prefs:animals:lot', lotFilter, { session: true }); }, [lotFilter]);
+  useEffect(() => { setPref('prefs:animals:filters', filters, { session: true }); }, [filters]);
   useEffect(() => { setPref('prefs:animals:pageSize', pageSize, { session: true }); }, [pageSize]);
   useEffect(() => { setPref('prefs:animals:page', page, { session: true }); }, [page]);
   useEffect(() => { setPref('prefs:animals:sortBy', sortBy, { session: true }); }, [sortBy]);
   useEffect(() => { setPref('prefs:animals:sortDir', sortDir, { session: true }); }, [sortDir]);
 
   const { data } = useQuery({
-    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir, statusFilter }],
+    queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir, filters }],
     queryFn: () => listAnimals({
       q: searchTerm || undefined,
       limit: pageSize,
       offset: page * pageSize,
       sort_by: sortBy,
       sort_dir: sortDir,
-      status_codes: statusFilter === 'sold'
-        ? 'SOLD'
-        : statusFilter === 'culled'
-          ? 'CULLED'
-          : statusFilter === 'dead'
-            ? 'DEAD'
-            : undefined,
+      status_codes: filters.status.length ? filters.status.join(',') : undefined,
+      breed_ids: filters.breed.length ? filters.breed : undefined,
+      lot_ids: filters.lot.length ? filters.lot : undefined,
+      sex: filters.sex.length ? filters.sex : undefined,
+      labels: filters.labels.length ? filters.labels : undefined,
+      in_milk_withdrawal:
+        filters.in_milk_withdrawal.length === 1
+          ? filters.in_milk_withdrawal[0] === 'true'
+          : undefined,
     }),
   });
 
+  // All filtering happens server-side, so the rows, total and summary
+  // returned by the API already reflect the active filters.
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
-  
+  const summary = data?.summary ?? { production: 0, withdrawn: 0, other: 0, total: 0 };
+
   const onSort = (key: string) => {
     setPage(0);
     setSortBy((prev) => {
@@ -101,57 +111,13 @@ export default function Animals() {
         type="button"
         className={`inline-flex items-center hover:text-foreground ${isActive ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}
         onClick={() => onSort(key)}
-        title={`Ordenar por ${label}`}
+        title={`${t('animals.sortBy')} ${label}`}
       >
         <span>{label}</span>
         {icon}
       </button>
     );
   };
-  const { data: lots = [] } = useQuery({
-    queryKey: ["lots", { active: true }],
-    queryFn: () => getLots({ active: true }),
-  });
-  
-
-  const filteredAnimals = useMemo(() => {
-    return items.filter((animal) => {
-      const name = (animal.name ?? "").toLowerCase();
-      const tag = (animal.tag ?? "").toLowerCase();
-      const breed = (animal.breed ?? "").toLowerCase();
-      const matchesSearch = name.includes(searchTerm.toLowerCase()) ||
-        tag.includes(searchTerm.toLowerCase()) ||
-        breed.includes(searchTerm.toLowerCase());
-      const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
-      const matchesStatus = statusFilter === "all" || statusKey === statusFilter;
-      const selectedLotName = (lots as any[]).find(l => l.id === lotFilter)?.name;
-      const matchesLot = !lotFilter || (animal.lot ?? "") === (selectedLotName ?? "");
-      return matchesSearch && matchesStatus && matchesLot;
-    });
-  }, [items, searchTerm, statusFilter, lotFilter, lots]);
-
-  const computeSummary = (list: typeof items) => {
-    return list.reduce(
-      (acc, animal) => {
-        const statusKey = getStatusKeyFromCode((animal as any).status_code ?? (animal as any).status);
-        const code = ((animal as any).status_code ?? (animal as any).status ?? "").toUpperCase();
-        if (code === 'LACTATING') acc.production += 1;
-        else if (['SOLD', 'CULLED', 'DEAD'].includes(code) || ['sold', 'culled', 'dead'].includes(statusKey)) acc.withdrawn += 1;
-        else acc.other += 1;
-        acc.total += 1;
-        return acc;
-      },
-      { production: 0, withdrawn: 0, other: 0, total: 0 }
-    );
-  };
-
-  const summary = useMemo(() => {
-    // Use backend-provided summary when no local-only filters apply
-    if (statusFilter === 'all' && !lotFilter && data?.summary) {
-      return data.summary;
-    }
-    return computeSummary(filteredAnimals);
-  }, [data?.summary, filteredAnimals, lotFilter, statusFilter]);
 
   const renderPhoto = (animal: any) => {
     const url = getAnimalImageUrl(animal) ?? "/logo.png";
@@ -199,9 +165,9 @@ export default function Animals() {
     const birth = new Date(birthDate);
     if (isNaN(birth.getTime())) return '-';
     const now = new Date();
-    const ageInMonths = (now.getFullYear() - birth.getFullYear()) * 12 + 
+    const ageInMonths = (now.getFullYear() - birth.getFullYear()) * 12 +
                        (now.getMonth() - birth.getMonth());
-    
+
     if (ageInMonths < 12) {
       return `${ageInMonths} ${t('animals.months')}`;
     } else {
@@ -241,7 +207,7 @@ export default function Animals() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div>
@@ -259,7 +225,7 @@ export default function Animals() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div>
@@ -272,84 +238,73 @@ export default function Animals() {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('animals.filters')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('animals.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <select
-              value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value); setPage(0); }}
-              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
-              title="Ordenar por"
-            >
-              <option value="tag">Código</option>
-              <option value="name">Nombre</option>
-              <option value="breed">Raza</option>
-              <option value="age">Edad</option>
-              <option value="lot">Lote</option>
-              <option value="classification">Clasificación</option>
-            </select>
-            <select
-              value={sortDir}
-              onChange={(e) => { setSortDir(e.target.value as 'asc' | 'desc'); setPage(0); }}
-              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
-              title="Dirección"
-            >
-              <option value="asc">Asc</option>
-              <option value="desc">Desc</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
-            >
-              <option value="all">{t('animals.allStatuses')}</option>
-              <option value="active">{t('animals.activeFilter')}</option>
-              <option value="sold">{t('animals.soldFilter')}</option>
-              <option value="culled">{t('animals.culledFilter')}</option>
-              <option value="dead">{t('animals.deadFilter')}</option>
-            </select>
-            <select
-              value={lotFilter}
-              onChange={(e) => setLotFilter(e.target.value)}
-              className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
-            >
-              <option value="">{t('animals.allLots') ?? 'Todos los lotes'}</option>
-              {(lots as any[]).map((l) => (
-                <option key={l.id} value={l.id}>{l.name}</option>
-              ))}
-            </select>
+        <CardContent className="pt-6 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('animals.searchPlaceholder')}
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+              className="pl-10"
+            />
           </div>
+          <AnimalsFilters
+            filters={filters}
+            onChange={(next) => { setFilters(next); setPage(0); }}
+          />
         </CardContent>
       </Card>
+
+      {/* Results count + sort toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{total}</span> {t('animals.animalsFound')}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{t('animals.sortBy')}</span>
+          <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(0); }}>
+            <SelectTrigger className="h-9 w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="tag">{t('animals.sortTag')}</SelectItem>
+              <SelectItem value="name">{t('animals.sortName')}</SelectItem>
+              <SelectItem value="breed">{t('animals.sortBreed')}</SelectItem>
+              <SelectItem value="age">{t('animals.sortAge')}</SelectItem>
+              <SelectItem value="lot">{t('animals.sortLot')}</SelectItem>
+              <SelectItem value="classification">{t('animals.sortClassification')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => { setSortDir((d) => (d === 'asc' ? 'desc' : 'asc')); setPage(0); }}
+            title={t('animals.sortToggleDirection')}
+            aria-label={sortDir === 'asc' ? t('animals.sortAscending') : t('animals.sortDescending')}
+          >
+            {sortDir === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
 
       {/* Animals Table - Desktop */}
       <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>{t('animals.animalsList')}</CardTitle>
           <CardDescription>
-            {filteredAnimals.length} {t('animals.animalsFound')}
+            {total} {t('animals.animalsFound')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Pagination Controls */}
           <div className="flex items-center justify-between border-b pb-4 mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Mostrando {filteredAnimals.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+              <span className="text-sm text-muted-foreground">{t('animals.showing')} {items.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} {t('animals.of')} {total}</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Por página</span>
+                <span className="text-sm text-muted-foreground">{t('animals.perPage')}</span>
                 <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
                   <SelectTrigger className="w-[100px]">
                     <SelectValue placeholder="10" />
@@ -378,7 +333,7 @@ export default function Animals() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px]">{t('common.photo') ?? 'Foto'}</TableHead>
-                    <TableHead>{renderHeader('Tag', 'tag')}</TableHead>
+                    <TableHead>{renderHeader(t('animals.sortTag'), 'tag')}</TableHead>
                     <TableHead>{renderHeader(t('common.name'), 'name')}</TableHead>
                     <TableHead>{renderHeader(t('animals.breed'), 'breed')}</TableHead>
                     <TableHead>{renderHeader(t('animals.age'), 'age')}</TableHead>
@@ -388,7 +343,7 @@ export default function Animals() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAnimals.map((animal) => (
+                {items.map((animal) => (
                   <TableRow
                     key={animal.id}
                     className="cursor-pointer hover:bg-muted/50"
@@ -417,6 +372,13 @@ export default function Animals() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {items.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      {t('animals.noAnimalsFound')}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -430,11 +392,11 @@ export default function Animals() {
           <CardContent className="p-4">
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Mostrando {filteredAnimals.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} de {total}</span>
+                <span className="text-sm text-muted-foreground">{t('animals.showing')} {items.length === 0 ? 0 : (page * pageSize) + 1} - {Math.min((page + 1) * pageSize, total)} {t('animals.of')} {total}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Por página</span>
+                  <span className="text-sm text-muted-foreground">{t('animals.perPage')}</span>
                   <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(parseInt(v, 10)); setPage(0); }}>
                     <SelectTrigger className="w-[100px]">
                       <SelectValue placeholder="10" />
@@ -459,7 +421,7 @@ export default function Animals() {
             </div>
           </CardContent>
         </Card>
-        {filteredAnimals.map((animal) => (
+        {items.map((animal) => (
           <Card key={animal.id}>
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-2 gap-3">
@@ -495,8 +457,8 @@ export default function Animals() {
             </CardContent>
           </Card>
         ))}
-        
-        {filteredAnimals.length === 0 && (
+
+        {items.length === 0 && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">{t('animals.noAnimalsFound')}</p>
           </div>
@@ -504,7 +466,7 @@ export default function Animals() {
       </div>
 
       {/* Mobile FAB */}
-      <Button 
+      <Button
         asChild
         className="fixed bottom-16 right-6 h-14 w-14 rounded-full shadow-lg md:hidden"
         size="icon"

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -9,6 +10,7 @@ import {
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTechnicians } from "@/hooks/useReproduction";
+import { getLabelSuggestions } from "@/services/animals";
 import type { ReproductiveBucket } from "@/services/reproductionDashboard";
 
 /**
@@ -23,6 +25,7 @@ export interface ReproFilterState {
   technician: string[];
   heat_detected: string[];
   last_event_type: string[];
+  labels: string[];
 }
 
 export const EMPTY_REPRO_FILTERS: ReproFilterState = {
@@ -32,6 +35,7 @@ export const EMPTY_REPRO_FILTERS: ReproFilterState = {
   technician: [],
   heat_detected: [],
   last_event_type: [],
+  labels: [],
 };
 
 type FilterKey = keyof ReproFilterState;
@@ -55,22 +59,22 @@ function tabFilters(bucket: ReproductiveBucket): {
     case "prenadas":
       return {
         defaults: ["method"],
-        more: ["technician", "heat_detected", "last_event_type"],
+        more: ["labels", "technician", "heat_detected", "last_event_type"],
       };
     case "inseminadas":
       return {
         defaults: ["alert_level", "method"],
-        more: ["technician", "heat_detected", "last_event_type"],
+        more: ["labels", "technician", "heat_detected", "last_event_type"],
       };
     case "sin_inseminar":
-      return { defaults: ["alert_level"], more: ["last_event_type"] };
+      return { defaults: ["alert_level"], more: ["labels", "last_event_type"] };
     case "vacias":
     case "alertas":
     case "todas":
     default:
       return {
         defaults: ["alert_level", "method", "pregnancy_status"],
-        more: ["technician", "heat_detected", "last_event_type"],
+        more: ["labels", "technician", "heat_detected", "last_event_type"],
       };
   }
 }
@@ -88,6 +92,11 @@ export default function ReproductiveAnimalsFilters({
 }: Props) {
   const { t } = useTranslation();
   const { data: technicians = [] } = useTechnicians();
+  const { data: animalLabels = [] } = useQuery({
+    queryKey: ["all-labels"],
+    queryFn: () => getLabelSuggestions(""),
+    staleTime: 5 * 60 * 1000,
+  });
   const [showMore, setShowMore] = useState(false);
 
   const { defaults, more } = tabFilters(bucket);
@@ -114,6 +123,8 @@ export default function ReproductiveAnimalsFilters({
         return t("reproduction.filterHeat");
       case "last_event_type":
         return t("reproduction.filterLastEvent");
+      case "labels":
+        return t("reproduction.filterLabels");
     }
   };
 
@@ -157,6 +168,8 @@ export default function ReproductiveAnimalsFilters({
           { value: "insemination", label: t("reproduction.eventInsemination") },
           { value: "check", label: t("reproduction.eventCheck") },
         ];
+      case "labels":
+        return animalLabels.map((label) => ({ value: label, label }));
     }
   };
 
