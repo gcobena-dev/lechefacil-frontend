@@ -320,6 +320,7 @@ export default {
   saving: "Guardando...",
   cancel: "Cancelar",
   delete: "Eliminar",
+  edit: "Editar",
   back: "Volver",
   search: "Buscar",
   filter: "Filtrar",

@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Package, Plus } from "lucide-react";
+import { ArrowLeft, Package, Pencil, Plus } from "lucide-react";
 
 export default function SemenInventory() {
   const { t } = useTranslation();
@@ -112,17 +112,29 @@ export default function SemenInventory() {
                         : "-"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(stock.id);
-                        }}
-                      >
-                        {t("reproduction.delete")}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/reproduction/semen/${stock.id}/edit`);
+                          }}
+                        >
+                          {t("reproduction.edit")}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(stock.id);
+                          }}
+                        >
+                          {t("reproduction.delete")}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -156,9 +168,22 @@ export default function SemenInventory() {
                         </p>
                       )}
                     </div>
-                    <Badge variant={stock.current_quantity > 0 ? "default" : "destructive"}>
-                      {stock.current_quantity} / {stock.initial_quantity}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={stock.current_quantity > 0 ? "default" : "destructive"}>
+                        {stock.current_quantity} / {stock.initial_quantity}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/reproduction/semen/${stock.id}/edit`);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

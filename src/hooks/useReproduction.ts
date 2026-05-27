@@ -11,6 +11,7 @@ import {
 } from "@/services/sireCatalog";
 import {
   listSemenStock,
+  getSemenStock,
   createSemenStock,
   updateSemenStock,
   deleteSemenStock,
@@ -101,6 +102,14 @@ export function useSemenStock(params?: {
   return useQuery({
     queryKey: ["semen-stock", params],
     queryFn: () => listSemenStock(params),
+  });
+}
+
+export function useSemenStockById(id: string | undefined) {
+  return useQuery({
+    queryKey: ["semen-stock", "by-id", id],
+    queryFn: () => getSemenStock(id!),
+    enabled: !!id,
   });
 }
 

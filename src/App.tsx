@@ -104,6 +104,7 @@ const App = () => (
             <Route path="reproduction/sires/:id/edit" element={<SireForm />} />
             <Route path="reproduction/semen" element={<SemenInventory />} />
             <Route path="reproduction/semen/new" element={<SemenStockForm />} />
+            <Route path="reproduction/semen/:id/edit" element={<SemenStockForm />} />
             <Route path="reports" element={<Reports />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="account" element={<Account />} />
