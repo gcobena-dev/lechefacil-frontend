@@ -31,6 +31,22 @@ export interface SirePerformanceResponse {
   conception_rate: number;
 }
 
+export interface SirePerformanceSummaryItem {
+  sire: SireCatalogResponse;
+  total_inseminations: number;
+  confirmed_pregnancies: number;
+  conception_rate: number;
+  straws_used: number;
+  straws_in_stock: number;
+}
+
+export interface SirePerformanceSummaryResponse {
+  items: SirePerformanceSummaryItem[];
+  date_from: string;
+  date_to: string;
+  include_inactive: boolean;
+}
+
 export interface CreateSirePayload {
   name: string;
   short_code?: string | null;
@@ -111,6 +127,25 @@ export async function getSirePerformance(id: string) {
     {
       withAuth: true,
       withTenant: true,
+    }
+  );
+}
+
+export async function getSirePerformanceSummary(params: {
+  date_from: string;
+  date_to: string;
+  include_inactive?: boolean;
+}) {
+  return apiFetch<SirePerformanceSummaryResponse>(
+    "/api/v1/reproduction/sires/performance-summary",
+    {
+      withAuth: true,
+      withTenant: true,
+      query: {
+        date_from: params.date_from,
+        date_to: params.date_to,
+        include_inactive: params.include_inactive,
+      },
     }
   );
 }

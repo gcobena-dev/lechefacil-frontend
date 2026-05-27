@@ -101,6 +101,23 @@ export async function updateSemenStock(
   });
 }
 
+export interface SemenInventoryAutocompleteResponse {
+  suppliers: string[];
+  batch_codes: string[];
+  tank_ids: string[];
+  canister_positions: string[];
+}
+
+export async function getSemenAutocompleteValues() {
+  return apiFetch<SemenInventoryAutocompleteResponse>(
+    "/api/v1/reproduction/semen/autocomplete",
+    {
+      withAuth: true,
+      withTenant: true,
+    }
+  );
+}
+
 export async function deleteSemenStock(id: string) {
   return apiFetch<void>(`/api/v1/reproduction/semen/${id}`, {
     method: "DELETE",

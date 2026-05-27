@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useReproductionKPIs, useReproductiveAnimals } from "@/hooks/useReproductionDashboard";
-import { useSires, useSemenStock } from "@/hooks/useReproduction";
+import {
+  useSires,
+  useSemenStock,
+  useSirePerformanceSummary,
+} from "@/hooks/useReproduction";
 import { myTenants } from "@/services/auth";
 import { getTenantId } from "@/services/config";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +46,7 @@ import ReproductionShortcutCard from "@/components/reproduction/ReproductionShor
 import ReproductiveStatusChart from "@/components/charts/ReproductiveStatusChart";
 import ServicesPerCowChart from "@/components/charts/ServicesPerCowChart";
 import InseminationActivityChart from "@/components/charts/InseminationActivityChart";
+import SirePerformanceChart from "@/components/charts/SirePerformanceChart";
 import type { ReproductiveBucket } from "@/services/reproductionDashboard";
 
 type PeriodKey = "3m" | "6m" | "12m" | "year";
@@ -57,6 +62,7 @@ export default function ReproductionDashboard() {
   const [filters, setFilters] = useState<ReproFilterState>(EMPTY_REPRO_FILTERS);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [siresIncludeInactive, setSiresIncludeInactive] = useState(false);
 
   // Filter state (string arrays) translated into the API query shape.
   const filterParams = useMemo(
@@ -99,6 +105,12 @@ export default function ReproductionDashboard() {
   });
   const { data: siresData } = useSires({ active_only: true, limit: 100 });
   const { data: semenData } = useSemenStock({ in_stock_only: true, limit: 1 });
+  const { data: sirePerfSummary, isFetching: sirePerfLoading } =
+    useSirePerformanceSummary({
+      date_from: dateFrom,
+      date_to: dateTo,
+      include_inactive: siresIncludeInactive,
+    });
 
   const sireCount = siresData?.items.length ?? 0;
   const strawsCount = semenData?.total ?? 0;
@@ -291,7 +303,7 @@ export default function ReproductionDashboard() {
                   {t("reproduction.analysisSection")}
                 </span>
                 <span className="text-xs text-muted-foreground ml-1">
-                  · {t("reproduction.chartsCount").replace("{n}", "3")}
+                  · {t("reproduction.chartsCount").replace("{n}", "4")}
                 </span>
               </div>
               <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 [&[data-state=open]]:rotate-180" />
@@ -322,6 +334,19 @@ export default function ReproductionDashboard() {
                     <InseminationActivityChart
                       data={kpis.monthly_activity}
                       trends={kpis.monthly_trends}
+                    />
+                  </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground mb-3 uppercase">
+                      {t("reproduction.sirePerformanceChartTitle")}
+                    </p>
+                    <SirePerformanceChart
+                      items={sirePerfSummary?.items ?? []}
+                      isLoading={sirePerfLoading}
+                      includeInactive={siresIncludeInactive}
+                      onIncludeInactiveChange={setSiresIncludeInactive}
                     />
                   </CardContent>
                 </Card>

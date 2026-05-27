@@ -6,6 +6,7 @@ import {
   updateSire,
   deleteSire,
   getSirePerformance,
+  getSirePerformanceSummary,
   type CreateSirePayload,
   type UpdateSirePayload,
 } from "@/services/sireCatalog";
@@ -15,6 +16,7 @@ import {
   createSemenStock,
   updateSemenStock,
   deleteSemenStock,
+  getSemenAutocompleteValues,
   type CreateSemenStockPayload,
   type UpdateSemenStockPayload,
 } from "@/services/semenInventory";
@@ -57,6 +59,18 @@ export function useSirePerformance(id: string | undefined) {
     queryKey: ["sires", id, "performance"],
     queryFn: () => getSirePerformance(id!),
     enabled: !!id,
+  });
+}
+
+export function useSirePerformanceSummary(params: {
+  date_from: string;
+  date_to: string;
+  include_inactive?: boolean;
+}) {
+  return useQuery({
+    queryKey: ["sires", "performance-summary", params],
+    queryFn: () => getSirePerformanceSummary(params),
+    enabled: !!params.date_from && !!params.date_to,
   });
 }
 
@@ -136,6 +150,14 @@ export function useUpdateSemenStock() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["semen-stock"] });
     },
+  });
+}
+
+export function useSemenAutocompleteValues() {
+  return useQuery({
+    queryKey: ["semen-autocomplete"],
+    queryFn: () => getSemenAutocompleteValues(),
+    staleTime: 5 * 60 * 1000,
   });
 }
 

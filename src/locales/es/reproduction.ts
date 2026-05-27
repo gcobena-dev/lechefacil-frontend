@@ -97,6 +97,18 @@ export default {
   totalInseminations: "Total Inseminaciones",
   totalOffspring: "Total Crías",
   avgMilkProduction: "Producción Promedio",
+  sirePerformanceChartTitle: "Rendimiento por toro",
+  strawsInStock: "Pajuelas en stock",
+  metricConceptionRate: "% Concepción",
+  metricStrawsUsed: "Pajuelas usadas",
+  metricStrawsInStock: "Stock",
+  includeInactiveSires: "Incluir inactivos",
+  showLabel: "Mostrar",
+  top5: "Top 5",
+  top10: "Top 10",
+  top20: "Top 20",
+  topAll: "Todos",
+  showingTopOfTotal: "Mostrando {shown} de {total} toros",
 
   // Inventario de pajuelas
   semenStock: "Inventario de Pajuelas",

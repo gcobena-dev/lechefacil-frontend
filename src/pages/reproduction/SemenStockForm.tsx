@@ -5,6 +5,8 @@ import {
   useCreateSemenStock,
   useSemenStockById,
   useUpdateSemenStock,
+  useSire,
+  useSemenAutocompleteValues,
 } from "@/hooks/useReproduction";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { SireSelector } from "@/components/reproduction/SireSelector";
+import { Autocomplete } from "@/components/ui/autocomplete";
 
 export default function SemenStockForm() {
   const { t } = useTranslation();
@@ -25,6 +28,7 @@ export default function SemenStockForm() {
   const createMutation = useCreateSemenStock();
   const updateMutation = useUpdateSemenStock();
   const { data: existing, isLoading: isLoadingExisting } = useSemenStockById(id);
+  const { data: autocomplete } = useSemenAutocompleteValues();
 
   const [sireId, setSireId] = useState("");
   const [initialQuantity, setInitialQuantity] = useState("");
@@ -38,6 +42,8 @@ export default function SemenStockForm() {
   const [purchaseDate, setPurchaseDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
+
+  const { data: editingSire } = useSire(isEdit ? sireId : undefined);
 
   useEffect(() => {
     if (!isEdit || !existing) return;
@@ -127,7 +133,17 @@ export default function SemenStockForm() {
           <div className="space-y-2">
             <Label>{t("reproduction.selectSire")} *</Label>
             {isEdit ? (
-              <Input value={sireId} disabled readOnly />
+              <Input
+                value={
+                  editingSire
+                    ? editingSire.short_code
+                      ? `${editingSire.name} (${editingSire.short_code})`
+                      : editingSire.name
+                    : ""
+                }
+                disabled
+                readOnly
+              />
             ) : (
               <SireSelector value={sireId} onValueChange={setSireId} />
             )}
@@ -170,9 +186,10 @@ export default function SemenStockForm() {
           {/* Batch Code */}
           <div className="space-y-2">
             <Label>{t("reproduction.batchCode")}</Label>
-            <Input
+            <Autocomplete
               value={batchCode}
-              onChange={(e) => setBatchCode(e.target.value)}
+              onChange={setBatchCode}
+              suggestions={autocomplete?.batch_codes ?? []}
               placeholder={t("reproduction.batchCodePlaceholder")}
             />
           </div>
@@ -181,17 +198,19 @@ export default function SemenStockForm() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("reproduction.tankId")}</Label>
-              <Input
+              <Autocomplete
                 value={tankId}
-                onChange={(e) => setTankId(e.target.value)}
+                onChange={setTankId}
+                suggestions={autocomplete?.tank_ids ?? []}
                 placeholder={t("reproduction.tankIdPlaceholder")}
               />
             </div>
             <div className="space-y-2">
               <Label>{t("reproduction.canisterPosition")}</Label>
-              <Input
+              <Autocomplete
                 value={canisterPosition}
-                onChange={(e) => setCanisterPosition(e.target.value)}
+                onChange={setCanisterPosition}
+                suggestions={autocomplete?.canister_positions ?? []}
                 placeholder={t("reproduction.canisterPositionPlaceholder")}
               />
             </div>
@@ -200,9 +219,10 @@ export default function SemenStockForm() {
           {/* Supplier */}
           <div className="space-y-2">
             <Label>{t("reproduction.supplier")}</Label>
-            <Input
+            <Autocomplete
               value={supplier}
-              onChange={(e) => setSupplier(e.target.value)}
+              onChange={setSupplier}
+              suggestions={autocomplete?.suppliers ?? []}
               placeholder={t("reproduction.supplierPlaceholder")}
             />
           </div>
