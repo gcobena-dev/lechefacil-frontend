@@ -4,6 +4,7 @@ import {
   listReproductiveAnimals,
   type ReproductiveAnimalFilters,
   type ReproductiveBucket,
+  type ReproductiveSort,
 } from "@/services/reproductionDashboard";
 
 export function useReproductionKPIs(dateFrom: string, dateTo: string) {
@@ -17,7 +18,7 @@ export function useReproductionKPIs(dateFrom: string, dateTo: string) {
 export function useReproductiveAnimals(
   params: {
     filter: ReproductiveBucket;
-    sort?: "postpartum" | "tag" | "name";
+    sort?: ReproductiveSort;
     sort_dir?: "asc" | "desc";
     search?: string;
     limit?: number;

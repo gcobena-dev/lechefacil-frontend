@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
   Eye,
   FileCheck2,
@@ -21,6 +24,13 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsAdmin } from "@/hooks/useAuth";
 import { PregnancyCheckDialog } from "@/components/reproduction/PregnancyCheckDialog";
@@ -37,7 +47,11 @@ import {
 import ReproductiveAnimalsFilters, {
   type ReproFilterState,
 } from "@/components/reproduction/ReproductiveAnimalsFilters";
-import type { ReproductiveAnimalRow, ReproductiveBucket } from "@/services/reproductionDashboard";
+import type {
+  ReproductiveAnimalRow,
+  ReproductiveBucket,
+  ReproductiveSort,
+} from "@/services/reproductionDashboard";
 
 interface Props {
   items: ReproductiveAnimalRow[];
@@ -48,11 +62,26 @@ interface Props {
   onSearchChange: (v: string) => void;
   filters: ReproFilterState;
   onFiltersChange: (filters: ReproFilterState) => void;
+  sort: ReproductiveSort;
+  sortDir: "asc" | "desc";
+  onSortChange: (sort: ReproductiveSort, dir: "asc" | "desc") => void;
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }
+
+// Direction a column starts on when first clicked. Dates and day counts read
+// best newest/highest first; text reads best A→Z.
+const DEFAULT_SORT_DIR: Record<ReproductiveSort, "asc" | "desc"> = {
+  tag: "asc",
+  name: "asc",
+  days: "desc",
+  postpartum: "desc",
+  alert: "asc",
+  situation: "asc",
+  last_event: "desc",
+};
 
 const ALERT_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   optimal: "default",
@@ -103,6 +132,9 @@ export default function ReproductiveAnimalsTable({
   onSearchChange,
   filters,
   onFiltersChange,
+  sort,
+  sortDir,
+  onSortChange,
   page,
   pageSize,
   onPageChange,
@@ -126,6 +158,35 @@ export default function ReproductiveAnimalsTable({
       // Tiene inseminación PENDING o CONFIRMED: ver detalle
       setResultDialogId(row.last_insemination_id);
     }
+  };
+
+  // Clicking the active column flips its direction; a new column starts on
+  // whichever direction is most useful for that kind of value.
+  const handleSort = (key: ReproductiveSort) => {
+    if (key === sort) {
+      onSortChange(key, sortDir === "asc" ? "desc" : "asc");
+    } else {
+      onSortChange(key, DEFAULT_SORT_DIR[key]);
+    }
+  };
+
+  const renderSortHeader = (label: string, key: ReproductiveSort) => {
+    const isActive = sort === key;
+    const Icon = !isActive ? ArrowUpDown : sortDir === "asc" ? ChevronUp : ChevronDown;
+    return (
+      <button
+        type="button"
+        onClick={() => handleSort(key)}
+        aria-label={`${label} — ${t("reproduction.sortByColumn")}`}
+        title={t("reproduction.sortByColumn")}
+        className={`inline-flex items-center gap-1 transition-colors hover:text-foreground ${
+          isActive ? "text-foreground font-semibold" : ""
+        }`}
+      >
+        <span>{label}</span>
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${isActive ? "" : "opacity-40"}`} />
+      </button>
+    );
   };
 
   // The days column adapts: gestation days on the "pregnant" tab,
@@ -259,6 +320,46 @@ export default function ReproductiveAnimalsTable({
             filters={filters}
             onChange={onFiltersChange}
           />
+          {/* Sorting lives in the column headers on desktop; the card list needs
+              its own control. */}
+          <div className="flex items-center gap-2 md:hidden">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {t("reproduction.sortBy")}
+            </span>
+            <Select
+              value={sort}
+              onValueChange={(v) => onSortChange(v as ReproductiveSort, DEFAULT_SORT_DIR[v as ReproductiveSort])}
+            >
+              <SelectTrigger className="h-8 flex-1 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tag">{t("reproduction.colId")}</SelectItem>
+                <SelectItem value="name">{t("reproduction.colCow")}</SelectItem>
+                <SelectItem value="days">{daysColLabel}</SelectItem>
+                <SelectItem value="alert">{t("reproduction.colState")}</SelectItem>
+                <SelectItem value="situation">{t("reproduction.colSituation")}</SelectItem>
+                <SelectItem value="last_event">{t("reproduction.colLastEvent")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => onSortChange(sort, sortDir === "asc" ? "desc" : "asc")}
+              aria-label={
+                sortDir === "asc"
+                  ? t("reproduction.sortedAscending")
+                  : t("reproduction.sortedDescending")
+              }
+            >
+              {sortDir === "asc" ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Desktop table */}
@@ -270,12 +371,18 @@ export default function ReproductiveAnimalsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("reproduction.colId")}</TableHead>
-                <TableHead>{t("reproduction.colCow")}</TableHead>
-                <TableHead className="text-right">{daysColLabel}</TableHead>
-                <TableHead>{t("reproduction.colState")}</TableHead>
-                <TableHead>{t("reproduction.colSituation")}</TableHead>
-                <TableHead>{t("reproduction.colLastEvent")}</TableHead>
+                <TableHead>{renderSortHeader(t("reproduction.colId"), "tag")}</TableHead>
+                <TableHead>{renderSortHeader(t("reproduction.colCow"), "name")}</TableHead>
+                <TableHead className="text-right">
+                  {renderSortHeader(daysColLabel, "days")}
+                </TableHead>
+                <TableHead>{renderSortHeader(t("reproduction.colState"), "alert")}</TableHead>
+                <TableHead>
+                  {renderSortHeader(t("reproduction.colSituation"), "situation")}
+                </TableHead>
+                <TableHead>
+                  {renderSortHeader(t("reproduction.colLastEvent"), "last_event")}
+                </TableHead>
                 <TableHead className="w-[80px]" />
               </TableRow>
             </TableHeader>

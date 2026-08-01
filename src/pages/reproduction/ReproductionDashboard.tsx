@@ -47,7 +47,7 @@ import ReproductiveStatusChart from "@/components/charts/ReproductiveStatusChart
 import ServicesPerCowChart from "@/components/charts/ServicesPerCowChart";
 import InseminationActivityChart from "@/components/charts/InseminationActivityChart";
 import SirePerformanceChart from "@/components/charts/SirePerformanceChart";
-import type { ReproductiveBucket } from "@/services/reproductionDashboard";
+import type { ReproductiveBucket, ReproductiveSort } from "@/services/reproductionDashboard";
 
 type PeriodKey = "3m" | "6m" | "12m" | "year";
 
@@ -60,6 +60,8 @@ export default function ReproductionDashboard() {
   const [bucket, setBucket] = useState<ReproductiveBucket>("alertas");
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<ReproFilterState>(EMPTY_REPRO_FILTERS);
+  const [sort, setSort] = useState<ReproductiveSort>("postpartum");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [siresIncludeInactive, setSiresIncludeInactive] = useState(false);
@@ -96,8 +98,8 @@ export default function ReproductionDashboard() {
   const { data: kpis } = useReproductionKPIs(dateFrom, dateTo);
   const { data: animalsData, isFetching: animalsLoading } = useReproductiveAnimals({
     filter: bucket,
-    sort: "postpartum",
-    sort_dir: "desc",
+    sort,
+    sort_dir: sortDir,
     search: search || undefined,
     ...filterParams,
     limit: pageSize,
@@ -250,6 +252,13 @@ export default function ReproductionDashboard() {
           filters={filters}
           onFiltersChange={(f) => {
             setFilters(f);
+            setPage(0);
+          }}
+          sort={sort}
+          sortDir={sortDir}
+          onSortChange={(s, dir) => {
+            setSort(s);
+            setSortDir(dir);
             setPage(0);
           }}
           page={page}

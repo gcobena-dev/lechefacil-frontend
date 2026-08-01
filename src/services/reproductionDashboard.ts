@@ -117,10 +117,19 @@ export interface ReproductiveAnimalsResponse {
   offset: number;
 }
 
+export type ReproductiveSort =
+  | "postpartum"
+  | "tag"
+  | "name"
+  | "days"
+  | "alert"
+  | "situation"
+  | "last_event";
+
 export async function listReproductiveAnimals(
   params: {
     filter?: ReproductiveBucket;
-    sort?: "postpartum" | "tag" | "name";
+    sort?: ReproductiveSort;
     sort_dir?: "asc" | "desc";
     search?: string;
     limit?: number;

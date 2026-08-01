@@ -113,6 +113,7 @@ export async function getDistinctTechnicians() {
 export async function updateInsemination(
   id: string,
   payload: {
+    service_date?: string;
     technician?: string;
     notes?: string;
     heat_detected?: boolean;

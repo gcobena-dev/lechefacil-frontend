@@ -211,6 +211,7 @@ export function useUpdateInsemination() {
     }: {
       id: string;
       payload: {
+        service_date?: string;
         technician?: string;
         notes?: string;
         heat_detected?: boolean;
@@ -220,6 +221,10 @@ export function useUpdateInsemination() {
     }) => updateInsemination(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inseminations"] });
+      // The service date drives the reproductive buckets and the animal
+      // timeline, so those views have to refetch too.
+      qc.invalidateQueries({ queryKey: ["reproductive-animals"] });
+      qc.invalidateQueries({ queryKey: ["animal-events"] });
     },
   });
 }

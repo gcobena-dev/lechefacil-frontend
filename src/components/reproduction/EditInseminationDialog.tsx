@@ -26,6 +26,16 @@ interface EditInseminationDialogProps {
   insemination: InseminationResponse | null;
 }
 
+// An ISO instant rendered as the local "YYYY-MM-DDTHH:mm" a datetime-local
+// input expects.
+function toLocalInputValue(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
 export default function EditInseminationDialog({
   open,
   onOpenChange,
@@ -35,6 +45,7 @@ export default function EditInseminationDialog({
   const { toast } = useToast();
   const isAdmin = useIsAdmin();
 
+  const [serviceDate, setServiceDate] = useState("");
   const [technician, setTechnician] = useState("");
   const [protocol, setProtocol] = useState("");
   const [heatDetected, setHeatDetected] = useState(false);
@@ -45,6 +56,7 @@ export default function EditInseminationDialog({
 
   useEffect(() => {
     if (insemination && open) {
+      setServiceDate(toLocalInputValue(insemination.service_date));
       setTechnician(insemination.technician ?? "");
       setProtocol(insemination.protocol ?? "");
       setHeatDetected(insemination.heat_detected);
@@ -60,6 +72,7 @@ export default function EditInseminationDialog({
       await mutation.mutateAsync({
         id: insemination.id,
         payload: {
+          service_date: serviceDate ? new Date(serviceDate).toISOString() : undefined,
           technician: technician || undefined,
           protocol: protocol || undefined,
           heat_detected: heatDetected,
@@ -86,6 +99,16 @@ export default function EditInseminationDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-service-date">{t("reproduction.serviceDate")}</Label>
+            <Input
+              id="edit-service-date"
+              type="datetime-local"
+              value={serviceDate}
+              onChange={(e) => setServiceDate(e.target.value)}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>{t("reproduction.selectSire")}</Label>
             <SireSelector value={sireId} onValueChange={setSireId} />

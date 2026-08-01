@@ -73,6 +73,13 @@ import HealthSummaryCards from "@/components/health/HealthSummaryCards";
 import WithdrawalAlert from "@/components/health/WithdrawalAlert";
 import HealthEventsList from "@/components/health/HealthEventsList";
 
+// "#012 · Vaca Bety", falling back to whichever of the two is known.
+// Returns null when the parent's identity could not be resolved.
+function parentLabel(tag?: string | null, name?: string | null): string | null {
+  const parts = [tag ? `#${tag}` : null, name || null].filter(Boolean);
+  return parts.length ? parts.join(" · ") : null;
+}
+
 export default function AnimalDetail() {
   const { id } = useParams();
   const { t } = useTranslation();
@@ -930,7 +937,7 @@ export default function AnimalDetail() {
                     <p className="font-medium">
                       {animal.dam_id ? (
                         <Link to={`/animals/${animal.dam_id}`} className="text-primary hover:underline">
-                          {t('animals.viewDam')}
+                          {parentLabel(animal.dam_tag, animal.dam_name) ?? t('animals.viewDam')}
                         </Link>
                       ) : '-'}
                     </p>
@@ -940,7 +947,7 @@ export default function AnimalDetail() {
                     <p className="font-medium">
                       {animal.sire_id ? (
                         <Link to={`/animals/${animal.sire_id}`} className="text-primary hover:underline">
-                          {t('animals.viewSire')}
+                          {parentLabel(animal.sire_tag, animal.sire_name) ?? t('animals.viewSire')}
                         </Link>
                       ) : animal.external_sire_code ? (
                         <span>{animal.external_sire_code} {animal.external_sire_registry ? `(${animal.external_sire_registry})` : ''}</span>
