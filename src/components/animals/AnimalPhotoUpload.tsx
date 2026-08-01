@@ -92,7 +92,7 @@ export function AnimalPhotoUpload({
             ${
               isDragging
                 ? "border-primary bg-primary/5"
-                : "border-gray-300 hover:border-primary"
+                : "border-border hover:border-primary"
             }
           `}
         >
@@ -105,11 +105,11 @@ export function AnimalPhotoUpload({
             className="hidden"
           />
           <div className="flex flex-col items-center gap-2">
-            <Upload className="h-10 w-10 text-gray-400" />
-            <p className="text-sm text-gray-600">
+            <Upload className="h-10 w-10 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
               {t('animals.dragPhotosHere')}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {t('animals.maxPhotos').replace('{max}', String(maxPhotos)).replace('{current}', String(photos.length))}
             </p>
           </div>
@@ -130,8 +130,8 @@ export function AnimalPhotoUpload({
                   onClick={() => handleSetPrimary(index)}
                   className={`absolute top-2 left-2 rounded-full p-1.5 shadow-lg transition-all ${
                     index === 0
-                      ? 'bg-white dark:bg-gray-200 text-black scale-110 cursor-default'
-                      : 'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-400/70 dark:hover:bg-gray-600/70 hover:scale-105 cursor-pointer'
+                      ? 'bg-white text-black scale-110 cursor-default'
+                      : 'bg-foreground/20 text-foreground/70 hover:bg-foreground/30 hover:scale-105 cursor-pointer'
                   }`}
                   type="button"
                   title={index === 0 ? t('animals.primaryPhoto') : t('animals.setPrimary')}
@@ -140,7 +140,7 @@ export function AnimalPhotoUpload({
                 </button>
                 <button
                   onClick={() => handleRemovePhoto(photo.id)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                   type="button"
                 >
                   <X className="h-4 w-4" />

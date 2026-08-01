@@ -362,7 +362,7 @@ export default function Login() {
         <DialogContent>
           <DialogHeader>
             <div className="flex justify-center mb-4">
-              <AlertCircle className="h-12 w-12 text-red-600" />
+              <AlertCircle className="h-12 w-12 text-destructive" />
             </div>
             <DialogTitle className="text-center">{t("common.error") || "Error"}</DialogTitle>
             <DialogDescription className="text-center">

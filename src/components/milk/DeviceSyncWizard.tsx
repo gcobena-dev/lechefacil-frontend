@@ -157,9 +157,9 @@ export default function DeviceSyncWizard({
         {/* Empty */}
         {step === "empty" && (
           <div className="space-y-4">
-            <Alert className="border-blue-200 bg-blue-50 text-blue-900">
-              <Info className="h-4 w-4 text-blue-500" />
-              <AlertDescription className="text-blue-800">
+            <Alert className="border-info/20 bg-info/10 text-foreground">
+              <Info className="h-4 w-4 text-info" />
+              <AlertDescription className="text-info">
                 No hay registros pendientes en la balanza.
               </AlertDescription>
             </Alert>
@@ -188,14 +188,14 @@ export default function DeviceSyncWizard({
         {/* Results */}
         {step === "result" && (
           <div className="space-y-4">
-            <Alert className="border-green-200 bg-green-50 text-green-900">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-success/20 bg-success/10 text-foreground">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <AlertDescription className="text-success">
                 {matched.length} registros coinciden con animales
                 <span className="block text-xs mt-1">
                   Total: {totals.totalWeight.toFixed(2)} {inputUnit.toUpperCase()}
                   {inputUnit.toUpperCase() !== "L" && (
-                    <span className="text-green-700 ml-1">
+                    <span className="text-success ml-1">
                       ({totals.totalLiters.toFixed(2)} L)
                     </span>
                   )}
@@ -239,9 +239,9 @@ export default function DeviceSyncWizard({
 
             {/* Unmatched warning */}
             {unmatched.length > 0 && (
-              <Alert className="border-yellow-200 bg-yellow-50 text-yellow-900">
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-                <AlertDescription className="text-yellow-800 text-xs">
+              <Alert className="border-warning/25 bg-warning/10 text-foreground">
+                <AlertCircle className="h-4 w-4 text-warning" />
+                <AlertDescription className="text-warning text-xs">
                   {unmatched.length} registros sin coincidencia:{" "}
                   {unmatched.map((u) => u.codigo).join(", ")}
                 </AlertDescription>

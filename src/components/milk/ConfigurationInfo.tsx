@@ -6,17 +6,17 @@ export default function ConfigurationInfo() {
   const { t } = useTranslation();
 
   return (
-    <div className="p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
+    <div className="p-4 border border-info/20 bg-info/10 rounded-lg">
       <div className="flex items-start gap-3">
-        <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+        <Info className="h-5 w-5 text-info mt-0.5" />
         <div>
-          <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">{t("milk.configuration")}</p>
-          <div className="text-xs text-blue-700 dark:text-blue-300">
+          <p className="text-sm text-foreground font-medium mb-1">{t("milk.configuration")}</p>
+          <div className="text-xs text-muted-foreground">
             <p className="mb-1">
               {t("milk.configurationChangeUnit")}{" "}
               <Link
                 to="/settings?tab=tenant"
-                className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+                className="underline hover:text-info font-medium"
               >
                 {t("milk.configurationMyProfile")}
               </Link>
@@ -25,7 +25,7 @@ export default function ConfigurationInfo() {
               {t("milk.configurationChangePrices")}{" "}
               <Link
                 to="/settings?tab=prices"
-                className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+                className="underline hover:text-info font-medium"
               >
                 {t("milk.configurationChangePricesLink")}
               </Link>

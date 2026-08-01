@@ -205,17 +205,17 @@ export default function OcrPhotoUpload({ onResultsProcessed, disabled, resetKey 
               ) : (
                 <div className="space-y-2">
                   {processedCount > 0 && (
-                    <Alert className="border-green-200 bg-green-50 text-green-900">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <AlertDescription className="text-green-800">
+                    <Alert className="border-success/20 bg-success/10 text-foreground">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                      <AlertDescription className="text-success">
                         ✓ {t('milk.ocrRecordsLoaded').replace('{count}', processedCount.toString())}
                       </AlertDescription>
                     </Alert>
                   )}
                   {unmatchedCount > 0 && (
-                    <Alert className="border-yellow-200 bg-yellow-50 text-yellow-900">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      <AlertDescription className="text-yellow-800">
+                    <Alert className="border-warning/25 bg-warning/10 text-foreground">
+                      <AlertTriangle className="h-4 w-4 text-warning" />
+                      <AlertDescription className="text-warning">
                         <p className="font-medium">⚠️ {t('milk.ocrUnmatchedSummary').replace('{count}', unmatchedCount.toString())}</p>
                         {/* Intentionally not listing all names to keep card compact */}
                       </AlertDescription>

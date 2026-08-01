@@ -209,6 +209,9 @@ export default {
   insufficientPermissions:
     "No tienes los permisos necesarios para acceder a esta sección.",
 
+  // Navegación nativa
+  pressBackAgainToExit: "Presiona atrás otra vez para salir",
+
   // Placeholders
   deleteUserReasonPlaceholder: "Razón para eliminar al usuario...",
 };

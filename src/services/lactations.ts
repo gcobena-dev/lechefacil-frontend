@@ -91,6 +91,6 @@ export const getLactationStatusLabel = (status: string): string => {
  */
 export const getLactationStatusColor = (status: string): string => {
   return status === "open"
-    ? "bg-green-100 text-green-800"
-    : "bg-gray-100 text-gray-800";
+    ? "bg-success/10 text-success"
+    : "bg-muted text-muted-foreground";
 };

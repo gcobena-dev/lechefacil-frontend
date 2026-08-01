@@ -65,6 +65,7 @@ import AccessRequestDetail from "./pages/admin/AccessRequestDetail";
 // Other pages
 import NotFound from "./pages/NotFound";
 import { useSilentRefresh } from "./hooks/useSilentRefresh";
+import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => (
           {/** Activate silent refresh globally */}
           <SilentRefreshActivator />
           <BrowserRouter>
+        <AndroidBackButtonHandler />
         <Routes>
           <Route path="/" element={<RequireAuth><RequireTenant><RequirePasswordChange><AppLayout /></RequirePasswordChange></RequireTenant></RequireAuth>}>
             <Route index element={<Dashboard />} />
@@ -148,5 +150,11 @@ export default App;
 // Minimal component to run the silent refresh hook at app root
 function SilentRefreshActivator() {
   useSilentRefresh({ enabled: true, intervalMs: 45 * 60 * 1000 });
+  return null;
+}
+
+// Runs inside the Router so it can drive react-router navigation
+function AndroidBackButtonHandler() {
+  useAndroidBackButton();
   return null;
 }

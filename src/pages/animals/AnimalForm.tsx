@@ -628,17 +628,17 @@ export default function AnimalForm() {
                 />
               </div>
 
-            <div className="p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="p-4 border border-info/20 bg-info/10 rounded-lg">
               <div className="flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <Info className="h-5 w-5 text-info mt-0.5" />
                 <div>
-                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">{t('animals.catalogsConfig')}</p>
-                  <div className="text-xs text-blue-700 dark:text-blue-300">
+                  <p className="text-sm text-foreground font-medium mb-1">{t('animals.catalogsConfig')}</p>
+                  <div className="text-xs text-muted-foreground">
                     <p>
                       {t('animals.catalogsConfigDescPrefix')}{' '}
                       <Link
                         to="/settings?tab=catalogs"
-                        className="underline hover:text-blue-900 dark:hover:text-blue-100 font-medium"
+                        className="underline hover:text-info font-medium"
                       >
                         {t('animals.catalogsConfigLink')}
                       </Link>
@@ -675,8 +675,8 @@ export default function AnimalForm() {
                           onClick={() => handleSetPrimaryPhoto(photo.id)}
                           className={`absolute top-2 left-2 rounded-full p-1.5 shadow-lg transition-all ${
                             photo.is_primary
-                              ? 'bg-white dark:bg-gray-200 text-black scale-110'
-                              : 'bg-gray-300/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-400/70 dark:hover:bg-gray-600/70 hover:scale-105'
+                              ? 'bg-white text-black scale-110'
+                              : 'bg-foreground/20 text-foreground/70 hover:bg-foreground/30 hover:scale-105'
                           }`}
                           type="button"
                           title={photo.is_primary ? t('animals.primaryPhoto') : t('animals.setPrimary')}
@@ -685,7 +685,7 @@ export default function AnimalForm() {
                         </button>
                         <button
                           onClick={() => handleDeleteExistingPhoto(photo.id)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           type="button"
                         >
                           <X className="h-4 w-4" />

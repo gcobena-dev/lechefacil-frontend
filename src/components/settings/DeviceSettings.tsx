@@ -467,7 +467,7 @@ export default function DeviceSettings() {
                       onClick={() => copyToClipboard(createdDevice.api_key!, createdDevice.id)}
                     >
                       {copiedId === createdDevice.id ? (
-                        <Check className="h-3.5 w-3.5 text-green-600" />
+                        <Check className="h-3.5 w-3.5 text-success" />
                       ) : (
                         <Copy className="h-3.5 w-3.5" />
                       )}
@@ -475,7 +475,7 @@ export default function DeviceSettings() {
                   </div>
                 </div>
               </div>
-              <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+              <div className="mt-3 p-2 border border-warning/25 bg-warning/10 rounded text-xs text-warning dark:text-warning">
                 {t("devices.apiKeyCopyReminder")}
               </div>
             </div>
@@ -505,7 +505,7 @@ export default function DeviceSettings() {
                 <p className="font-medium text-sm">{selectedDevice.name}</p>
                 <p className="text-xs text-muted-foreground mt-1">{t("devices.currentKey")}: {selectedDevice.api_key_masked}</p>
               </div>
-              <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+              <div className="mt-3 p-2 border border-warning/25 bg-warning/10 rounded text-xs text-warning dark:text-warning">
                 {t("devices.regenerateWarning")}
               </div>
             </div>
@@ -588,7 +588,7 @@ export default function DeviceSettings() {
                         onClick={() => copyToClipboard(activePinData.pin, "pin")}
                       >
                         {copiedId === "pin" ? (
-                          <Check className="h-3.5 w-3.5 mr-1 text-green-600" />
+                          <Check className="h-3.5 w-3.5 mr-1 text-success" />
                         ) : (
                           <Copy className="h-3.5 w-3.5 mr-1" />
                         )}
@@ -654,13 +654,13 @@ export default function DeviceSettings() {
                           onClick={() => copyToClipboard(activePinData.apiKey!, "apikey")}
                         >
                           {copiedId === "apikey" ? (
-                            <Check className="h-3.5 w-3.5 text-green-600" />
+                            <Check className="h-3.5 w-3.5 text-success" />
                           ) : (
                             <Copy className="h-3.5 w-3.5" />
                           )}
                         </Button>
                       </div>
-                      <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                      <div className="mt-2 p-2 border border-warning/25 bg-warning/10 rounded text-xs text-warning dark:text-warning">
                         {t("devices.apiKeyCopyReminder")}
                       </div>
                     </div>

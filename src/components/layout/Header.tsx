@@ -35,7 +35,7 @@ export function Header() {
   const farmName = currentTenant?.tenant_name ?? "...";
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-card/50 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
           {/* Hamburger menu for mobile */}

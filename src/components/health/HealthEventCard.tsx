@@ -139,10 +139,10 @@ export default function HealthEventCard({
                 )}
                 {event.withdrawal_until && (
                   <div>
-                    <p className="text-sm font-medium text-yellow-700">
+                    <p className="text-sm font-medium text-warning">
                       {t("health.withdrawalPeriodLabel")}
                     </p>
-                    <p className="text-sm text-yellow-700">
+                    <p className="text-sm text-warning">
                       {t("health.doNotMilkUntilLabel")}: {formatDate(event.withdrawal_until)}
                     </p>
                   </div>

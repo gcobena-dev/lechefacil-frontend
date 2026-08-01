@@ -105,7 +105,7 @@ export function NotificationBell() {
     >
       <div
         className={`absolute top-1 left-1 w-2 h-2 rounded-full ${
-          isConnected ? 'bg-green-500' : 'bg-gray-400'
+          isConnected ? 'bg-success' : 'bg-muted-foreground'
         }`}
         title={isConnected ? t('notifications.connected') : t('notifications.disconnected')}
       />
@@ -138,7 +138,7 @@ export function NotificationBell() {
                       variant="ghost"
                       size="sm"
                       onClick={markAllAsRead}
-                      className="h-auto p-1 text-xs text-blue-600 hover:text-blue-700"
+                      className="h-auto p-1 text-xs text-info hover:text-info"
                     >
                       {t('notifications.markAll')}
                     </Button>
@@ -167,7 +167,7 @@ export function NotificationBell() {
                       key={notification.id}
                       onClick={() => { handleNotificationClick(notification); setMobileOpen(false); }}
                       className={`w-full text-left p-3 border-b cursor-pointer hover:bg-accent ${
-                        !notification.read ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                        !notification.read ? 'bg-info/10' : ''
                       }`}
                     >
                       <div className="flex items-start w-full">
@@ -183,7 +183,7 @@ export function NotificationBell() {
                           </p>
                         </div>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1 flex-shrink-0" />
+                          <div className="w-2 h-2 bg-info rounded-full ml-2 mt-1 flex-shrink-0" />
                         )}
                       </div>
                     </button>
@@ -221,7 +221,7 @@ export function NotificationBell() {
                 variant="ghost"
                 size="sm"
                 onClick={markAllAsRead}
-                className="h-auto p-1 text-xs text-blue-600 hover:text-blue-700"
+                className="h-auto p-1 text-xs text-info hover:text-info"
               >
                 {t('notifications.markAll')}
               </Button>
@@ -249,7 +249,7 @@ export function NotificationBell() {
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={`p-3 cursor-pointer focus:bg-accent ${
-                    !notification.read ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                    !notification.read ? 'bg-info/10' : ''
                   }`}
                 >
                   <div className="flex items-start w-full">
@@ -265,7 +265,7 @@ export function NotificationBell() {
                       </p>
                     </div>
                     {!notification.read && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1 flex-shrink-0" />
+                      <div className="w-2 h-2 bg-info rounded-full ml-2 mt-1 flex-shrink-0" />
                     )}
                   </div>
                 </DropdownMenuItem>

@@ -54,10 +54,12 @@ export function AppSidebar() {
                       to={item.url}
                       onClick={() => setOpenMobile(false)}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                        // Activo tonal + barra de marca: menos peso visual que
+                        // un bloque sólido y consistente en claro y oscuro
+                        `relative flex items-center gap-3 px-3 py-2.5 rounded-control font-medium transition-colors ${
                           isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-accent hover:text-accent-foreground'
+                            ? 'bg-accent text-accent-foreground before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-full before:bg-primary'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`
                       }
                     >

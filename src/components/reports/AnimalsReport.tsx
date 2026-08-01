@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getStatusKeyFromCode } from "@/utils/animals";
+import { getAnimalStatusTone } from "@/utils/status-colors";
 import SortableHeader from "@/components/reports/SortableHeader";
 import { useSortableTable } from "@/components/reports/useSortableTable";
 
@@ -202,24 +203,11 @@ export default function AnimalsReport() {
     const statusKey = getStatusKeyFromCode(code);
     const isActive = statusKey === 'active';
 
-    // Visual style map per status code
-    const style: Record<string, { cls: string }> = {
-      CALF: { cls: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900 dark:text-sky-200 dark:border-sky-700" },
-      HEIFER: { cls: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:border-indigo-700" },
-      PREGNANT_HEIFER: { cls: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-700" },
-      LACTATING: { cls: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-700" },
-      DRY: { cls: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900 dark:text-amber-200 dark:border-amber-700" },
-      PREGNANT_DRY: { cls: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200 dark:border-orange-700" },
-      BULL: { cls: "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600" },
-      SOLD: { cls: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600" },
-      DEAD: { cls: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900 dark:text-red-200 dark:border-red-700" },
-      CULLED: { cls: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900 dark:text-rose-200 dark:border-rose-700" },
-    };
-
-    const s = style[code] || { cls: "bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600" };
+    // Tono por etapa productiva: paleta categórica del design system
+    const tone = getAnimalStatusTone(code);
 
     return (
-      <Badge variant="outline" className={`flex items-center gap-1 border ${s.cls}`}>
+      <Badge variant="outline" className={`flex items-center gap-1 border ${tone}`}>
         {isActive ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
         <span title={description}>{name}</span>
       </Badge>
@@ -609,7 +597,7 @@ export default function AnimalsReport() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-blue-500" />
+                    <Users className="h-5 w-5 text-info" />
                     <div>
                       <p className="text-sm text-muted-foreground">{t("reports.totalAnimals")}</p>
                       <p className="text-2xl font-bold">{reportData.summary.total_animals}</p>
@@ -621,7 +609,7 @@ export default function AnimalsReport() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="h-5 w-5 text-success" />
                     <div>
                       <p className="text-sm text-muted-foreground">{t("reports.activeAnimals")}</p>
                       <p className="text-2xl font-bold">{reportData.summary.active_animals}</p>
@@ -633,7 +621,7 @@ export default function AnimalsReport() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-gray-500" />
+                    <XCircle className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">{t("reports.inactiveAnimals")}</p>
                       <p className="text-2xl font-bold">{reportData.summary.inactive_animals}</p>
@@ -909,13 +897,13 @@ export default function AnimalsReport() {
                             {calculateAnimalsTotals().totalAnimals} {t("animals.animalsFound")}
                           </td>
                           <td className="border border-border p-2 text-center">-</td>
-                          <td className="border border-border p-2 text-right font-bold text-blue-600">
+                          <td className="border border-border p-2 text-right font-bold text-info">
                             {calculateAnimalsTotals().totalLiters.toLocaleString()}L
                           </td>
-                          <td className="border border-border p-2 text-right font-bold text-green-600">
+                          <td className="border border-border p-2 text-right font-bold text-success">
                             {calculateAnimalsTotals().totalRecords.toLocaleString()}
                           </td>
-                          <td className="border border-border p-2 text-right font-bold text-purple-600">
+                          <td className="border border-border p-2 text-right font-bold text-chart-7">
                             {calculateAnimalsTotals().avgPerRecord.toFixed(1)}L
                           </td>
                         </tr>
@@ -938,20 +926,20 @@ export default function AnimalsReport() {
                       <div className="space-y-2">
                         <div>
                           <span className="text-muted-foreground text-xs">{t("reports.totalLiters")}: </span>
-                          <span className="font-bold text-blue-600">
+                          <span className="font-bold text-info">
                             {calculateAnimalsTotals().totalLiters.toLocaleString()}L
                           </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground text-xs">{t("reports.recordsCount")}: </span>
-                          <span className="font-bold text-green-600">
+                          <span className="font-bold text-success">
                             {calculateAnimalsTotals().totalRecords.toLocaleString()}
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs text-muted-foreground">{t("reports.avgPerRecord")}</div>
-                        <div className="font-bold text-lg text-purple-600">
+                        <div className="font-bold text-lg text-chart-7">
                           {calculateAnimalsTotals().avgPerRecord.toFixed(1)}L
                         </div>
                       </div>
@@ -973,7 +961,7 @@ export default function AnimalsReport() {
                           <div className="space-y-2">
                             <div>
                               <span className="text-muted-foreground text-xs">{t("reports.totalLiters")}: </span>
-                              <span className="font-medium text-blue-600">
+                              <span className="font-medium text-info">
                                 {animal.total_liters.toLocaleString()}L
                               </span>
                             </div>
@@ -986,7 +974,7 @@ export default function AnimalsReport() {
                           </div>
                           <div className="text-right">
                             <div className="text-xs text-muted-foreground">{t("reports.avgPerRecord")}</div>
-                            <div className="font-medium text-green-600">
+                            <div className="font-medium text-success">
                               {animal.avg_per_record.toFixed(1)}L
                             </div>
                           </div>

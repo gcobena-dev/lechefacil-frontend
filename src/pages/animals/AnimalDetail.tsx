@@ -268,7 +268,7 @@ export default function AnimalDetail() {
                         className="w-full h-full object-cover"
                       />
                       {photo.is_primary && (
-                        <div className="absolute top-2 left-2 bg-white dark:bg-gray-200 text-black rounded-full p-1.5 shadow-lg">
+                        <div className="absolute top-2 left-2 bg-white text-black rounded-full p-1.5 shadow-lg">
                           <Check className="h-4 w-4" />
                         </div>
                       )}
@@ -300,7 +300,7 @@ export default function AnimalDetail() {
         <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={closeFullscreen}>
           <button
             onClick={closeFullscreen}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 rounded-full hover:bg-white/10 transition-colors"
+            className="absolute top-4 right-4 text-white hover:text-white/70 z-50 p-2 rounded-full hover:bg-white/10 transition-colors"
           >
             <X className="h-8 w-8" />
           </button>
@@ -312,7 +312,7 @@ export default function AnimalDetail() {
                   e.stopPropagation();
                   prevPhoto();
                 }}
-                className="absolute left-4 text-white hover:text-gray-300 z-50 p-3 rounded-full hover:bg-white/10 transition-colors"
+                className="absolute left-4 text-white hover:text-white/70 z-50 p-3 rounded-full hover:bg-white/10 transition-colors"
               >
                 <ChevronLeft className="h-10 w-10" />
               </button>
@@ -321,7 +321,7 @@ export default function AnimalDetail() {
                   e.stopPropagation();
                   nextPhoto();
                 }}
-                className="absolute right-4 text-white hover:text-gray-300 z-50 p-3 rounded-full hover:bg-white/10 transition-colors"
+                className="absolute right-4 text-white hover:text-white/70 z-50 p-3 rounded-full hover:bg-white/10 transition-colors"
               >
                 <ChevronRight className="h-10 w-10" />
               </button>
@@ -335,7 +335,7 @@ export default function AnimalDetail() {
               className="max-w-full max-h-full object-contain"
             />
             {sortedPhotos[fullscreenIndex].is_primary && (
-              <div className="absolute top-4 left-4 bg-white dark:bg-gray-200 text-black rounded-full p-2 shadow-lg">
+              <div className="absolute top-4 left-4 bg-white text-black rounded-full p-2 shadow-lg">
                 <Check className="h-5 w-5" />
               </div>
             )}
@@ -419,8 +419,8 @@ export default function AnimalDetail() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{productionSummary.avgDaily.toFixed(1)}L</p>
@@ -433,8 +433,8 @@ export default function AnimalDetail() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Heart className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info/10 rounded-lg">
+                <Heart className="h-5 w-5 text-info" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{formatCurrency(productionSummary.totalEarnings)}</p>
@@ -447,8 +447,8 @@ export default function AnimalDetail() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
+              <div className="p-2 bg-chart-7/10 rounded-lg">
+                <BarChart3 className="h-5 w-5 text-chart-7" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{total || productionSummary.recordsCount}</p>
@@ -476,7 +476,7 @@ export default function AnimalDetail() {
                 <p className="text-sm text-muted-foreground">
                   {t('animals.dailyAverage')}: {productionSummary.avgDaily.toFixed(1)}L
                 </p>
-                <p className="text-sm font-medium text-green-600">
+                <p className="text-sm font-medium text-success">
                   {t('animals.earnings')}: {formatCurrency(productionSummary.totalEarnings)}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -495,9 +495,9 @@ export default function AnimalDetail() {
                     <TooltipContent>
                       <div className="max-w-xs text-sm">
                         <p className="mb-1">{t('animals.trendHint')}</p>
-                        <p className="text-green-600">{t('animals.trendGreen')}</p>
-                        <p className="text-red-600">{t('animals.trendRed')}</p>
-                        <p className="text-gray-600">{t('animals.trendGray')}</p>
+                        <p className="text-success">{t('animals.trendGreen')}</p>
+                        <p className="text-destructive">{t('animals.trendRed')}</p>
+                        <p className="text-muted-foreground">{t('animals.trendGray')}</p>
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -522,7 +522,7 @@ export default function AnimalDetail() {
 
                   if (last30Avg > productionSummary.avgDaily) {
                     return (
-                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                      <Badge variant="default" className="bg-success/10 text-success border-success/20">
                         <TrendingUp className="h-3 w-3 mr-1" />
                         {t('animals.highPerformer')}
                       </Badge>

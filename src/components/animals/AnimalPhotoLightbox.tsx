@@ -132,7 +132,8 @@ export function AnimalPhotoLightbox({
             setOpen(false);
           }}
         >
-          <div className="relative bg-black">
+          {/* Superficie siempre oscura: los tokens de dentro resuelven en dark */}
+          <div className="dark relative bg-black">
             <button
               type="button"
               className="absolute right-3 top-3 z-10 rounded-full bg-white/80 p-1 text-black"
@@ -173,7 +174,7 @@ export function AnimalPhotoLightbox({
             </div>
 
             {error && (
-              <div className="px-4 pb-3 text-center text-xs text-red-200">{error}</div>
+              <div className="px-4 pb-3 text-center text-xs text-destructive">{error}</div>
             )}
 
             {photos.length > 1 && (

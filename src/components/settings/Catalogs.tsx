@@ -134,7 +134,7 @@ export default function Catalogs() {
                         title={b.active ? t("animals.deactivate") : t("animals.activate")}
                         aria-label={b.active ? t("animals.deactivate") : t("animals.activate")}
                         size="sm"
-                        className="data-[state=checked]:bg-green-600"
+                        className="data-[state=checked]:bg-success"
                       />
                     </TableCell>
                   </TableRow>
@@ -209,7 +209,7 @@ export default function Catalogs() {
                         title={l.active ? t("animals.deactivate") : t("animals.activate")}
                         aria-label={l.active ? t("animals.deactivate") : t("animals.activate")}
                         size="sm"
-                        className="data-[state=checked]:bg-green-600"
+                        className="data-[state=checked]:bg-success"
                       />
                     </TableCell>
                   </TableRow>

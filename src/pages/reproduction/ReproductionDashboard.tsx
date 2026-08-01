@@ -185,7 +185,7 @@ export default function ReproductionDashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard
           icon={Syringe}
-          iconClassName="text-pink-500"
+          iconClassName="text-chart-5"
           label={t("reproduction.kpiCowsInseminated")}
           value={kpis?.cows_inseminated ?? 0}
           delta={prev ? (kpis!.cows_inseminated - prev.cows_inseminated) : null}
@@ -193,7 +193,7 @@ export default function ReproductionDashboard() {
         />
         <KpiCard
           icon={Package}
-          iconClassName="text-blue-500"
+          iconClassName="text-chart-1"
           label={t("reproduction.kpiStrawsUsed")}
           value={kpis?.straws_used ?? 0}
           delta={prev ? (kpis!.straws_used - prev.straws_used) : null}
@@ -201,7 +201,7 @@ export default function ReproductionDashboard() {
         />
         <KpiCard
           icon={BarChart3}
-          iconClassName="text-purple-500"
+          iconClassName="text-chart-7"
           label={t("reproduction.kpiServicesPerCow")}
           value={kpis?.services_per_cow ?? 0}
           delta={prev ? Number((kpis!.services_per_cow - prev.services_per_cow).toFixed(2)) : null}
@@ -209,7 +209,7 @@ export default function ReproductionDashboard() {
         />
         <KpiCard
           icon={Baby}
-          iconClassName="text-green-500"
+          iconClassName="text-chart-3"
           label={t("reproduction.kpiPregnantPct")}
           value={`${kpis?.pregnant_pct ?? 0}%`}
           delta={prev ? Number((kpis!.pregnant_pct - prev.pregnant_pct).toFixed(1)) : null}
@@ -218,7 +218,7 @@ export default function ReproductionDashboard() {
         />
         <KpiCard
           icon={TrendingUp}
-          iconClassName="text-emerald-500"
+          iconClassName="text-chart-6"
           label={t("reproduction.kpiConceptionRate")}
           value={`${kpis?.conception_rate ?? 0}%`}
           delta={prev ? Number((kpis!.conception_rate - prev.conception_rate).toFixed(1)) : null}
@@ -307,7 +307,7 @@ export default function ReproductionDashboard() {
           <AccordionItem value="analysis" className="border-none">
             <AccordionTrigger className="hover:no-underline rounded-md border bg-card px-4 py-3 [&>svg]:hidden">
               <div className="flex items-center gap-2 flex-1">
-                <TrendingUp className="h-4 w-4 text-emerald-500" />
+                <TrendingUp className="h-4 w-4 text-success" />
                 <span className="text-base font-semibold">
                   {t("reproduction.analysisSection")}
                 </span>

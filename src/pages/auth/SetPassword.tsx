@@ -92,7 +92,7 @@ export default function SetPassword() {
         <Card className="w-full max-w-md shadow-strong">
           <CardHeader className="text-center space-y-2">
             <div className="flex justify-center">
-              <CheckCircle2 className="h-16 w-16 text-green-600" />
+              <CheckCircle2 className="h-16 w-16 text-success" />
             </div>
             <CardTitle className="text-2xl">{t("auth.passwordSetSuccessTitle") || "¡Contraseña Establecida!"}</CardTitle>
             <CardDescription>{successMessage}</CardDescription>
@@ -243,7 +243,7 @@ export default function SetPassword() {
         <DialogContent>
           <DialogHeader>
             <div className="flex justify-center mb-4">
-              <AlertCircle className="h-12 w-12 text-red-600" />
+              <AlertCircle className="h-12 w-12 text-destructive" />
             </div>
             <DialogTitle className="text-center">{t("common.error") || "Error"}</DialogTitle>
             <DialogDescription className="text-center">

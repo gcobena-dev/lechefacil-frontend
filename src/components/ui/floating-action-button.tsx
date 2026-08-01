@@ -15,10 +15,11 @@ export function FloatingActionButton({ to, className, children }: FloatingAction
       asChild 
       size="icon"
       className={cn(
-        // Lift above BottomNav (h-14) and safe area className=
-        "fixed bottom-16 right-6 h-14 w-14 rounded-full shadow-lg",
+        // Se apoya por encima del BottomNav (h-16) + safe area, sin taparlo
+        "fixed right-5 bottom-[calc(5rem+env(safe-area-inset-bottom))]",
+        "h-14 w-14 rounded-full shadow-strong",
         "md:hidden", // Only show on mobile
-        "hover:scale-110 transition-transform",
+        "active:scale-95 transition-transform",
         className
       )}
     >

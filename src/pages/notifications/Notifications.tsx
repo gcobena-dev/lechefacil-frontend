@@ -78,7 +78,7 @@ export default function NotificationsPage() {
               {notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`p-3 rounded-lg border cursor-pointer hover:bg-accent ${!n.read ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200' : ''}`}
+                  className={`p-3 rounded-lg border cursor-pointer hover:bg-accent ${!n.read ? 'bg-info/10 border-info/20' : ''}`}
                   onClick={() => {
                     if (!n.read) markAsRead([n.id]);
                   }}
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-3 break-words">{n.message}</p>
                       <p className="text-[11px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString('es-EC')}</p>
                     </div>
-                    {!n.read && <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0" />}
+                    {!n.read && <div className="w-2 h-2 bg-info rounded-full mt-1.5 flex-shrink-0" />}
                   </div>
                 </div>
               ))}

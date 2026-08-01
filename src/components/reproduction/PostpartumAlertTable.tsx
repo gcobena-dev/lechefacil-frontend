@@ -216,7 +216,7 @@ export default function PostpartumAlertTable({ alerts, inseminationMap }: Props)
                   !insemination
                     ? "bg-destructive/10 border-destructive/20"
                     : insemination.pregnancy_status === "OPEN" || insemination.pregnancy_status === "LOST"
-                      ? "bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800"
+                      ? "bg-warning/10 border-warning/25"
                       : "bg-muted/50"
                 }`}>
                   <div className="flex items-start gap-2 min-w-0">

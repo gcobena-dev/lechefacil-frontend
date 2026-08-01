@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { getEventTypeTone } from "@/utils/status-colors";
 
 export type EventType =
   | "CALVING"
@@ -137,18 +138,4 @@ export const getEventTypeLabel = (type: EventType): string => {
 /**
  * Helper to get event type color
  */
-export const getEventTypeColor = (type: EventType): string => {
-  const colors: Record<EventType, string> = {
-    CALVING: "bg-green-100 text-green-800",
-    DRY_OFF: "bg-blue-100 text-blue-800",
-    SALE: "bg-yellow-100 text-yellow-800",
-    DEATH: "bg-red-100 text-red-800",
-    CULL: "bg-orange-100 text-orange-800",
-    SERVICE: "bg-purple-100 text-purple-800",
-    EMBRYO_TRANSFER: "bg-pink-100 text-pink-800",
-    BIRTH: "bg-green-100 text-green-800",
-    ABORTION: "bg-red-100 text-red-800",
-    TRANSFER: "bg-gray-100 text-gray-800",
-  };
-  return colors[type] || "bg-gray-100 text-gray-800";
-};
+export const getEventTypeColor = (type: EventType): string => getEventTypeTone(type);

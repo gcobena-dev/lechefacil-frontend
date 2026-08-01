@@ -18,13 +18,13 @@ export default function HealthSummaryCards({
       return {
         icon: "🟡",
         label: t("health.inWithdrawal"),
-        color: "bg-yellow-100 text-yellow-800 border-yellow-200",
+        color: "bg-warning/15 text-warning border-warning/25",
       };
     }
     return {
       icon: "🟢",
       label: t("health.healthy"),
-      color: "bg-green-100 text-green-800 border-green-200",
+      color: "bg-success/10 text-success border-success/20",
     };
   };
 
@@ -59,7 +59,7 @@ export default function HealthSummaryCards({
             <p className="text-sm text-muted-foreground">{t("health.withdrawalPeriod")}</p>
             {inWithdrawal && withdrawalUntil ? (
               <div className="mt-1">
-                <p className="font-medium text-yellow-700">
+                <p className="font-medium text-warning">
                   {t("health.until")}: {formatDate(withdrawalUntil)}
                 </p>
               </div>

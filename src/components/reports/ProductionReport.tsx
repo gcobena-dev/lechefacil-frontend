@@ -720,7 +720,7 @@ export default function ProductionReport() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-blue-500" />
+                      <BarChart3 className="h-5 w-5 text-info" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("reports.litersProduced")}</p>
                         <p className="text-2xl font-bold">{reportData.summary.total_liters_produced.toLocaleString()}L</p>
@@ -732,7 +732,7 @@ export default function ProductionReport() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-green-500" />
+                      <TrendingUp className="h-5 w-5 text-success" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("reports.litersDelivered")}</p>
                         <p className="text-2xl font-bold">{reportData.summary.total_liters_delivered.toLocaleString()}L</p>
@@ -744,10 +744,10 @@ export default function ProductionReport() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-green-500" />
+                      <DollarSign className="h-5 w-5 text-success" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("reports.totalRevenue")}</p>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold text-success">
                           {formatCurrency(calculateRevenue(reportData.summary.total_liters_delivered))}
                         </p>
                       </div>
@@ -761,7 +761,7 @@ export default function ProductionReport() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-purple-500" />
+                      <Calendar className="h-5 w-5 text-chart-7" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("reports.totalRecords")}</p>
                         <p className="text-2xl font-bold">{reportData.summary.total_records}</p>
@@ -773,10 +773,10 @@ export default function ProductionReport() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5 text-orange-500" />
+                      <BarChart3 className="h-5 w-5 text-warning" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("reports.difference")}</p>
-                        <p className={`text-2xl font-bold ${reportData.summary.retention_difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <p className={`text-2xl font-bold ${reportData.summary.retention_difference >= 0 ? 'text-success' : 'text-destructive'}`}>
                           {reportData.summary.retention_difference >= 0 ? '+' : ''}{reportData.summary.retention_difference.toFixed(1)}L
                         </p>
                       </div>
@@ -787,7 +787,7 @@ export default function ProductionReport() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-gray-500" />
+                      <TrendingUp className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">{t("reports.avgPerRecord")}</p>
                         <p className="text-2xl font-bold">{reportData.summary.avg_per_record.toFixed(1)}L</p>
@@ -1079,16 +1079,16 @@ export default function ProductionReport() {
                             <tr key={row.originalDate} className="hover:bg-muted/30">
                               <td className="border border-border p-2">{row.date}</td>
                               <td className="border border-border p-2 text-muted-foreground capitalize">{row.dayName}</td>
-                              <td className="border border-border p-2 text-right font-medium text-blue-600">
+                              <td className="border border-border p-2 text-right font-medium text-info">
                                 {row.producidos > 0 ? `${row.producidos.toLocaleString()}L` : '-'}
                               </td>
-                              <td className="border border-border p-2 text-right font-medium text-green-600">
+                              <td className="border border-border p-2 text-right font-medium text-success">
                                 {row.entregados > 0 ? `${row.entregados.toLocaleString()}L` : '-'}
                               </td>
-                              <td className="border border-border p-2 text-right font-medium text-blue-700">
+                              <td className="border border-border p-2 text-right font-medium text-info">
                                 {row.producidos > 0 ? formatCurrency((row as any).ingresos_producidos) : '-'}
                               </td>
-                              <td className="border border-border p-2 text-right font-medium text-green-700">
+                              <td className="border border-border p-2 text-right font-medium text-success">
                                 {row.entregados > 0 ? formatCurrency(row.ingresos) : '-'}
                               </td>
                           </tr>
@@ -1100,16 +1100,16 @@ export default function ProductionReport() {
                           <td className="border border-border p-2 text-muted-foreground">
                             {calculateTableTotals().recordCount} {t("reports.records")}
                           </td>
-                          <td className="border border-border p-2 text-right font-bold text-blue-600">
+                          <td className="border border-border p-2 text-right font-bold text-info">
                             {calculateTableTotals().totalProduced > 0 ? `${calculateTableTotals().totalProduced.toLocaleString()}L` : '-'}
                           </td>
-                          <td className="border border-border p-2 text-right font-bold text-green-600">
+                          <td className="border border-border p-2 text-right font-bold text-success">
                             {calculateTableTotals().totalDelivered > 0 ? `${calculateTableTotals().totalDelivered.toLocaleString()}L` : '-'}
                           </td>
-                          <td className="border border-border p-2 text-right font-bold text-blue-700">
+                          <td className="border border-border p-2 text-right font-bold text-info">
                             {calculateTableTotals().totalRevenueProduced > 0 ? formatCurrency(calculateTableTotals().totalRevenueProduced) : '-'}
                           </td>
-                          <td className="border border-border p-2 text-right font-bold text-green-700">
+                          <td className="border border-border p-2 text-right font-bold text-success">
                             {calculateTableTotals().totalRevenue > 0 ? formatCurrency(calculateTableTotals().totalRevenue) : '-'}
                           </td>
                         </tr>
@@ -1132,7 +1132,7 @@ export default function ProductionReport() {
                       <div className="space-y-2">
                         <div>
                           <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
-                          <span className="font-bold text-blue-600">
+                          <span className="font-bold text-info">
                             {calculateTableTotals().totalProduced > 0
                               ? `(${calculateTableTotals().totalProduced.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenueProduced)}`
                               : '-'}
@@ -1140,7 +1140,7 @@ export default function ProductionReport() {
                         </div>
                         <div>
                           <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
-                          <span className="font-bold text-green-600">
+                          <span className="font-bold text-success">
                             {calculateTableTotals().totalDelivered > 0
                               ? `(${calculateTableTotals().totalDelivered.toLocaleString()}L) ${formatCurrency(calculateTableTotals().totalRevenue)}`
                               : '-'}
@@ -1162,13 +1162,13 @@ export default function ProductionReport() {
                           <div className="space-y-2">
                             <div>
                               <span className="text-muted-foreground text-xs">{t("reports.produced")}: </span>
-                              <span className="font-medium text-blue-600">
+                              <span className="font-medium text-info">
                                 {row.producidos > 0 ? `(${row.producidos.toLocaleString()}L) ${formatCurrency((row as any).ingresos_producidos)}` : '-'}
                               </span>
                             </div>
                             <div>
                               <span className="text-muted-foreground text-xs">{t("reports.delivered")}: </span>
-                              <span className="font-medium text-green-600">
+                              <span className="font-medium text-success">
                                 {row.entregados > 0 ? `(${row.entregados.toLocaleString()}L) ${formatCurrency(row.ingresos)}` : '-'}
                               </span>
                             </div>

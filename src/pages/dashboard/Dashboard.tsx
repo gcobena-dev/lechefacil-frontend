@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -131,11 +133,43 @@ export default function Dashboard() {
   const dailyGoalTarget = toNum(dailyProgress.data?.daily_goal?.target_liters);
 
   if (isLoading) {
+    // Skeleton con la forma real de la página: nada de spinner a pantalla completa
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">{t("dashboard.loading")}</p>
+      <div className="space-y-6" aria-busy="true" aria-label={t("dashboard.loading")}>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-11 w-full sm:w-44" />
+        </div>
+
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-4 sm:p-5 space-y-3">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-3 w-28" />
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Card key={i} className="p-6 space-y-4">
+              <Skeleton className="h-5 w-40" />
+              {Array.from({ length: 4 }).map((__, j) => (
+                <div key={j} className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              ))}
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -194,84 +228,41 @@ export default function Dashboard() {
 
           {/* KPI Cards */}
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t("dashboard.litersToday")}</CardTitle>
-                <Milk className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalLitersFixed}{t("dashboard.liters")}</div>
-                <p className="text-xs text-muted-foreground">
-                  <span className={`flex items-center gap-1 ${
-                    litersTrendUp ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {litersTrendUp ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    {litersVsYesterday} {t("dashboard.vsYesterday")}
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
+            <StatCard
+              label={t("dashboard.litersToday")}
+              value={totalLitersFixed}
+              unit={t("dashboard.liters")}
+              icon={Milk}
+              trend={litersTrendUp ? "up" : "down"}
+              trendValue={litersVsYesterday}
+              hint={t("dashboard.vsYesterday")}
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t("dashboard.revenueToday")}</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-                <p className="text-xs text-muted-foreground">
-                  <span className={`flex items-center gap-1 ${
-                    revenueTrendUp ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {revenueTrendUp ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    {revenueVsYesterday} {t("dashboard.vsYesterday")}
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
+            <StatCard
+              label={t("dashboard.revenueToday")}
+              value={formatCurrency(totalRevenue)}
+              icon={DollarSign}
+              trend={revenueTrendUp ? "up" : "down"}
+              trendValue={revenueVsYesterday}
+              hint={t("dashboard.vsYesterday")}
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t("dashboard.averagePerAnimal")}</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{avgPerAnimalFixed}{t("dashboard.liters")}</div>
-                <p className="text-xs text-muted-foreground">
-                  <span className={`flex items-center gap-1 ${
-                    averageTrendUp ? 'text-success' : 'text-destructive'
-                  }`}>
-                    {averageTrendUp ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    {averageVsYesterday} {t("dashboard.vsYesterday")}
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
+            <StatCard
+              label={t("dashboard.averagePerAnimal")}
+              value={avgPerAnimalFixed}
+              unit={t("dashboard.liters")}
+              icon={Users}
+              trend={averageTrendUp ? "up" : "down"}
+              trendValue={averageVsYesterday}
+              hint={t("dashboard.vsYesterday")}
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t("dashboard.activeAnimals")}</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeAnimals}</div>
-                <p className="text-xs text-muted-foreground">
-                  {t("dashboard.totalInProduction")}
-                </p>
-              </CardContent>
-            </Card>
+            <StatCard
+              label={t("dashboard.activeAnimals")}
+              value={activeAnimals}
+              icon={Calendar}
+              hint={t("dashboard.totalInProduction")}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -370,7 +361,7 @@ export default function Dashboard() {
                         <div
                           key={notification.id}
                           className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-accent ${
-                            !notification.read ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200' : ''
+                            !notification.read ? 'bg-info/10 border-info/20' : ''
                           }`}
                           onClick={() => {
                             if (!notification.read) {
@@ -399,7 +390,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1" />
+                            <div className="w-2 h-2 bg-info rounded-full mt-1" />
                           )}
                         </div>
                       );

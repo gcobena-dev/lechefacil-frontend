@@ -205,19 +205,19 @@ export function getNotificationIconColor(type: string): string {
     case "delivery_recorded":
     case "animal_birth":
     case "animal_created":
-      return "text-green-500";
+      return "text-success";
 
     case "production_recorded":
     case "production_bulk_recorded":
     case "animal_updated":
     case "animal_event_created":
     case "pregnancy_check_recorded":
-      return "text-blue-500";
+      return "text-info";
 
     case "price_updated":
     case "price_change_alert":
     case "calving_expected_soon":
-      return "text-yellow-500";
+      return "text-warning";
 
     default:
       return "text-muted-foreground";

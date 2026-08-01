@@ -73,7 +73,7 @@ export default function MilkPrices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{currentPrice ? formatCurrency(parseFloat(currentPrice.price_per_l)) : "-"}/L</div>
-            <div className={`flex items-center text-xs ${isIncreasing ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`flex items-center text-xs ${isIncreasing ? 'text-success' : 'text-destructive'}`}>
               {isIncreasing ? <TrendingUp className="mr-1 h-3 w-3" /> : <TrendingDown className="mr-1 h-3 w-3" />}
               {Math.abs(priceChange).toFixed(2)} {t('milk.from')} el precio anterior
             </div>
