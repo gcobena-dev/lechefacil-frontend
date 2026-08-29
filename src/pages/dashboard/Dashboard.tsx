@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
@@ -65,7 +64,6 @@ export default function Dashboard() {
     : userRoleRaw === 'VETERINARIAN' ? 'VET'
     : (userRoleRaw as 'ADMIN' | 'WORKER' | 'VET') || 'ADMIN';
   const userId = useUserId();
-  const [retryCount, setRetryCount] = useState(0);
 
   // Get notifications
   const { notifications, markAsRead } = useNotifications();
@@ -81,22 +79,11 @@ export default function Dashboard() {
     adminOverview,
     isLoading,
     hasError,
-    errors
+    errors,
+    refetchAll
   } = useDashboardData(userRole);
 
   const today = new Date();
-
-  // If error persists after retry, logout
-  useEffect(() => {
-    if (hasError && retryCount >= 1) {
-      const logoutAndRedirect = async () => {
-        const { performLogout } = await import('@/services/auth');
-        await performLogout();
-        navigate('/login');
-      };
-      logoutAndRedirect();
-    }
-  }, [hasError, retryCount, navigate]);
 
   // -----------------------------
   // Derivados con casting/guardas
@@ -176,9 +163,10 @@ export default function Dashboard() {
   }
 
   if (hasError) {
+    // An expired session is already handled globally (SessionExpiredHandler
+    // logs out and redirects to /login), so here we only retry the data.
     const handleRetry = () => {
-      setRetryCount(prev => prev + 1);
-      window.location.reload();
+      refetchAll();
     };
 
     return (

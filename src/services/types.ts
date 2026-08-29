@@ -127,6 +127,8 @@ export interface AnimalStatusResponse {
   name: string;
   description: string;
   is_system_default: boolean;
+  /** false for SOLD / DEAD / CULLED: animals out of the herd */
+  is_active: boolean;
 }
 
 export interface BuyerResponse {

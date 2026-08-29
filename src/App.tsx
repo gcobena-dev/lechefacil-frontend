@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/hooks/useTheme.tsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { RequireAuth } from "./components/auth/RequireAuth";
+import { SessionExpiredHandler } from "./components/auth/SessionExpiredHandler";
 import { RequirePasswordChange } from "./components/auth/RequirePasswordChange";
 import { RequireTenant } from "./components/auth/RequireTenant";
 import { RequireSuperAdmin } from "./components/auth/RequireSuperAdmin";
@@ -80,6 +81,7 @@ const App = () => (
           <SilentRefreshActivator />
           <BrowserRouter>
         <AndroidBackButtonHandler />
+        <SessionExpiredHandler />
         <Routes>
           <Route path="/" element={<RequireAuth><RequireTenant><RequirePasswordChange><AppLayout /></RequirePasswordChange></RequireTenant></RequireAuth>}>
             <Route index element={<Dashboard />} />

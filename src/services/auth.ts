@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, type ApiError } from "./client";
 import {
   requireApiUrl,
   getTenantId,
@@ -95,7 +95,13 @@ export async function refreshAccess(): Promise<LoginResponse> {
     credentials: "include",
     body,
   });
-  if (!res.ok) throw new Error("refresh_failed");
+  if (!res.ok) {
+    // Carry the status so callers can tell "session rejected" (401/403) apart
+    // from a transient failure (5xx) or no connection at all (fetch rejects).
+    const err: ApiError = new Error("refresh_failed");
+    err.status = res.status;
+    throw err;
+  }
   const data = await res.json();
   const rtNew = (data as any)?.refresh_token;
   if (rtNew) {

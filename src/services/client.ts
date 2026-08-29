@@ -7,6 +7,7 @@ import {
   setMustChangePassword,
 } from "./config";
 import { refreshAccess } from "./auth";
+import { notifySessionExpired } from "./session";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -70,48 +71,56 @@ export async function apiFetch<T>(
     }
     // Attempt refresh once on 401 for authenticated requests
     if (res.status === 401 && options.withAuth) {
+      let refreshData;
       try {
-        const refreshData = await refreshAccess();
-        setToken(refreshData.access_token);
-
-        // Update must_change_password flag from refresh response
-        setMustChangePassword(refreshData.must_change_password);
-
-        // If user has multiple memberships and no tenant is set, they might need to select farm
-        if (
-          refreshData.memberships &&
-          refreshData.memberships.length > 1 &&
-          !getTenantId()
-        ) {
-          // This could redirect to farm selection, but for now we'll continue with the request
-          console.warn(
-            "Multiple memberships found, user might need to select farm"
-          );
-        }
-
-        // retry original request with new token
-        const retryHeaders = { ...headers };
-        retryHeaders["Authorization"] = `Bearer ${refreshData.access_token}`;
-        res = await fetch(url.toString(), {
-          method: options.method ?? "GET",
-          headers: retryHeaders,
-          body: options.body ? JSON.stringify(options.body) : undefined,
-          credentials: options.withCredentials ? "include" : undefined,
-        });
-        if (!res.ok) {
-          const err: ApiError = new Error(`HTTP ${res.status}`);
-          err.status = res.status;
-          try {
-            err.details = await res.json();
-          } catch (_e) {
-            // ignore JSON parse errors when extracting retry error details
-          }
-          throw err;
-        }
+        refreshData = await refreshAccess();
       } catch (e) {
+        // The session is only unrecoverable when the server itself rejected the
+        // refresh (401/403). A network failure or a 5xx must not log anybody out.
+        const refreshStatus = (e as ApiError)?.status;
+        if (refreshStatus === 401 || refreshStatus === 403) notifySessionExpired();
         const err: ApiError = new Error(`HTTP ${res.status}`);
         err.status = res.status;
         err.details = details;
+        throw err;
+      }
+
+      setToken(refreshData.access_token);
+
+      // Update must_change_password flag from refresh response
+      setMustChangePassword(refreshData.must_change_password);
+
+      // If user has multiple memberships and no tenant is set, they might need to select farm
+      if (
+        refreshData.memberships &&
+        refreshData.memberships.length > 1 &&
+        !getTenantId()
+      ) {
+        // This could redirect to farm selection, but for now we'll continue with the request
+        console.warn(
+          "Multiple memberships found, user might need to select farm"
+        );
+      }
+
+      // retry original request with new token
+      const retryHeaders = { ...headers };
+      retryHeaders["Authorization"] = `Bearer ${refreshData.access_token}`;
+      res = await fetch(url.toString(), {
+        method: options.method ?? "GET",
+        headers: retryHeaders,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        credentials: options.withCredentials ? "include" : undefined,
+      });
+      if (!res.ok) {
+        const err: ApiError = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        try {
+          err.details = await res.json();
+        } catch (_e) {
+          // ignore JSON parse errors when extracting retry error details
+        }
+        // Rejected again with a brand new token: the session is gone
+        if (res.status === 401) notifySessionExpired();
         throw err;
       }
     } else {

@@ -18,6 +18,9 @@ export interface SemenInventoryResponse {
   created_at: string;
   updated_at: string;
   version: number;
+  /** Resolved from the sire catalog by the API */
+  sire_name: string | null;
+  sire_code: string | null;
 }
 
 export interface SemenInventoryListResponse {

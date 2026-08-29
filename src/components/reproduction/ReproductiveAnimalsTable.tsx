@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsAdmin } from "@/hooks/useAuth";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { PregnancyCheckDialog } from "@/components/reproduction/PregnancyCheckDialog";
 import LastCheckResultDialog from "@/components/reproduction/LastCheckResultDialog";
 import EditInseminationByIdDialog from "@/components/reproduction/EditInseminationByIdDialog";
@@ -69,6 +70,9 @@ interface Props {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  /** Mobile only: swiping the card list moves to the neighbouring tab. */
+  onSwipeNextTab?: () => void;
+  onSwipePrevTab?: () => void;
 }
 
 // Direction a column starts on when first clicked. Dates and day counts read
@@ -110,6 +114,14 @@ function eventLabel(type: string | null, t: (k: string) => string): string {
   return "—";
 }
 
+/** "Nombre (CÓDIGO)" when both are known, otherwise whichever exists. */
+function sireLabel(row: { sire_name: string | null; sire_code: string | null }): string | null {
+  const name = row.sire_name?.trim();
+  const code = row.sire_code?.trim();
+  if (name && code) return `${name} (${code})`;
+  return name || code || null;
+}
+
 function alertLabel(level: string, t: (k: string) => string): string {
   switch (level) {
     case "critical":
@@ -139,6 +151,8 @@ export default function ReproductiveAnimalsTable({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  onSwipeNextTab,
+  onSwipePrevTab,
 }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -197,6 +211,15 @@ export default function ReproductiveAnimalsTable({
       : bucket === "todas"
         ? t("reproduction.colDays")
         : t("reproduction.colDaysPostpartum");
+
+  // The bull only exists once a cow has been served: pointless column on the
+  // "sin inseminar" tab.
+  const showSireColumn = bucket !== "sin_inseminar";
+
+  const swipeHandlers = useSwipeNavigation({
+    onSwipeLeft: onSwipeNextTab,
+    onSwipeRight: onSwipePrevTab,
+  });
 
   const renderDaysCell = (row: ReproductiveAnimalRow) => {
     if (row.bucket === "prenadas") {
@@ -380,6 +403,7 @@ export default function ReproductiveAnimalsTable({
                 <TableHead>
                   {renderSortHeader(t("reproduction.colSituation"), "situation")}
                 </TableHead>
+                {showSireColumn && <TableHead>{t("reproduction.colSire")}</TableHead>}
                 <TableHead>
                   {renderSortHeader(t("reproduction.colLastEvent"), "last_event")}
                 </TableHead>
@@ -389,7 +413,10 @@ export default function ReproductiveAnimalsTable({
             <TableBody>
               {items.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
+                  <TableCell
+                    colSpan={showSireColumn ? 8 : 7}
+                    className="text-center py-16 text-muted-foreground"
+                  >
                     {isLoading ? t("reproduction.loading") : t("reproduction.noAnimalsInBucket")}
                   </TableCell>
                 </TableRow>
@@ -413,6 +440,22 @@ export default function ReproductiveAnimalsTable({
                     <TableCell>
                       <Badge variant="secondary">{row.situation_label}</Badge>
                     </TableCell>
+                    {showSireColumn && (
+                      <TableCell className="text-sm">
+                        {row.sire_name ? (
+                          <div className="flex flex-col leading-tight">
+                            <span className="truncate">{row.sire_name}</span>
+                            {row.sire_code && (
+                              <span className="text-xs text-muted-foreground">
+                                {row.sire_code}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-sm text-muted-foreground">
                       {row.last_event_type
                         ? `${eventLabel(row.last_event_type, t)} ${formatDate(row.last_event_date)}`
@@ -442,8 +485,9 @@ export default function ReproductiveAnimalsTable({
           </Table>
         </div>
 
-        {/* Mobile cards */}
+        {/* Mobile cards. Swiping sideways moves to the neighbouring tab. */}
         <div
+          {...swipeHandlers}
           className={`md:hidden divide-y min-h-[360px] transition-opacity ${
             isLoading && items.length > 0 ? "opacity-60" : ""
           }`}
@@ -491,6 +535,12 @@ export default function ReproductiveAnimalsTable({
                     </span>
                   )}
                 </div>
+                {sireLabel(row) && (
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {t("reproduction.sire")}:{" "}
+                    <span className="text-foreground">{sireLabel(row)}</span>
+                  </p>
+                )}
               </div>
             ))
           )}

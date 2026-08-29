@@ -62,7 +62,12 @@ export interface BirthEventData {
 }
 
 export interface ServiceEventData {
+  /** Local sire: an animal of the herd */
   sire_id?: string;
+  /** Bull from the sire catalog, resolved by the API for the timeline link */
+  sire_catalog_id?: string;
+  sire_name?: string;
+  sire_code?: string;
   external_sire_code?: string;
   external_sire_registry?: string;
   method?: "AI" | "NATURAL" | "ET";

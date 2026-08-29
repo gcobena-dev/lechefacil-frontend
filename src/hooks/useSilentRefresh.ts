@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { refreshAccess } from "@/services/auth";
+import { notifySessionExpired } from "@/services/session";
 import { getToken, setToken, setMustChangePassword } from "@/services/config";
 
 interface Options {
@@ -30,9 +31,11 @@ export function useSilentRefresh({
         setToken(data.access_token);
         setMustChangePassword(data.must_change_password);
       } catch (e) {
-        // If refresh fails (e.g., cookie expired), keep current state; 401 flows will handle logout if needed
-        // Optionally, could clear token here, but better to let next authenticated call surface 401
-        // console.warn('Silent refresh failed', e);
+        // The server rejecting the refresh (401/403) means the session is over:
+        // close it now instead of waiting for a screen to fail loading data.
+        // Network failures and 5xx are transient, so we keep the session as is.
+        const status = (e as { status?: number })?.status;
+        if (status === 401 || status === 403) notifySessionExpired();
       }
     };
 

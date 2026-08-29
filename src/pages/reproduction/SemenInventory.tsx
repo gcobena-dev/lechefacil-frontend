@@ -75,6 +75,7 @@ export default function SemenInventory() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>{t("reproduction.sire")}</TableHead>
                   <TableHead>{t("reproduction.batchCode")}</TableHead>
                   <TableHead>{t("reproduction.tankId")}</TableHead>
                   <TableHead>{t("reproduction.currentQuantity")}</TableHead>
@@ -92,7 +93,17 @@ export default function SemenInventory() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => navigate(`/reproduction/sires/${stock.sire_catalog_id}`)}
                   >
-                    <TableCell className="font-medium">{stock.batch_code || "-"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-medium">{stock.sire_name || "-"}</span>
+                        {stock.sire_code && (
+                          <span className="text-xs text-muted-foreground">
+                            {stock.sire_code}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{stock.batch_code || "-"}</TableCell>
                     <TableCell>{stock.tank_id || "-"}</TableCell>
                     <TableCell>
                       <Badge variant={stock.current_quantity > 0 ? "default" : "destructive"}>
@@ -153,7 +164,17 @@ export default function SemenInventory() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <p className="font-semibold">{stock.batch_code || "Sin lote"}</p>
+                      <p className="font-semibold">
+                        {stock.sire_name || t("reproduction.sire")}
+                        {stock.sire_code && (
+                          <span className="ml-1 text-xs font-normal text-muted-foreground">
+                            ({stock.sire_code})
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("reproduction.batchCode")}: {stock.batch_code || "-"}
+                      </p>
                       {stock.supplier && (
                         <p className="text-sm text-muted-foreground">{stock.supplier}</p>
                       )}

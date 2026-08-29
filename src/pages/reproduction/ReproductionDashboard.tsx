@@ -47,7 +47,11 @@ import ReproductiveStatusChart from "@/components/charts/ReproductiveStatusChart
 import ServicesPerCowChart from "@/components/charts/ServicesPerCowChart";
 import InseminationActivityChart from "@/components/charts/InseminationActivityChart";
 import SirePerformanceChart from "@/components/charts/SirePerformanceChart";
-import type { ReproductiveBucket, ReproductiveSort } from "@/services/reproductionDashboard";
+import {
+  REPRODUCTIVE_BUCKETS,
+  type ReproductiveBucket,
+  type ReproductiveSort,
+} from "@/services/reproductionDashboard";
 
 type PeriodKey = "3m" | "6m" | "12m" | "year";
 
@@ -65,6 +69,20 @@ export default function ReproductionDashboard() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [siresIncludeInactive, setSiresIncludeInactive] = useState(false);
+
+  const changeBucket = (b: ReproductiveBucket) => {
+    setBucket(b);
+    setPage(0);
+    // Filters are tab-specific; reset them when switching tabs.
+    setFilters(EMPTY_REPRO_FILTERS);
+  };
+
+  // Mobile: swiping the list moves to the neighbouring tab, stopping at the ends.
+  const moveBucket = (delta: number) => {
+    const i = REPRODUCTIVE_BUCKETS.indexOf(bucket);
+    const next = REPRODUCTIVE_BUCKETS[i + delta];
+    if (next) changeBucket(next);
+  };
 
   // Filter state (string arrays) translated into the API query shape.
   const filterParams = useMemo(
@@ -232,12 +250,7 @@ export default function ReproductionDashboard() {
         <ReproductiveStatusTabs
           active={bucket}
           counts={bucketCounts}
-          onChange={(b) => {
-            setBucket(b);
-            setPage(0);
-            // Filters are tab-specific; reset them when switching tabs.
-            setFilters(EMPTY_REPRO_FILTERS);
-          }}
+          onChange={changeBucket}
         />
         <ReproductiveAnimalsTable
           items={animalsData?.items ?? []}
@@ -265,6 +278,8 @@ export default function ReproductionDashboard() {
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
+          onSwipeNextTab={() => moveBucket(1)}
+          onSwipePrevTab={() => moveBucket(-1)}
         />
       </div>
 

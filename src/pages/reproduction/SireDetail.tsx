@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Edit } from "lucide-react";
 import { SirePerformanceCard } from "@/components/reproduction/SirePerformanceCard";
+import { SireSemenStockCard } from "@/components/reproduction/SireSemenStockCard";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
@@ -91,6 +92,9 @@ export default function SireDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Straws still in the tank */}
+      {id && <SireSemenStockCard sireId={id} />}
 
       {/* Performance */}
       {performance && <SirePerformanceCard performance={performance} />}

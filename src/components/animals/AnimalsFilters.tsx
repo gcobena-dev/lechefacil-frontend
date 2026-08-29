@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/popover";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { getAnimalStatuses, getLabelSuggestions } from "@/services/animals";
+import { getLabelSuggestions } from "@/services/animals";
+import { useAnimalStatuses, activeStatusCodes } from "@/hooks/useAnimalStatuses";
 import { getLots } from "@/services/lots";
 import { getBreeds } from "@/services/breeds";
 
@@ -46,13 +47,28 @@ export function countActiveAnimalFilters(f: AnimalFilterState): number {
   );
 }
 
-const DEFAULT_KEYS: FilterKey[] = [
-  "status",
-  "sex",
-  "labels",
-  "in_milk_withdrawal",
+// Lot is part of the day-to-day workflow, so it stays in the visible row;
+// milk withdrawal is a rare lookup and lives under "más filtros".
+const DEFAULT_KEYS: FilterKey[] = ["status", "sex", "labels", "lot"];
+const MORE_KEYS: FilterKey[] = ["breed", "in_milk_withdrawal"];
+
+/** Lifecycle order for the status options; anything else goes after these. */
+const STATUS_ORDER = [
+  "CALF",
+  "HEIFER",
+  "PREGNANT_HEIFER",
+  "LACTATING",
+  "DRY",
+  "PREGNANT_DRY",
+  "BULL",
 ];
-const MORE_KEYS: FilterKey[] = ["lot", "breed"];
+
+interface FilterOption {
+  value: string;
+  label: string;
+  /** Optional header rendered above the first option of each group. */
+  group?: string;
+}
 
 interface Props {
   filters: AnimalFilterState;
@@ -63,11 +79,7 @@ export default function AnimalsFilters({ filters, onChange }: Props) {
   const { t } = useTranslation();
   const [showMore, setShowMore] = useState(false);
 
-  const { data: statuses = [] } = useQuery({
-    queryKey: ["animal-statuses"],
-    queryFn: () => getAnimalStatuses("es"),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: statuses = [] } = useAnimalStatuses();
   const { data: lots = [] } = useQuery({
     queryKey: ["lots", { active: true }],
     queryFn: () => getLots({ active: true }),
@@ -110,10 +122,29 @@ export default function AnimalsFilters({ filters, onChange }: Props) {
     }
   };
 
-  const optionsFor = (key: FilterKey): { value: string; label: string }[] => {
+  const statusOptions = (): FilterOption[] => {
+    const rank = (code: string) => {
+      const i = STATUS_ORDER.indexOf(code);
+      return i === -1 ? STATUS_ORDER.length : i;
+    };
+    const sorted = [...statuses].sort((a, b) => {
+      // In-herd statuses first, then sold / dead / culled
+      if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+      return rank(a.code) - rank(b.code) || a.name.localeCompare(b.name);
+    });
+    return sorted.map((s) => ({
+      value: s.code,
+      label: s.name,
+      group: s.is_active
+        ? t("animals.statusGroupActive")
+        : t("animals.statusGroupInactive"),
+    }));
+  };
+
+  const optionsFor = (key: FilterKey): FilterOption[] => {
     switch (key) {
       case "status":
-        return statuses.map((s) => ({ value: s.code, label: s.name }));
+        return statusOptions();
       case "sex":
         return [
           { value: "FEMALE", label: t("animals.female") },
@@ -172,20 +203,33 @@ export default function AnimalsFilters({ filters, onChange }: Props) {
               {t("animals.filterNoOptions")}
             </p>
           ) : (
-            <div className="max-h-64 overflow-y-auto">
-              {options.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
-                >
-                  <Checkbox
-                    checked={selected.includes(opt.value)}
-                    onCheckedChange={() => toggle(opt.value)}
-                  />
-                  <span className="truncate">{opt.label}</span>
-                </label>
+            <div className="max-h-72 overflow-y-auto">
+              {options.map((opt, i) => (
+                <div key={opt.value}>
+                  {opt.group && opt.group !== options[i - 1]?.group && (
+                    <p className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {opt.group}
+                    </p>
+                  )}
+                  <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted">
+                    <Checkbox
+                      checked={selected.includes(opt.value)}
+                      onCheckedChange={() => toggle(opt.value)}
+                    />
+                    <span className="truncate">{opt.label}</span>
+                  </label>
+                </div>
               ))}
             </div>
+          )}
+          {key === "status" && statuses.length > 0 && (
+            <button
+              type="button"
+              className="mt-1 w-full rounded px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted"
+              onClick={() => setKey(key, activeStatusCodes(statuses))}
+            >
+              {t("animals.filterOnlyActive")}
+            </button>
           )}
           {selected.length > 0 && (
             <button
@@ -193,7 +237,9 @@ export default function AnimalsFilters({ filters, onChange }: Props) {
               className="mt-1 w-full rounded px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-muted"
               onClick={() => setKey(key, [])}
             >
-              {t("animals.filterClearOne")}
+              {key === "status"
+                ? t("animals.filterShowAllStatuses")
+                : t("animals.filterClearOne")}
             </button>
           )}
         </PopoverContent>

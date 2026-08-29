@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -40,9 +41,24 @@ const getEventIcon = (type: string) => {
   return iconMap[type] || <AlertTriangle className="h-5 w-5" />;
 };
 
+/**
+ * Sire display: "Name (CODE)" when both are known, otherwise whichever exists.
+ * `sire_code` comes from the sire catalog; `external_sire_code` is what older
+ * events stored as free text.
+ */
+const getSireLabel = (data?: Record<string, any>): string | null => {
+  const name = data?.sire_name?.trim();
+  const code = (data?.sire_code ?? data?.external_sire_code)?.trim();
+  if (name && code) return `${name} (${code})`;
+  return name || code || null;
+};
+
 const EventDetails = ({ event }: { event: AnimalEvent }) => {
   const { t } = useTranslation();
   if (!event.data) return null;
+
+  const sireLabel = getSireLabel(event.data);
+  const sireCatalogId = event.data?.sire_catalog_id as string | undefined;
 
   const renderBirthData = () => (
     <div className="text-sm space-y-1">
@@ -55,8 +71,21 @@ const EventDetails = ({ event }: { event: AnimalEvent }) => {
 
   const renderServiceData = () => (
     <div className="text-sm space-y-1">
-      {event.data?.external_sire_code && (
-        <p><strong>{t('animals.sire')}:</strong> {event.data.external_sire_code}</p>
+      {sireLabel && (
+        <p>
+          <strong>{t('animals.sire')}:</strong>{' '}
+          {sireCatalogId ? (
+            // Always underlined: on touch there is no hover to reveal it
+            <Link
+              to={`/reproduction/sires/${sireCatalogId}`}
+              className="text-primary underline underline-offset-4 hover:decoration-2"
+            >
+              {sireLabel}
+            </Link>
+          ) : (
+            sireLabel
+          )}
+        </p>
       )}
       {event.data?.method && (
         <p><strong>{t('animals.method')}:</strong> {event.data.method}</p>

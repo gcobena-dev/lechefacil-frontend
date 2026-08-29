@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getTodayLocalDateString } from "@/utils/dateUtils";
 import {
   getDailyKPIs,
@@ -91,6 +91,7 @@ export function useDashboardData(
   userId?: string
 ) {
   const today = getTodayLocalDateString();
+  const queryClient = useQueryClient();
 
   // Common data for all roles
   const dailyKPIs = useDailyKPIs(today);
@@ -125,6 +126,9 @@ export function useDashboardData(
 
     // Error states
     hasError: dailyKPIs.error || topProducers.error || dailyProgress.error,
+
+    // Retry every active dashboard query, without reloading the whole app
+    refetchAll: () => queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
 
     // Combined errors
     errors: {

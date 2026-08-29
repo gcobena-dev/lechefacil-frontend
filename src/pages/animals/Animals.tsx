@@ -35,14 +35,26 @@ import AnimalsFilters, {
   EMPTY_ANIMAL_FILTERS,
   type AnimalFilterState,
 } from "@/components/animals/AnimalsFilters";
-import { getPref, setPref } from "@/utils/prefs";
+import { getPref, setPref, hasPref } from "@/utils/prefs";
+import {
+  useAnimalStatuses,
+  activeStatusCodes,
+  inactiveStatusCodes,
+} from "@/hooks/useAnimalStatuses";
+
+const FILTERS_PREF_KEY = 'prefs:animals:filters';
 
 export default function Animals() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState(() => getPref<string>('prefs:animals:search', '', { session: true }));
   const [filters, setFilters] = useState<AnimalFilterState>(() =>
-    getPref<AnimalFilterState>('prefs:animals:filters', EMPTY_ANIMAL_FILTERS, { session: true }),
+    getPref<AnimalFilterState>(FILTERS_PREF_KEY, EMPTY_ANIMAL_FILTERS, { session: true }),
+  );
+  // Until the default status filter is resolved we don't query or persist,
+  // so the list never flashes sold/dead animals on first load.
+  const [filtersReady, setFiltersReady] = useState(() =>
+    hasPref(FILTERS_PREF_KEY, { session: true }),
   );
   const [pageSize, setPageSize] = useState<number>(() => getPref<number>('prefs:animals:pageSize', 10, { session: true }));
   const [page, setPage] = useState<number>(() => getPref<number>('prefs:animals:page', 0, { session: true }));
@@ -51,13 +63,35 @@ export default function Animals() {
 
   // Persist changes during the session
   useEffect(() => { setPref('prefs:animals:search', searchTerm, { session: true }); }, [searchTerm]);
-  useEffect(() => { setPref('prefs:animals:filters', filters, { session: true }); }, [filters]);
+  useEffect(() => {
+    if (filtersReady) setPref(FILTERS_PREF_KEY, filters, { session: true });
+  }, [filters, filtersReady]);
   useEffect(() => { setPref('prefs:animals:pageSize', pageSize, { session: true }); }, [pageSize]);
   useEffect(() => { setPref('prefs:animals:page', page, { session: true }); }, [page]);
   useEffect(() => { setPref('prefs:animals:sortBy', sortBy, { session: true }); }, [sortBy]);
   useEffect(() => { setPref('prefs:animals:sortDir', sortDir, { session: true }); }, [sortDir]);
 
-  const { data } = useQuery({
+  const {
+    data: statuses = [],
+    isSuccess: statusesLoaded,
+    isError: statusesFailed,
+  } = useAnimalStatuses();
+
+  // Default view: only the animals still in the herd. The status checkboxes
+  // show exactly that selection, so it is visible and easy to undo.
+  useEffect(() => {
+    if (filtersReady) return;
+    if (statusesLoaded) {
+      setFilters((prev) => ({ ...prev, status: activeStatusCodes(statuses) }));
+      setFiltersReady(true);
+    } else if (statusesFailed) {
+      // Never block the list because the status catalog failed to load
+      setFiltersReady(true);
+    }
+  }, [filtersReady, statusesLoaded, statusesFailed, statuses]);
+
+  const { data, isPending } = useQuery({
+    enabled: filtersReady,
     queryKey: ["animals", { q: searchTerm, limit: pageSize, offset: page * pageSize, sortBy, sortDir, filters }],
     queryFn: () => listAnimals({
       q: searchTerm || undefined,
@@ -160,6 +194,49 @@ export default function Animals() {
     );
   };
 
+  // --- Summary cards double as status filters -------------------------------
+  const activeCodes = activeStatusCodes(statuses);
+  const inactiveCodes = inactiveStatusCodes(statuses);
+  const sameSet = (a: string[], b: string[]) =>
+    a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|');
+
+  /** Applies a card's status set; clicking the active card goes back to the default. */
+  const applyStatusFilter = (codes: string[]) => {
+    setPage(0);
+    setFilters((prev) => ({
+      ...prev,
+      status: sameSet(prev.status, codes) ? activeCodes : codes,
+    }));
+  };
+
+  const summaryCards = [
+    {
+      key: 'production',
+      value: summary.production,
+      label: t('animals.inProductionStats'),
+      icon: <Milk className="h-5 w-5 text-primary" />,
+      codes: ['LACTATING'],
+    },
+    {
+      key: 'withdrawn',
+      value: summary.withdrawn,
+      label: t('animals.withdrawnStats'),
+      codes: inactiveCodes,
+    },
+    {
+      key: 'other',
+      value: summary.other,
+      label: t('animals.otherStats'),
+      codes: activeCodes.filter((c) => c !== 'LACTATING'),
+    },
+    {
+      key: 'total',
+      value: summary.total,
+      label: t('animals.totalStats'),
+      codes: [] as string[],
+    },
+  ];
+
   const calculateAge = (birthDate?: string | null) => {
     if (!birthDate) return '-';
     const birth = new Date(birthDate);
@@ -194,46 +271,42 @@ export default function Animals() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards: each one filters the list by its statuses */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Milk className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-2xl font-bold">{summary.production}</p>
-                <p className="text-sm text-muted-foreground">{t('animals.inProductionStats')}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div>
-              <p className="text-2xl font-bold">{summary.withdrawn}</p>
-              <p className="text-sm text-muted-foreground">{t('animals.withdrawnStats')}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div>
-              <p className="text-2xl font-bold">{summary.other}</p>
-              <p className="text-sm text-muted-foreground">{t('animals.otherStats')}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div>
-              <p className="text-2xl font-bold">{summary.total}</p>
-              <p className="text-sm text-muted-foreground">{t('animals.totalStats')}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {summaryCards.map((card) => {
+          // Until the catalog loads, the status sets are empty and would make
+          // several cards look active at once
+          const isActive = statuses.length > 0 && sameSet(filters.status, card.codes);
+          return (
+            <Card
+              key={card.key}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isActive}
+              title={t('animals.filterByCard')}
+              onClick={() => applyStatusFilter(card.codes)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  applyStatusFilter(card.codes);
+                }
+              }}
+              className={`cursor-pointer transition-colors hover:border-primary/60 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                isActive ? 'border-primary bg-muted/30' : ''
+              }`}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  {card.icon}
+                  <div>
+                    <p className="text-2xl font-bold">{card.value}</p>
+                    <p className="text-sm text-muted-foreground">{card.label}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -372,7 +445,7 @@ export default function Animals() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {items.length === 0 && (
+                {items.length === 0 && !isPending && (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       {t('animals.noAnimalsFound')}
@@ -458,7 +531,7 @@ export default function Animals() {
           </Card>
         ))}
 
-        {items.length === 0 && (
+        {items.length === 0 && !isPending && (
           <div className="text-center py-8">
             <p className="text-muted-foreground">{t('animals.noAnimalsFound')}</p>
           </div>

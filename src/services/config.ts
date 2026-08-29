@@ -96,6 +96,7 @@ export function logout() {
   setToken(null);
   setTenantId(null);
   setMustChangePassword(false);
+  setRefreshToken(null);
 }
 
 export function getRefreshToken(): string | null {

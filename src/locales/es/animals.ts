@@ -118,6 +118,11 @@ export default {
   withdrawnStats: "Dados de baja",
   otherStats: "Otros",
   totalStats: "Total",
+  filterByCard: "Clic para filtrar por este estado",
+  filterOnlyActive: "Solo animales en el hato",
+  filterShowAllStatuses: "Mostrar todos los estados",
+  statusGroupActive: "En el hato",
+  statusGroupInactive: "Dados de baja",
 
   // Formulario
   editAnimal: "Editar Animal",

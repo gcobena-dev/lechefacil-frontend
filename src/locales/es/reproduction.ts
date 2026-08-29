@@ -269,6 +269,7 @@ export default {
   colState: "ESTADO",
   colSituation: "SITUACIÓN",
   colLastEvent: "ÚLTIMO EVENTO",
+  colSire: "TORO",
   sortBy: "Ordenar por",
   sortByColumn: "Ordenar por esta columna",
   sortedAscending: "Orden ascendente",

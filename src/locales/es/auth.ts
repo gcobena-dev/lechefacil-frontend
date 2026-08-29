@@ -134,6 +134,10 @@ export default {
   alreadyHaveAccount: "¿Ya tienes una cuenta?",
   signIn: "Iniciar sesión",
 
+  // Session
+  sessionExpired: "Tu sesión expiró",
+  sessionExpiredDescription: "Vuelve a iniciar sesión para continuar.",
+
   // NoAccess
   accessRestricted: "Acceso restringido",
   noPermissions: "No tienes permisos para ver esta página.",

@@ -69,6 +69,16 @@ export type ReproductiveBucket =
   | "sin_inseminar"
   | "todas";
 
+/** Tab order, shared by the tab bar and the mobile swipe navigation. */
+export const REPRODUCTIVE_BUCKETS = [
+  "alertas",
+  "inseminadas",
+  "prenadas",
+  "vacias",
+  "sin_inseminar",
+  "todas",
+] as const;
+
 export interface ReproductiveAnimalRow {
   animal_id: string;
   tag: string;
@@ -87,6 +97,9 @@ export interface ReproductiveAnimalRow {
   method: "AI" | "NATURAL" | "ET" | "IATF" | null;
   technician: string | null;
   heat_detected: boolean | null;
+  /** Bull of the last insemination */
+  sire_name: string | null;
+  sire_code: string | null;
   labels: string[];
 }
 

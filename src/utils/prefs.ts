@@ -27,3 +27,14 @@ export function setPref<T>(
     // ignore write errors
   }
 }
+
+/** True when the key has a value stored (to tell "not set" from "set to empty"). */
+export function hasPref(key: string, options?: { session?: boolean }): boolean {
+  try {
+    const useSession = options?.session ?? true;
+    const storage = useSession ? window.sessionStorage : window.localStorage;
+    return storage.getItem(key) != null;
+  } catch {
+    return false;
+  }
+}
