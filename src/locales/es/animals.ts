@@ -142,6 +142,9 @@ export default {
   animalUpdatedMsg: "Animal actualizado",
   savedSuccessfully: "guardado correctamente",
   couldNotSave: "No se pudo guardar el animal",
+  saveConflict: "El animal cambió mientras lo editabas",
+  saveConflictDesc:
+    "Acabamos de recargar los datos más recientes. Revisá los cambios y volvé a guardar.",
   statusRequiredTitle: "Estado requerido",
   statusRequiredDesc: "Debes seleccionar un estado para continuar.",
 

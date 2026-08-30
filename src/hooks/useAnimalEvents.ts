@@ -9,6 +9,7 @@ import {
 } from "@/services/animalEvents";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
+import { invalidateReproductionQueries } from "@/lib/queryInvalidation";
 
 /**
  * Hook to fetch animal events (timeline)
@@ -37,12 +38,10 @@ export const useRegisterAnimalEvent = (animalId: string) => {
     mutationFn: (payload) => registerAnimalEvent(animalId, payload),
     onSuccess: (data) => {
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["animal-events", animalId] });
-      queryClient.invalidateQueries({
-        queryKey: ["animal-lactations", animalId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["animal-detail", animalId] });
-      queryClient.invalidateQueries({ queryKey: ["animal", animalId] });
+      // An event moves the animal's status and lactation, so the list, the
+      // dashboard counters, the detail and the reproductive buckets all hold
+      // an outdated copy.
+      void invalidateReproductionQueries(queryClient);
 
       // Show success message
       toast.success(data.message || t("animals.eventRegistered"));

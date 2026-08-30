@@ -19,7 +19,7 @@ export default function EventTypeSelector({ onSelect }: EventTypeSelectorProps) 
       id: "TREATMENT" as const,
       icon: "💊",
       label: t("health.treatmentLabel"),
-      description: t("health.treatmentDescription"),
+      description: t("health.treatmentTypeDescription"),
     },
     {
       id: "VET_OBSERVATION" as const,
@@ -31,7 +31,7 @@ export default function EventTypeSelector({ onSelect }: EventTypeSelectorProps) 
       id: "EMERGENCY" as const,
       icon: "🚑",
       label: t("health.emergencyLabel"),
-      description: t("health.emergencyDescription"),
+      description: t("health.emergencyTypeDescription"),
     },
   ];
 

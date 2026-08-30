@@ -29,6 +29,7 @@ import {
   formatLocalTime,
   toLocalOffsetISO,
 } from "@/utils/dateUtils";
+import { invalidateMilkQueries } from "@/lib/queryInvalidation";
 
 const UNIT_MAP: Record<string, "l" | "kg" | "lb"> = {
   L: "l",
@@ -67,9 +68,9 @@ export function useMilkCollectionActions(
       mutationFn: (payload: CreateMilkDeliveryPayload) =>
         createMilkDelivery(payload),
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["milk-deliveries", deliveryDateFrom],
-        });
+        // The delivery also moves the day's totals on the dashboard and the
+        // reports, not just the list for this date.
+        void invalidateMilkQueries(queryClient);
         resetDeliveryForm();
       },
     });
@@ -186,9 +187,7 @@ export function useMilkCollectionActions(
     try {
       await doCreate(payload);
 
-      await queryClient.invalidateQueries({
-        queryKey: ["milk-productions", formData.date],
-      });
+      await invalidateMilkQueries(queryClient);
       toast({
         title: t("common.recordSuccessful"),
         description: `${calculatedLiters.toFixed(1)}L registrados`,
@@ -311,9 +310,7 @@ export function useMilkCollectionActions(
     try {
       await doCreateBulk(payload);
 
-      await queryClient.invalidateQueries({
-        queryKey: ["milk-productions", formData.date],
-      });
+      await invalidateMilkQueries(queryClient);
       toast({
         title: t("common.bulkRecordSuccessful"),
         description: `${bulkCalculatedTotal.toFixed(1)}L ${t(

@@ -6,6 +6,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { initOutbox, getSyncableOps, subscribeOutbox } from "@/services/outbox";
 import { syncOutbox } from "@/services/outboxSync";
 import { subscribeConnectivity } from "@/services/connectivity";
+import { invalidateMilkQueries } from "@/lib/queryInvalidation";
 
 /** How often to retry while something is still queued. */
 const TICK_MS = 60 * 1000;
@@ -31,9 +32,7 @@ export function useOutboxAutoSync(): void {
       // Anything that landed on the server should show up as a server record
       // now, so the pending badge disappears instead of double-rendering.
       if (summary.synced > 0) {
-        queryClient.invalidateQueries({ queryKey: ["milk-productions"] });
-        queryClient.invalidateQueries({ queryKey: ["milk-deliveries"] });
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        void invalidateMilkQueries(queryClient);
       }
       if (disposed) return;
 

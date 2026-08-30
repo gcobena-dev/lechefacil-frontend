@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { invalidateHealthQueries } from "@/lib/queryInvalidation";
 
 interface ObservationFormProps {
   animalId: string;
@@ -30,8 +31,10 @@ export default function ObservationForm({ animalId }: ObservationFormProps) {
   const createMutation = useMutation({
     mutationFn: (payload: any) => createHealthRecord(animalId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", animalId] });
-      queryClient.invalidateQueries({ queryKey: ["animal", animalId] });
+      // A health record can move the animal's status (milk withdrawal,
+      // treatment), which the events list, the animal list and the dashboard
+      // each read from their own cached copy.
+      void invalidateHealthQueries(queryClient);
       toast({
         title: t("health.observationRegistered"),
         description: t("health.observationSavedSuccess"),

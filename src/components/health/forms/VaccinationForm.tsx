@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { invalidateHealthQueries } from "@/lib/queryInvalidation";
 
 interface VaccinationFormProps {
   animalId: string;
@@ -34,8 +35,10 @@ export default function VaccinationForm({ animalId }: VaccinationFormProps) {
   const createMutation = useMutation({
     mutationFn: (payload: any) => createHealthRecord(animalId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", animalId] });
-      queryClient.invalidateQueries({ queryKey: ["animal", animalId] });
+      // A health record can move the animal's status (milk withdrawal,
+      // treatment), which the events list, the animal list and the dashboard
+      // each read from their own cached copy.
+      void invalidateHealthQueries(queryClient);
       toast({
         title: t("health.vaccinationRegistered"),
         description: t("health.vaccinationSavedSuccess"),

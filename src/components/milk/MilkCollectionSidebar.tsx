@@ -11,6 +11,7 @@ import { useIsAdmin } from "@/hooks/useAuth";
 import { getLocalDateString as toLocalDate } from "@/utils/dateUtils";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { invalidateMilkQueries } from "@/lib/queryInvalidation";
 import type { AnimalResponse, MilkDeliveryResponse } from "@/services/types";
 import type { MilkProductionItem } from "@/services/milkProductions";
 import { getPref, setPref } from "@/utils/prefs";
@@ -513,7 +514,7 @@ export default function MilkCollectionSidebar({
         onOpenChange={(open) => { if (!open) setEditingProduction(null); }}
         production={editingProduction}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["milk-productions"] });
+          void invalidateMilkQueries(queryClient);
         }}
       />
       <EditDeliveryDialog
@@ -522,7 +523,7 @@ export default function MilkCollectionSidebar({
         delivery={editingDelivery}
         buyerName={editingDeliveryBuyerName}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["milk-deliveries"] });
+          void invalidateMilkQueries(queryClient);
         }}
       />
     </div>

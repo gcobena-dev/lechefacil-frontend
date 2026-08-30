@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { invalidateHealthQueries } from "@/lib/queryInvalidation";
 
 export default function EditHealthEvent() {
   const { t } = useTranslation();
@@ -55,9 +56,10 @@ export default function EditHealthEvent() {
   const updateMutation = useMutation({
     mutationFn: (payload: any) => updateHealthRecord(animalId!, healthRecordId!, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", animalId] });
-      queryClient.invalidateQueries({ queryKey: ["healthRecord", animalId, healthRecordId] });
-      queryClient.invalidateQueries({ queryKey: ["animal", animalId] });
+      // A health record can move the animal's status (milk withdrawal,
+      // treatment), which the events list, the animal list and the dashboard
+      // each read from their own cached copy.
+      void invalidateHealthQueries(queryClient);
       toast({
         title: t("health.healthRecordUpdated"),
         description: t("health.healthRecordUpdateSuccess"),

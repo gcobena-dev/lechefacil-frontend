@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getBreeds, createBreed, updateBreed } from "@/services/breeds";
+import { invalidateAnimalQueries } from "@/lib/queryInvalidation";
 import { getLots, createLot, updateLot, deleteLot } from "@/services/lots";
 import { Pencil } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -40,7 +41,11 @@ export default function Catalogs() {
   });
   const updateBreedMut = useMutation({
     mutationFn: (args: { id: string; body: any }) => updateBreed(args.id, args.body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["breeds"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["breeds"] });
+      // The animal rows carry the breed name, not just its id.
+      void invalidateAnimalQueries(qc);
+    },
   });
 
   const createLotMut = useMutation({
@@ -53,7 +58,10 @@ export default function Catalogs() {
   });
   const updateLotMut = useMutation({
     mutationFn: (args: { id: string; body: any }) => updateLot(args.id, args.body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["lots"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lots"] });
+      void invalidateAnimalQueries(qc);
+    },
   });
 
   const openRename = (type: 'breed' | 'lot', id: string, name: string) => {

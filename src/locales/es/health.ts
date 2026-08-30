@@ -160,9 +160,11 @@ export default {
   vaccinationLabel: "Vacunación",
   vaccinationDescription: "Registrar aplicación de vacuna",
   treatmentLabel: "Tratamiento",
+  treatmentTypeDescription: "Registrar tratamiento médico",
   observationLabel: "Observación",
   observationDescription: "Chequeo veterinario",
   emergencyLabel: "Emergencia",
+  emergencyTypeDescription: "Atención urgente",
 
   // Página de registro
   registerHealthEvent: "Registrar Evento de Salud",
@@ -206,6 +208,4 @@ export default {
     "El registro de salud se ha actualizado correctamente",
   errorUpdatingHealthRecord: "No se pudo actualizar el registro",
   saveChanges: "Guardar cambios",
-  treatmentDescription: "Tratamiento",
-  emergencyDescription: "Emergencia",
 };

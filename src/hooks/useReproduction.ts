@@ -31,6 +31,7 @@ import {
   type CreateInseminationPayload,
   type PregnancyCheckPayload,
 } from "@/services/inseminations";
+import { invalidateReproductionQueries } from "@/lib/queryInvalidation";
 
 // --- Sires ---
 
@@ -79,7 +80,7 @@ export function useCreateSire() {
   return useMutation({
     mutationFn: (payload: CreateSirePayload) => createSire(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sires"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -90,7 +91,7 @@ export function useUpdateSire() {
     mutationFn: ({ id, payload }: { id: string; payload: UpdateSirePayload }) =>
       updateSire(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sires"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -100,7 +101,7 @@ export function useDeleteSire() {
   return useMutation({
     mutationFn: (id: string) => deleteSire(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sires"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -132,7 +133,7 @@ export function useCreateSemenStock() {
   return useMutation({
     mutationFn: (payload: CreateSemenStockPayload) => createSemenStock(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["semen-stock"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -148,7 +149,7 @@ export function useUpdateSemenStock() {
       payload: UpdateSemenStockPayload;
     }) => updateSemenStock(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["semen-stock"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -166,7 +167,7 @@ export function useDeleteSemenStock() {
   return useMutation({
     mutationFn: (id: string) => deleteSemenStock(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["semen-stock"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -196,8 +197,9 @@ export function useCreateInsemination() {
     mutationFn: (payload: CreateInseminationPayload) =>
       createInsemination(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["inseminations"] });
-      qc.invalidateQueries({ queryKey: ["semen-stock"] });
+      // A service consumes a straw and moves the animal into the
+      // reproductive buckets, so stock, lists and dashboards all shift.
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -220,11 +222,9 @@ export function useUpdateInsemination() {
       };
     }) => updateInsemination(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["inseminations"] });
       // The service date drives the reproductive buckets and the animal
       // timeline, so those views have to refetch too.
-      qc.invalidateQueries({ queryKey: ["reproductive-animals"] });
-      qc.invalidateQueries({ queryKey: ["animal-events"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -234,7 +234,7 @@ export function useDeleteInsemination() {
   return useMutation({
     mutationFn: (id: string) => deleteInsemination(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["inseminations"] });
+      void invalidateReproductionQueries(qc);
     },
   });
 }
@@ -250,8 +250,8 @@ export function useRecordPregnancyCheck() {
       payload: PregnancyCheckPayload;
     }) => recordPregnancyCheck(inseminationId, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["inseminations"] });
-      qc.invalidateQueries({ queryKey: ["pending-checks"] });
+      // A confirmed pregnancy changes the animal's status.
+      void invalidateReproductionQueries(qc);
     },
   });
 }

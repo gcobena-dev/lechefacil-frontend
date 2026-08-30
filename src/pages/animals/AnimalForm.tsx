@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, X, Sparkles, Check, Info, FileText, GitBranch } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultiplePhotos, listAnimalPhotos, deleteAnimalPhoto, updateAnimalPhoto, getNextTag, listAnimals, getLabelSuggestions } from "@/services/animals";
 import { getAnimalCertificate, createCertificate, updateCertificate } from "@/services/animalCertificates";
 import { getBreeds } from "@/services/breeds";
@@ -19,6 +19,7 @@ import { getLots } from "@/services/lots";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AnimalPhotoUpload, PhotoFile } from "@/components/animals/AnimalPhotoUpload";
 import { TagInput } from "@/components/ui/tag-input";
+import { invalidateAnimalQueries } from "@/lib/queryInvalidation";
 
 interface AnimalFormData {
   tag: string;
@@ -58,6 +59,7 @@ export default function AnimalForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const isEditing = Boolean(id);
 
   const [formData, setFormData] = useState<AnimalFormData>({
@@ -254,7 +256,11 @@ export default function AnimalForm() {
           external_sire_code: formData.sireType === "external" ? (formData.externalSireCode || null) : null,
           external_sire_registry: formData.sireType === "external" ? (formData.externalSireRegistry || null) : null,
         };
-        await doUpdate({ id: id as string, body });
+        const updated = await doUpdate({ id: id as string, body });
+        // Seed the detail cache with the version the server just assigned.
+        // Without it, re-opening this form inside the 5 minute `staleTime`
+        // replays the previous `version` and the API answers 409.
+        queryClient.setQueryData(["animal", id], updated);
       } else {
         const body = {
           tag: formData.tag,
@@ -273,6 +279,7 @@ export default function AnimalForm() {
         };
         const created = await doCreate(body);
         animalId = created.id;
+        queryClient.setQueryData(["animal", created.id], created);
       }
 
       // Handle certificate (save separately if any field has data)
@@ -291,7 +298,9 @@ export default function AnimalForm() {
             farm: formData.farm || undefined,
             certificate_name: formData.certificateName || undefined,
             association_code: formData.associationCode || undefined,
-            certNotes: formData.certNotes || undefined,
+            // The API field is `notes`; sending `certNotes` meant the note was
+            // dropped by the schema and never saved.
+            notes: formData.certNotes || undefined,
           };
 
           try {
@@ -328,6 +337,10 @@ export default function AnimalForm() {
         setUploadingPhotos(false);
       }
 
+      // Certificates and photos were written straight through the service
+      // layer, so nothing else has dropped their cached copies either.
+      void invalidateAnimalQueries(queryClient);
+
       toast({
         title: isEditing ? t('animals.animalUpdatedMsg') : t('animals.animalCreatedMsg'),
         description: `${formData.tag} ${t('animals.savedSuccessfully')}`,
@@ -336,6 +349,18 @@ export default function AnimalForm() {
     } catch (err: any) {
       console.error(err);
       setUploadingPhotos(false);
+      // 409 means our `version` was behind the server's. Refetch so the form
+      // rebinds to the current record instead of replaying the stale version
+      // on every retry.
+      if (err?.status === 409) {
+        void invalidateAnimalQueries(queryClient);
+        toast({
+          title: t('animals.saveConflict'),
+          description: t('animals.saveConflictDesc'),
+          variant: "destructive",
+        });
+        return;
+      }
       toast({ title: t('common.error'), description: t('animals.couldNotSave'), variant: "destructive" });
     }
   };
@@ -357,6 +382,9 @@ export default function AnimalForm() {
         ...p,
         is_primary: p.id === photoId
       })));
+      // The thumbnail on the list and detail screens comes from the cached
+      // photos, not from this component's state.
+      void invalidateAnimalQueries(queryClient);
 
       toast({
         title: t('animals.primaryPhotoUpdated'),

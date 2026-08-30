@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { invalidateHealthQueries } from "@/lib/queryInvalidation";
 
 interface EmergencyFormProps {
   animalId: string;
@@ -32,8 +33,10 @@ export default function EmergencyForm({ animalId }: EmergencyFormProps) {
   const createMutation = useMutation({
     mutationFn: (payload: any) => createHealthRecord(animalId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["healthRecords", animalId] });
-      queryClient.invalidateQueries({ queryKey: ["animal", animalId] });
+      // A health record can move the animal's status (milk withdrawal,
+      // treatment), which the events list, the animal list and the dashboard
+      // each read from their own cached copy.
+      void invalidateHealthQueries(queryClient);
       toast({
         title: t("health.emergencyRegistered"),
         description: t("health.emergencySavedSuccess"),

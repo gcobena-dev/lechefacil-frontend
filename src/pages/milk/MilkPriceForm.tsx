@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listBuyers } from "@/services/buyers";
 import { createMilkPrice } from "@/services/milkPrices";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -21,6 +21,7 @@ interface MilkPriceFormData {
 
 export default function MilkPriceForm() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -55,6 +56,12 @@ export default function MilkPriceForm() {
     }
     try {
       await doCreate(formData);
+      // The prices tab and the collection screen read from this root, and the
+      // backend also rewrites the farm's default buyer and price, so the tenant
+      // settings caches are stale too.
+      void queryClient.invalidateQueries({ queryKey: ["milk-prices"] });
+      void queryClient.invalidateQueries({ queryKey: ["tenant-settings"] });
+      void queryClient.invalidateQueries({ queryKey: ["tenant-billing"] });
       toast({ title: t('milk.priceRegistered'), description: t('milk.priceSavedCorrectly') });
       navigate("/settings?tab=prices");
     } catch (err) {

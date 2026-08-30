@@ -56,6 +56,7 @@ import { useAnimalDetail } from "@/hooks/useAnimalDetail";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { invalidateMilkQueries } from "@/lib/queryInvalidation";
 import { listAnimalPhotos } from "@/services/animals";
 import { useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1032,8 +1033,7 @@ export default function AnimalDetail() {
         onOpenChange={(open) => { if (!open) setEditingProduction(null); }}
         production={editingProduction}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["animal-production-paged"] });
-          queryClient.invalidateQueries({ queryKey: ["animal-detail"] });
+          void invalidateMilkQueries(queryClient);
         }}
       />
 
