@@ -1,5 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  getOutboxSnapshot,
+  getPendingProductionEntries,
+  subscribeOutbox,
+} from "@/services/outbox";
 import { listAnimals, getAnimal } from "@/services/animals";
 import { listBuyers } from "@/services/buyers";
 import { getBillingSettings } from "@/services/settings";
@@ -65,7 +70,12 @@ export function useMilkCollectionData(formData: {
   const [recordsOrder, setRecordsOrder] = useState<"asc" | "desc">("desc");
 
   // Load productions for selected date (server-side ordering)
-  const { data: productions = [] } = useQuery({
+  const {
+    data: productions = [],
+    isError: productionsFailed,
+    isFetching: productionsFetching,
+    dataUpdatedAt: productionsUpdatedAt,
+  } = useQuery({
     queryKey: [
       "milk-productions",
       formData.date,
@@ -80,14 +90,57 @@ export function useMilkCollectionData(formData: {
       }),
   });
 
+  /**
+   * Records still sitting in the outbox, shaped like server productions so the
+   * daily totals and the list include what the farmer just typed. They are
+   * merged at read time rather than written into the query cache, because the
+   * next successful refetch would silently wipe an optimistic cache entry — and
+   * this way the "pending" badge stays truthful.
+   */
+  const outboxOps = useSyncExternalStore(
+    subscribeOutbox,
+    getOutboxSnapshot,
+    getOutboxSnapshot
+  );
+  const pendingProductions = useMemo(() => {
+    return getPendingProductionEntries(formData.date, undefined, outboxOps).map((e) => ({
+      // No `version`: that is what keeps the edit affordance off a record the
+      // server has never seen.
+      id: `${e.opId}:${e.animalId}`,
+      animal_id: e.animalId,
+      buyer_id: null,
+      // AM -> 06:00, PM -> 18:00, the same convention the backend applies, so
+      // ordering by time puts pending rows where they belong.
+      date_time: `${e.date}T${e.shift === "AM" ? "06:00" : "18:00"}:00`,
+      shift: e.shift,
+      input_unit: "l",
+      input_quantity: String(e.inputQuantity),
+      density: "1",
+      volume_l: String(e.volumeL),
+      price_snapshot: null,
+      currency: billing?.default_currency || "USD",
+      amount: null,
+      notes: null,
+      __pending: true as const,
+      __pendingStatus: e.status,
+    }));
+  }, [formData.date, billing?.default_currency, outboxOps]);
+
+  const productionsWithPending = useMemo(
+    () => [...pendingProductions, ...productions],
+    [pendingProductions, productions]
+  );
+
   // Build animal ID set from today's productions
   const productionAnimalIds = useMemo(() => {
     const ids = new Set<string>();
-    productions.forEach((p: any) => {
+    // Pending rows included: a bulk entry can cover animals outside the page
+    // currently loaded, and they still need a name in the list.
+    productionsWithPending.forEach((p: any) => {
       if (p.animal_id) ids.add(String(p.animal_id));
     });
     return Array.from(ids);
-  }, [productions]);
+  }, [productionsWithPending]);
 
   // Fetch any animals referenced in productions that are missing from current page
   const animalsById = useMemo(() => {
@@ -177,7 +230,7 @@ export function useMilkCollectionData(formData: {
 
   // Calculate recent entries
   const recentEntries = useMemo(() => {
-    const items = productions
+    const items = productionsWithPending
       .filter((p) => toLocalDate(new Date(p.date_time)) === formData.date)
       .sort(
         (a, b) =>
@@ -193,10 +246,11 @@ export function useMilkCollectionData(formData: {
           animal: `${animal?.name ?? ""} (${animal?.tag ?? ""})`,
           amount: `${parseFloat(p.volume_l).toFixed(1)}L`,
           time,
+          pending: Boolean((p as { __pending?: boolean }).__pending),
         };
       });
     return items;
-  }, [productions, animalsEnriched, formData.date]);
+  }, [productionsWithPending, animalsEnriched, formData.date]);
 
   // Calculate recent deliveries
   const recentDeliveries = useMemo(() => {
@@ -253,7 +307,7 @@ export function useMilkCollectionData(formData: {
     activeAnimals,
     buyers,
     billing,
-    productions,
+    productions: productionsWithPending,
     productionsOrder: {
       order_by: recordsOrderBy,
       order: recordsOrder,
@@ -263,6 +317,12 @@ export function useMilkCollectionData(formData: {
     deliveries,
     prices,
     effectivePrice,
+    /** True when the last refetch failed; cached rows may still be shown. */
+    productionsFailed,
+    productionsFetching,
+    /** Epoch ms of the data on screen, for the "datos del ..." marker. */
+    productionsUpdatedAt,
+    pendingCount: pendingProductions.length,
     recentEntries,
     recentDeliveries,
     deliveryDateFrom,

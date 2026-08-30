@@ -4,9 +4,22 @@ import { useTranslation } from "@/hooks/useTranslation";
 import {
   createMilkProduction,
   createMilkProductionsBulk,
+  type CreateMilkProductionPayload,
+  type CreateMilkProductionsBulkPayload,
 } from "@/services/milkProductions";
-import { createMilkDelivery } from "@/services/milkDeliveries";
+import {
+  createMilkDelivery,
+  type CreateMilkDeliveryPayload,
+} from "@/services/milkDeliveries";
+import { isNetworkError } from "@/services/client";
+import { getConnectivityState } from "@/services/connectivity";
+import {
+  enqueue,
+  getPendingProductionEntries,
+  type OutboxMeta,
+} from "@/services/outbox";
 import { convertToLiters } from "@/lib/mock-data";
+import { uuid } from "@/utils/uuid";
 import type {
   MilkCollectionFormData,
   DeliveryFormData,
@@ -16,6 +29,12 @@ import {
   formatLocalTime,
   toLocalOffsetISO,
 } from "@/utils/dateUtils";
+
+const UNIT_MAP: Record<string, "l" | "kg" | "lb"> = {
+  L: "l",
+  KG: "kg",
+  LB: "lb",
+};
 
 export function useMilkCollectionActions(
   formData: MilkCollectionFormData,
@@ -34,16 +53,19 @@ export function useMilkCollectionActions(
   const queryClient = useQueryClient();
 
   const { mutateAsync: doCreate, isPending: creating } = useMutation({
-    mutationFn: createMilkProduction,
+    mutationFn: (payload: CreateMilkProductionPayload) =>
+      createMilkProduction(payload),
   });
 
   const { mutateAsync: doCreateBulk, isPending: creatingBulk } = useMutation({
-    mutationFn: createMilkProductionsBulk,
+    mutationFn: (payload: CreateMilkProductionsBulkPayload) =>
+      createMilkProductionsBulk(payload),
   });
 
   const { mutateAsync: doCreateDelivery, isPending: creatingDelivery } =
     useMutation({
-      mutationFn: createMilkDelivery,
+      mutationFn: (payload: CreateMilkDeliveryPayload) =>
+        createMilkDelivery(payload),
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ["milk-deliveries", deliveryDateFrom],
@@ -51,6 +73,42 @@ export function useMilkCollectionActions(
         resetDeliveryForm();
       },
     });
+
+  /**
+   * Saves the record on the device so the milking is never lost, and tells the
+   * user plainly that it is stored but not sent yet.
+   */
+  const queueOffline = async (
+    kind: "production.create" | "production.bulk" | "delivery.create",
+    payload: Record<string, unknown>,
+    meta: OutboxMeta,
+    description: string
+  ) => {
+    await enqueue({ id: payload.client_request_id as string, kind, payload, meta });
+    toast({
+      title: t("offline.savedOnDevice"),
+      description,
+    });
+  };
+
+  /**
+   * The same rule the server enforces, applied to what is still on the device:
+   * without it a farmer with no signal could register the same cow twice and
+   * only find out at sync time.
+   */
+  const findPendingDuplicates = (animalIds: string[]): string[] => {
+    const pending = getPendingProductionEntries(
+      formData.date,
+      formData.shift as "AM" | "PM"
+    );
+    const pendingIds = new Set(pending.map((p) => p.animalId));
+    return animalIds.filter((id) => pendingIds.has(id));
+  };
+
+  const nameOf = (id: string) => {
+    const a = animals.find((x) => x.id === id);
+    return a ? `${a.name ?? ""} (${a.tag ?? ""})`.trim() : id;
+  };
 
   const handleSingleSubmit = async () => {
     // Disallow future dates
@@ -72,39 +130,61 @@ export function useMilkCollectionActions(
       return;
     }
 
-    const unitMap: Record<string, "l" | "kg" | "lb"> = {
-      L: "l",
-      KG: "kg",
-      LB: "lb",
-    };
+    const dupes = findPendingDuplicates([formData.animalId]);
+    if (dupes.length > 0) {
+      toast({
+        title: t("common.error"),
+        description: t("offline.alreadyQueued", { animal: nameOf(dupes[0]) }),
+        variant: "destructive",
+      });
+      return;
+    }
+
     const calculatedLiters = convertToLiters(
       parseFloat(formData.inputValue),
       formData.inputUnit as any,
       parseFloat(formData.density)
     );
 
-    try {
-      // Build a local datetime for the selected date using current local time
-      const now = new Date();
-      const [y, m, d] = formData.date.split("-").map(Number);
-      const localDt = new Date(
-        y,
-        (m || 1) - 1,
-        d || now.getDate(),
-        now.getHours(),
-        now.getMinutes()
-      );
+    const payload = {
+      client_request_id: uuid(),
+      date: formData.date,
+      shift: formData.shift as "AM" | "PM",
+      animal_id: formData.animalId,
+      input_unit: UNIT_MAP[formData.inputUnit as keyof typeof UNIT_MAP] ?? "l",
+      input_quantity: parseFloat(formData.inputValue),
+      density: parseFloat(formData.density),
+      buyer_id: formData.buyerId || null,
+      notes: formData.notes || null,
+    };
+    const meta: OutboxMeta = {
+      date: formData.date,
+      shift: formData.shift as "AM" | "PM",
+      buyerId: formData.buyerId || null,
+      totalVolumeL: calculatedLiters,
+      entries: [
+        {
+          animalId: formData.animalId,
+          inputQuantity: parseFloat(formData.inputValue),
+          volumeL: calculatedLiters,
+        },
+      ],
+    };
 
-      await doCreate({
-        date: formData.date,
-        shift: formData.shift as "AM" | "PM",
-        animal_id: formData.animalId,
-        input_unit: unitMap[formData.inputUnit as keyof typeof unitMap] ?? "l",
-        input_quantity: parseFloat(formData.inputValue),
-        density: parseFloat(formData.density),
-        buyer_id: formData.buyerId || null,
-        notes: formData.notes || null,
-      });
+    // Known to be offline: skip the doomed request and queue straight away.
+    if (!getConnectivityState().online) {
+      await queueOffline(
+        "production.create",
+        payload,
+        meta,
+        `${calculatedLiters.toFixed(1)}L · ${nameOf(formData.animalId)}`
+      );
+      resetProductionForm();
+      return;
+    }
+
+    try {
+      await doCreate(payload);
 
       await queryClient.invalidateQueries({
         queryKey: ["milk-productions", formData.date],
@@ -115,6 +195,18 @@ export function useMilkCollectionActions(
       });
       resetProductionForm();
     } catch (err: any) {
+      // The connection dropped between the check and the send: queue it rather
+      // than making the user retype the milking.
+      if (isNetworkError(err)) {
+        await queueOffline(
+          "production.create",
+          payload,
+          meta,
+          `${calculatedLiters.toFixed(1)}L · ${nameOf(formData.animalId)}`
+        );
+        resetProductionForm();
+        return;
+      }
       console.error(err);
       toast({
         title: t("common.error"),
@@ -149,50 +241,75 @@ export function useMilkCollectionActions(
       return;
     }
 
-    const unitMap: Record<string, "l" | "kg" | "lb"> = {
-      L: "l",
-      KG: "kg",
-      LB: "lb",
-    };
-    const bulkCalculatedTotal = Object.values(animalQuantities).reduce(
-      (sum, quantity) => {
-        return (
-          sum +
-          (quantity
-            ? convertToLiters(
-                parseFloat(quantity),
-                formData.inputUnit as any,
-                parseFloat(formData.density)
-              )
-            : 0)
-        );
-      },
+    const dupes = findPendingDuplicates(animalsWithQuantities);
+    if (dupes.length > 0) {
+      toast({
+        title: t("common.error"),
+        description: t("offline.alreadyQueuedMany", {
+          count: dupes.length,
+          animals: dupes.slice(0, 3).map(nameOf).join(", "),
+        }),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const litersOf = (quantity: string) =>
+      convertToLiters(
+        parseFloat(quantity),
+        formData.inputUnit as any,
+        parseFloat(formData.density)
+      );
+    const bulkCalculatedTotal = animalsWithQuantities.reduce(
+      (sum, id) => sum + litersOf(animalQuantities[id]),
       0
     );
 
-    try {
-      const now = new Date();
-      const [y, m, d] = formData.date.split("-").map(Number);
-      const localDt = new Date(
-        y,
-        (m || 1) - 1,
-        d || now.getDate(),
-        now.getHours(),
-        now.getMinutes()
-      );
+    const opId = uuid();
+    const payload = {
+      client_request_id: opId,
+      date: formData.date,
+      shift: formData.shift as "AM" | "PM",
+      input_unit: UNIT_MAP[formData.inputUnit as keyof typeof UNIT_MAP] ?? "l",
+      density: parseFloat(formData.density),
+      buyer_id: formData.buyerId || null,
+      notes: formData.notes || null,
+      items: animalsWithQuantities.map((animal_id) => ({
+        animal_id,
+        input_quantity: parseFloat(animalQuantities[animal_id]),
+        // Per-row id: a partially applied batch resumes exactly where it stopped.
+        client_request_id: uuid(),
+      })),
+    };
+    const meta: OutboxMeta = {
+      date: formData.date,
+      shift: formData.shift as "AM" | "PM",
+      buyerId: formData.buyerId || null,
+      totalVolumeL: bulkCalculatedTotal,
+      entries: animalsWithQuantities.map((animalId) => ({
+        animalId,
+        inputQuantity: parseFloat(animalQuantities[animalId]),
+        volumeL: litersOf(animalQuantities[animalId]),
+      })),
+    };
 
-      await doCreateBulk({
-        date: formData.date,
-        shift: formData.shift as "AM" | "PM",
-        input_unit: unitMap[formData.inputUnit as keyof typeof unitMap] ?? "l",
-        density: parseFloat(formData.density),
-        buyer_id: formData.buyerId || null,
-        notes: formData.notes || null,
-        items: animalsWithQuantities.map((animal_id) => ({
-          animal_id,
-          input_quantity: parseFloat(animalQuantities[animal_id]),
-        })),
-      });
+    if (!getConnectivityState().online) {
+      await queueOffline(
+        "production.bulk",
+        // Queued batches skip rows the server already has instead of aborting.
+        { ...payload, on_conflict: "skip" },
+        meta,
+        `${bulkCalculatedTotal.toFixed(1)}L · ${animalsWithQuantities.length} ${t(
+          "milk.animals"
+        )}`
+      );
+      resetProductionForm();
+      onBulkSuccess?.();
+      return;
+    }
+
+    try {
+      await doCreateBulk(payload);
 
       await queryClient.invalidateQueries({
         queryKey: ["milk-productions", formData.date],
@@ -209,6 +326,20 @@ export function useMilkCollectionActions(
       // Notify UI to clear OCR widget/cards
       onBulkSuccess?.();
     } catch (err: any) {
+      if (isNetworkError(err)) {
+        await queueOffline(
+          "production.bulk",
+          { ...payload, on_conflict: "skip" },
+          meta,
+          `${bulkCalculatedTotal.toFixed(1)}L · ${animalsWithQuantities.length} ${t(
+            "milk.animals"
+          )}`
+        );
+        resetProductionForm();
+        onBulkSuccess?.();
+        return;
+      }
+
       console.error("Bulk submission error:", err);
 
       // Check if this is a validation error with conflicts
@@ -225,11 +356,6 @@ export function useMilkCollectionActions(
           existing_date_time?: string;
           existing_volume_l?: string;
         }>;
-
-        const nameOf = (id: string) => {
-          const a = animals.find((x) => x.id === id);
-          return a ? `${a.name ?? ""} (${a.tag ?? ""})`.trim() : id;
-        };
 
         const lines = conflicts.map((c) => {
           const animalName = nameOf(c.animal_id);
@@ -288,20 +414,47 @@ export function useMilkCollectionActions(
       return;
     }
 
-    try {
-      const payload = {
-        date_time: toLocalOffsetISO(new Date(deliveryFormData.dateTime)),
-        volume_l: parseFloat(deliveryFormData.volumeL),
-        buyer_id: deliveryFormData.buyerId,
-        notes: deliveryFormData.notes || undefined,
-      };
+    const volumeL = parseFloat(deliveryFormData.volumeL);
+    const payload = {
+      client_request_id: uuid(),
+      date_time: toLocalOffsetISO(new Date(deliveryFormData.dateTime)),
+      volume_l: volumeL,
+      buyer_id: deliveryFormData.buyerId,
+      notes: deliveryFormData.notes || undefined,
+    };
+    const meta: OutboxMeta = {
+      buyerId: deliveryFormData.buyerId,
+      totalVolumeL: volumeL,
+    };
 
+    if (!getConnectivityState().online) {
+      await queueOffline(
+        "delivery.create",
+        payload,
+        meta,
+        `${volumeL.toFixed(1)}L · ${t("milk.delivery")}`
+      );
+      resetDeliveryForm();
+      return;
+    }
+
+    try {
       await doCreateDelivery(payload);
       toast({
         title: t("common.success"),
         description: t("milk.deliverMilk") + " registrada correctamente",
       });
     } catch (error: any) {
+      if (isNetworkError(error)) {
+        await queueOffline(
+          "delivery.create",
+          payload,
+          meta,
+          `${volumeL.toFixed(1)}L · ${t("milk.delivery")}`
+        );
+        resetDeliveryForm();
+        return;
+      }
       toast({
         title: t("common.error"),
         description:

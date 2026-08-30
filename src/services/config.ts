@@ -10,8 +10,33 @@ const RUNTIME_API_URL = (typeof window !== "undefined" &&
 const RUNTIME_TENANT_HEADER = (typeof window !== "undefined" &&
   window.__APP_CONFIG__?.VITE_TENANT_HEADER) as string | undefined;
 
-export const API_URL =
-  RUNTIME_API_URL ?? (import.meta.env.VITE_API_URL as string | undefined);
+// The web deploy builds without baking VITE_API_URL (see deploy.yml): the URL
+// arrives at runtime from /env.js, which is generated at container start and so
+// cannot be precached by the service worker. Offline that script never loads,
+// leaving the app with no idea where its API lives. Remembering the last URL we
+// resolved keeps the offline build functional — and keeps the outbox able to
+// send once the connection is back.
+const API_URL_KEY = "lf_api_url";
+
+function resolveApiUrl(): string | undefined {
+  const fromEnv =
+    RUNTIME_API_URL ?? (import.meta.env.VITE_API_URL as string | undefined);
+  if (fromEnv) {
+    try {
+      localStorage.setItem(API_URL_KEY, fromEnv);
+    } catch {
+      // Storage unavailable (private mode): just use the value we have.
+    }
+    return fromEnv;
+  }
+  try {
+    return localStorage.getItem(API_URL_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export const API_URL = resolveApiUrl();
 // Función para validar y sanitizar el nombre del header
 function getValidTenantHeader(): string {
   const envHeader =

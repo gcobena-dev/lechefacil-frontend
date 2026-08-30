@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, persistOptions } from "@/lib/queryClient";
 import { ThemeProvider } from "@/hooks/useTheme.tsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
@@ -35,6 +36,7 @@ import EditHealthEvent from "./pages/animals/EditHealthEvent";
 
 // Milk pages
 import MilkCollect from "./pages/milk/MilkCollect";
+import PendingSync from "./pages/milk/PendingSync";
 import MilkPrices from "./pages/milk/MilkPrices";
 import MilkPriceForm from "./pages/milk/MilkPriceForm";
 import BuyerForm from "./pages/milk/BuyerForm";
@@ -67,11 +69,20 @@ import AccessRequestDetail from "./pages/admin/AccessRequestDetail";
 import NotFound from "./pages/NotFound";
 import { useSilentRefresh } from "./hooks/useSilentRefresh";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
+import { useOutboxAutoSync } from "./hooks/useOutboxAutoSync";
+import { initConnectivity } from "./services/connectivity";
+import { initOutbox } from "./services/outbox";
 
-const queryClient = new QueryClient();
+// Start listening for connectivity changes and load the queued writes from disk
+// before anything renders, so the first screen already knows where it stands.
+initConnectivity();
+void initOutbox();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={persistOptions}
+  >
       <ThemeProvider defaultTheme="system" storageKey="lechefacil-ui-theme">
         <TooltipProvider>
           <Toaster />
@@ -79,6 +90,8 @@ const App = () => (
           <UpdateChecker />
           {/** Activate silent refresh globally */}
           <SilentRefreshActivator />
+          {/** Drains the offline write queue whenever it can */}
+          <OutboxAutoSyncActivator />
           <BrowserRouter>
         <AndroidBackButtonHandler />
         <SessionExpiredHandler />
@@ -93,6 +106,7 @@ const App = () => (
             <Route path="animals/:id/health/new" element={<RegisterHealthEvent />} />
             <Route path="animals/:id/health/:healthRecordId/edit" element={<EditHealthEvent />} />
             <Route path="milk/collect" element={<MilkCollect />} />
+            <Route path="milk/pending" element={<PendingSync />} />
             <Route path="milk/prices" element={<MilkPrices />} />
             <Route path="milk/prices/new" element={<MilkPriceForm />} />
             <Route path="buyers/new" element={<BuyerForm />} />
@@ -144,7 +158,7 @@ const App = () => (
       </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
@@ -152,6 +166,12 @@ export default App;
 // Minimal component to run the silent refresh hook at app root
 function SilentRefreshActivator() {
   useSilentRefresh({ enabled: true, intervalMs: 45 * 60 * 1000 });
+  return null;
+}
+
+// Retries queued writes on reconnect, resume and login
+function OutboxAutoSyncActivator() {
+  useOutboxAutoSync();
   return null;
 }
 

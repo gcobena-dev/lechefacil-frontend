@@ -13,11 +13,17 @@ import { getTodayLocalDateString } from "@/utils/dateUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { convertToLiters } from "@/lib/mock-data";
+import { useConnectivity } from "@/hooks/useConnectivity";
+import { CloudOff } from "lucide-react";
+import { formatLocalDateShort, formatLocalTime } from "@/utils/dateUtils";
 
 export default function MilkCollect() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { online } = useConnectivity();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("production");
   const [ocrResetKey, setOcrResetKey] = useState<number>(0);
 
@@ -54,7 +60,9 @@ export default function MilkCollect() {
     effectivePrice,
     recentEntries,
     recentDeliveries,
-    deliveryDateFrom
+    deliveryDateFrom,
+    productionsFailed,
+    productionsUpdatedAt
   } = useMilkCollectionData(formData);
 
   // Dialog for bulk conflicts
@@ -92,26 +100,49 @@ export default function MilkCollect() {
 
   // Auto-select all active animals when list loads for bulk mode
   useEffect(() => {
+    let cancelled = false;
+
     const autoSelectAll = async () => {
       if (selectedAnimals.length > 0) return;
       // If we know the total from server and page size, fetch all pages to collect IDs
       const total = animalsPagination.total;
       const pageSize = animalsPagination.pageSize;
+      const selectLoaded = () => {
+        if (!cancelled && activeAnimals.length > 0) {
+          setSelectedAnimals(activeAnimals.map(a => a.id));
+        }
+      };
       if (!total || total <= 0) {
         // Fallback: select whatever is currently loaded
-        if (activeAnimals.length > 0) setSelectedAnimals(activeAnimals.map(a => a.id));
+        selectLoaded();
         return;
       }
       const totalPages = Math.max(1, Math.ceil(total / pageSize));
       const ids: string[] = [];
-      for (let p = 1; p <= totalPages; p++) {
-        const res = await listAnimals({ status_codes: "LACTATING", page: p, limit: pageSize });
-        res.items?.forEach(a => ids.push(a.id));
+      try {
+        for (let p = 1; p <= totalPages; p++) {
+          // Through the query cache, not a bare request: offline this serves the
+          // pages already stored on the device. `staleTime: Infinity` because we
+          // only need the ids — the visible page is kept fresh by its own query.
+          const res = await queryClient.fetchQuery({
+            queryKey: ["animals", { status_codes: "LACTATING", page: p, q: "", limit: pageSize }],
+            queryFn: () => listAnimals({ status_codes: "LACTATING", page: p, limit: pageSize, q: "" }),
+            staleTime: Infinity,
+          });
+          res.items?.forEach(a => ids.push(a.id));
+        }
+      } catch {
+        // No signal and pages never cached. Selecting what we do have beats
+        // leaving the farmer staring at an empty form.
       }
+      if (cancelled) return;
       if (ids.length > 0) setSelectedAnimals(ids);
+      else selectLoaded();
     };
+
     autoSelectAll();
-  }, [activeAnimals, selectedAnimals.length, animalsPagination.total, animalsPagination.pageSize, setSelectedAnimals]);
+    return () => { cancelled = true; };
+  }, [activeAnimals, selectedAnimals.length, animalsPagination.total, animalsPagination.pageSize, setSelectedAnimals, queryClient]);
 
   // Handle form data changes
   const handleFormDataChange = (data: Partial<typeof formData>) => {
@@ -183,16 +214,8 @@ export default function MilkCollect() {
       setPendingProductionType("single");
     }
 
-    // Warn if offline (e.g. still connected to "Balanza" WiFi)
-    if (!navigator.onLine) {
-      toast({
-        title: t("milk.deviceSyncOfflineTitle"),
-        description: t("milk.deviceSyncOfflineDesc"),
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Offline is no longer a refusal: the record is stored on the device and
+    // sent when there is signal again. The dialog says so before confirming.
     setConfirmProductionOpen(true);
   };
 
@@ -236,6 +259,16 @@ export default function MilkCollect() {
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t("milk.milkCollectionTitle")}</h1>
         <p className="text-muted-foreground text-sm sm:text-base">{t("milk.managePricesAndBuyers")}</p>
+        {productionsFailed && (
+          <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+            <CloudOff className="h-3.5 w-3.5" />
+            {productionsUpdatedAt
+              ? t("offline.cachedData", {
+                  when: `${formatLocalDateShort(new Date(productionsUpdatedAt).toISOString())} ${formatLocalTime(new Date(productionsUpdatedAt).toISOString())}`,
+                })
+              : t("offline.loadFailedNoCache")}
+          </p>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -383,6 +416,14 @@ export default function MilkCollect() {
                 </div>
               </>
             )}
+            {!online && (
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+                <CloudOff className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span className="text-xs text-amber-900 dark:text-amber-200">
+                  {t("offline.willQueueOnConfirm")}
+                </span>
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setConfirmProductionOpen(false)}>
@@ -420,6 +461,14 @@ export default function MilkCollect() {
               <span className="text-muted-foreground">{t("milk.volumeL")}</span>
               <span className="font-medium">{deliveryFormData.volumeL}L</span>
             </div>
+            {!online && (
+              <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
+                <CloudOff className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span className="text-xs text-amber-900 dark:text-amber-200">
+                  {t("offline.willQueueOnConfirm")}
+                </span>
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setConfirmDeliveryOpen(false)}>

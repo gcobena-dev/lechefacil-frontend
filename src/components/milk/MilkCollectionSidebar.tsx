@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Truck, ChevronLeft, ChevronRight, ArrowUpDown, Pencil } from "lucide-react";
+import { Clock, Truck, ChevronLeft, ChevronRight, ArrowUpDown, Pencil, CloudOff } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +45,9 @@ interface RecentDelivery {
 interface Production {
   id?: string;
   animal_id?: string;
+  /** Set on rows merged in from the offline queue; they have no server id yet. */
+  __pending?: boolean;
+  __pendingStatus?: "pending" | "conflict" | "failed";
   date_time: string;
   shift: string;
   volume_l: string;
@@ -377,6 +380,15 @@ export default function MilkCollectionSidebar({
                       <div className="mt-2 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <Badge variant={shift === 'AM' ? 'default' : 'secondary'} className="shrink-0">{shift}</Badge>
+                          {p.__pending && (
+                            <Badge
+                              variant={p.__pendingStatus === 'pending' ? 'outline' : 'destructive'}
+                              className="shrink-0 gap-1"
+                            >
+                              <CloudOff className="h-3 w-3" />
+                              {t('offline.pendingBadge')}
+                            </Badge>
+                          )}
                           {isAdmin && p.id && p.version !== undefined && (
                             <Button
                               variant="ghost"

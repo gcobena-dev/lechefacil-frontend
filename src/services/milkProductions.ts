@@ -53,7 +53,7 @@ export async function listMilkProductions(params: {
   return resp.items;
 }
 
-export async function createMilkProduction(payload: {
+export interface CreateMilkProductionPayload {
   date?: string; // YYYY-MM-DD
   shift?: "AM" | "PM";
   date_time?: string; // ISO
@@ -63,16 +63,48 @@ export async function createMilkProduction(payload: {
   density?: number | string | null;
   buyer_id?: string | null;
   notes?: string | null;
-}) {
+  /**
+   * Device-generated UUID. Replaying the same id returns the record created the
+   * first time instead of a duplicate, which is what makes offline retries safe.
+   */
+  client_request_id?: string;
+}
+
+/** `tenantId` lets the outbox replay a record into the farm it was typed in. */
+export interface RequestScope {
+  tenantId?: string;
+}
+
+export async function createMilkProduction(
+  payload: CreateMilkProductionPayload,
+  scope: RequestScope = {}
+) {
   return apiFetch<MilkProductionItem>("/api/v1/milk-productions/", {
     method: "POST",
     withAuth: true,
     withTenant: true,
+    tenantId: scope.tenantId,
     body: payload,
   });
 }
 
-export async function createMilkProductionsBulk(payload: {
+export interface MilkProductionSkipped {
+  animal_id: string;
+  date: string;
+  shift: string;
+  input_quantity: string;
+  /** `already_applied`: same client_request_id. `duplicate`: same animal/day/shift. */
+  reason: "already_applied" | "duplicate";
+  existing_date_time?: string | null;
+  existing_volume_l?: string | null;
+}
+
+export interface MilkProductionsBulkResponse {
+  items: MilkProductionItem[];
+  skipped: MilkProductionSkipped[];
+}
+
+export interface CreateMilkProductionsBulkPayload {
   date?: string; // YYYY-MM-DD
   shift?: "AM" | "PM";
   date_time?: string; // ISO
@@ -80,14 +112,34 @@ export async function createMilkProductionsBulk(payload: {
   density?: number | string | null;
   buyer_id?: string | null;
   notes?: string | null;
-  items: { animal_id: string; input_quantity: number | string }[];
-}) {
-  return apiFetch<MilkProductionItem[]>("/api/v1/milk-productions/bulk", {
-    method: "POST",
-    withAuth: true,
-    withTenant: true,
-    body: payload,
-  });
+  items: {
+    animal_id: string;
+    input_quantity: number | string;
+    client_request_id?: string;
+  }[];
+  /**
+   * "fail" (default) keeps the interactive behaviour: any clash aborts the whole
+   * batch so the user sees the conflicts dialog. The outbox sends "skip", where
+   * rows that already exist are reported back instead of blocking the rest —
+   * otherwise 3 already-synced cows would stop the other 17 forever.
+   */
+  on_conflict?: "fail" | "skip";
+}
+
+export async function createMilkProductionsBulk(
+  payload: CreateMilkProductionsBulkPayload,
+  scope: RequestScope = {}
+) {
+  return apiFetch<MilkProductionsBulkResponse>(
+    "/api/v1/milk-productions/bulk",
+    {
+      method: "POST",
+      withAuth: true,
+      withTenant: true,
+      tenantId: scope.tenantId,
+      body: payload,
+    }
+  );
 }
 
 export async function updateMilkProduction(
@@ -207,5 +259,7 @@ export async function processOcrImage(payload: {
     withAuth: true,
     withTenant: true,
     body: payload,
+    // Vision model round-trip; well past the default request deadline.
+    timeoutMs: 120_000,
   });
 }

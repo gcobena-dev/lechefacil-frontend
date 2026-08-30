@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Milk, UserCircle } from "lucide-react";
 import { BottomNav } from "./BottomNav";
+import { OfflineBanner } from "./OfflineBanner";
 import { useQuery } from "@tanstack/react-query";
 import { me as apiMe } from "@/services/auth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -59,6 +60,8 @@ export function AppLayout() {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Header />
+          {/* Connection + unsent-records status, above every screen */}
+          <OfflineBanner />
           {/* Add bottom padding so content isn't hidden behind BottomNav (h-16) on mobile */}
           <main className="flex-1 p-4 md:p-6 overflow-auto pb-24 md:pb-6 min-w-0">
             <Outlet />

@@ -11,18 +11,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { myTenants, performLogout } from "@/services/auth";
 import { getTenantId } from "@/services/config";
 import { useSwitchTenant } from "@/hooks/useSwitchTenant";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useTranslation } from "@/hooks/useTranslation";
 import { NotificationBell } from "./NotificationBell";
+import { purgeScopedQueryCache } from "@/lib/queryClient";
 
 export function Header() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const switchTenant = useSwitchTenant();
+  const queryClient = useQueryClient();
   const { isSuperAdmin } = useIsSuperAdmin();
 
   const { data: memberships } = useQuery({
@@ -122,7 +124,11 @@ export function Header() {
               <DropdownMenuItem
                 className="text-destructive cursor-pointer"
                 onClick={async () => {
+                  // Purge before the token goes: the cache key is derived from
+                  // it. The outbox stays — unsent records must outlive a logout.
+                  await purgeScopedQueryCache();
                   await performLogout();
+                  queryClient.clear();
                   navigate("/login", { replace: true });
                 }}
               >

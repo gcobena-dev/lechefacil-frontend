@@ -10,6 +10,7 @@ import updates from "./updates";
 import notifications from "./notifications";
 import reproduction from "./reproduction";
 import devices from "./devices";
+import offline from "./offline";
 
 export default {
   common,
@@ -24,4 +25,5 @@ export default {
   notifications,
   reproduction,
   devices,
+  offline,
 };

@@ -6,6 +6,12 @@ export interface CreateMilkDeliveryPayload {
   volume_l: number;
   buyer_id: string;
   notes?: string;
+  /**
+   * Device-generated UUID, required for safe offline replay. Unlike productions,
+   * deliveries have no natural key — the same buyer can receive several loads on
+   * the same day — so without this a retry would silently duplicate one.
+   */
+  client_request_id?: string;
 }
 
 export async function listMilkDeliveries(params?: {
@@ -24,11 +30,15 @@ export async function listMilkDeliveries(params?: {
   });
 }
 
-export async function createMilkDelivery(payload: CreateMilkDeliveryPayload) {
+export async function createMilkDelivery(
+  payload: CreateMilkDeliveryPayload,
+  scope: { tenantId?: string } = {}
+) {
   return apiFetch<MilkDeliveryResponse>("/api/v1/milk-deliveries/", {
     method: "POST",
     withAuth: true,
     withTenant: true,
+    tenantId: scope.tenantId,
     body: payload,
   });
 }

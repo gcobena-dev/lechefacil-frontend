@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { SESSION_EXPIRED_EVENT } from "@/services/session";
 import { performLogout } from "@/services/auth";
+import { purgeScopedQueryCache } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -47,6 +48,12 @@ export function SessionExpiredHandler() {
       );
 
       try {
+        // Purge the persisted cache FIRST: its key is derived from the token and
+        // tenant, so after performLogout() we would be deleting the wrong scope
+        // and leaving this session's data on disk. The outbox is deliberately
+        // left alone — those records exist nowhere else and must survive to be
+        // sent after the next login.
+        await purgeScopedQueryCache();
         // Best-effort: revoke the refresh cookie and the push token server-side
         await performLogout();
       } finally {

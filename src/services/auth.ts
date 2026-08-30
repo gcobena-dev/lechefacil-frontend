@@ -89,12 +89,22 @@ export async function refreshAccess(): Promise<LoginResponse> {
   const rt = getRefreshToken();
   if (rt) headers["Authorization"] = `Bearer ${rt}`;
   const body = rt ? JSON.stringify({ refresh_token: rt }) : undefined;
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    credentials: "include",
-    body,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body,
+    });
+  } catch (cause) {
+    // Losing the connection while refreshing must never read as "session
+    // rejected": no status, but flagged so the outbox retries later.
+    const err: ApiError = new Error("Sin conexión con el servidor");
+    err.isNetworkError = true;
+    (err as Error & { cause?: unknown }).cause = cause;
+    throw err;
+  }
   if (!res.ok) {
     // Carry the status so callers can tell "session rejected" (401/403) apart
     // from a transient failure (5xx) or no connection at all (fetch rejects).
