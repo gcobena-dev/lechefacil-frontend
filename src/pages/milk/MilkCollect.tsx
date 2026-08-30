@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { listAnimals } from "@/services/animals";
 import { Milk, Truck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -13,7 +12,6 @@ import { getTodayLocalDateString } from "@/utils/dateUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 import { convertToLiters } from "@/lib/mock-data";
 import { useConnectivity } from "@/hooks/useConnectivity";
 import { CloudOff } from "lucide-react";
@@ -23,7 +21,6 @@ export default function MilkCollect() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { online } = useConnectivity();
-  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("production");
   const [ocrResetKey, setOcrResetKey] = useState<number>(0);
 
@@ -52,7 +49,6 @@ export default function MilkCollect() {
   const {
     animals,
     activeAnimals,
-    animalsPagination,
     buyers,
     billing,
     productions,
@@ -98,51 +94,14 @@ export default function MilkCollect() {
     () => setOcrResetKey((k) => k + 1)
   );
 
-  // Auto-select all active animals when list loads for bulk mode
+  // Auto-select all active animals when list loads for bulk mode.
+  // The whole lactating list now arrives in a single query, so this no longer
+  // has to walk pages over the network — which also means it works offline.
   useEffect(() => {
-    let cancelled = false;
-
-    const autoSelectAll = async () => {
-      if (selectedAnimals.length > 0) return;
-      // If we know the total from server and page size, fetch all pages to collect IDs
-      const total = animalsPagination.total;
-      const pageSize = animalsPagination.pageSize;
-      const selectLoaded = () => {
-        if (!cancelled && activeAnimals.length > 0) {
-          setSelectedAnimals(activeAnimals.map(a => a.id));
-        }
-      };
-      if (!total || total <= 0) {
-        // Fallback: select whatever is currently loaded
-        selectLoaded();
-        return;
-      }
-      const totalPages = Math.max(1, Math.ceil(total / pageSize));
-      const ids: string[] = [];
-      try {
-        for (let p = 1; p <= totalPages; p++) {
-          // Through the query cache, not a bare request: offline this serves the
-          // pages already stored on the device. `staleTime: Infinity` because we
-          // only need the ids — the visible page is kept fresh by its own query.
-          const res = await queryClient.fetchQuery({
-            queryKey: ["animals", { status_codes: "LACTATING", page: p, q: "", limit: pageSize }],
-            queryFn: () => listAnimals({ status_codes: "LACTATING", page: p, limit: pageSize, q: "" }),
-            staleTime: Infinity,
-          });
-          res.items?.forEach(a => ids.push(a.id));
-        }
-      } catch {
-        // No signal and pages never cached. Selecting what we do have beats
-        // leaving the farmer staring at an empty form.
-      }
-      if (cancelled) return;
-      if (ids.length > 0) setSelectedAnimals(ids);
-      else selectLoaded();
-    };
-
-    autoSelectAll();
-    return () => { cancelled = true; };
-  }, [activeAnimals, selectedAnimals.length, animalsPagination.total, animalsPagination.pageSize, setSelectedAnimals, queryClient]);
+    if (selectedAnimals.length > 0) return;
+    if (activeAnimals.length === 0) return;
+    setSelectedAnimals(activeAnimals.map((a) => a.id));
+  }, [activeAnimals, selectedAnimals.length, setSelectedAnimals]);
 
   // Handle form data changes
   const handleFormDataChange = (data: Partial<typeof formData>) => {
@@ -252,7 +211,7 @@ export default function MilkCollect() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4">
+    <div className="max-w-7xl mx-auto space-y-6 px-0 sm:px-4">
       <div className="text-center">
         <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-full flex items-center justify-center mb-4">
           <Milk className="w-6 h-6 sm:w-8 sm:h-8 text-primary-foreground" />
@@ -285,19 +244,13 @@ export default function MilkCollect() {
 
         <TabsContent value="production" className="mt-6">
           <div className="grid gap-6 xl:grid-cols-3">
-            <div className="xl:col-span-2">
+            <div className="xl:col-span-2 min-w-0">
               <MilkProductionForm
                 formData={formData}
                 isBulkMode={isBulkMode}
                 selectedAnimals={selectedAnimals}
                 animalQuantities={animalQuantities}
                 activeAnimals={activeAnimals}
-                animalsTotal={animalsPagination.total}
-                animalsPage={animalsPagination.page}
-                animalsPageSize={animalsPagination.pageSize}
-                onAnimalsPageChange={animalsPagination.setPage}
-                animalsSearch={animalsPagination.search}
-                onAnimalsSearchChange={animalsPagination.setSearch}
                 buyers={buyers}
                 effectivePrice={effectivePrice}
                 creating={creating}
@@ -327,7 +280,7 @@ export default function MilkCollect() {
 
         <TabsContent value="delivery" className="mt-6">
           <div className="grid gap-6 xl:grid-cols-3">
-            <div className="xl:col-span-2">
+            <div className="xl:col-span-2 min-w-0">
               <MilkDeliveryForm
                 deliveryFormData={deliveryFormData}
                 buyers={buyers}

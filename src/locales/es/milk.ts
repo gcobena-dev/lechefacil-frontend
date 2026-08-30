@@ -269,6 +269,8 @@ export default {
   deviceSyncOfflineDesc:
     "Reconecta tu WiFi o datos móviles antes de guardar los registros",
 
+  withValueOfTotal: "{{withValue}} de {{total}} con dato",
+
   // Sorting
   sortBy: "Ordenar por",
   mostRecent: "Más reciente",

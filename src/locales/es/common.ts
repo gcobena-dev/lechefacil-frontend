@@ -21,6 +21,7 @@ export default {
   submit: "Enviar",
   loading: "Cargando...",
   refresh: "Actualizar",
+  showingFiltered: "Mostrando {{shown}} de {{total}}",
 
   // Estados comunes
   active: "Activo",

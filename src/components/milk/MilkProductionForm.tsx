@@ -35,12 +35,6 @@ interface MilkProductionFormProps {
   animalQuantities: Record<string, string>;
   activeAnimals: Animal[];
   // Server-side animals pagination (optional)
-  animalsTotal?: number | null;
-  animalsPage?: number;
-  animalsPageSize?: number;
-  onAnimalsPageChange?: (page: number) => void;
-  animalsSearch?: string;
-  onAnimalsSearchChange?: (q: string) => void;
   buyers: Buyer[];
   effectivePrice?: number;
   creating: boolean;
@@ -68,12 +62,6 @@ export default function MilkProductionForm({
   selectedAnimals,
   animalQuantities,
   activeAnimals,
-  animalsTotal,
-  animalsPage,
-  animalsPageSize,
-  onAnimalsPageChange,
-  animalsSearch,
-  onAnimalsSearchChange,
   buyers,
   effectivePrice,
   creating,
@@ -122,7 +110,9 @@ export default function MilkProductionForm({
       <CardHeader>
         <CardTitle>{t("milk.milkingData")}</CardTitle>
       </CardHeader>
-      <CardContent>
+      {/* Tighter gutters on phones: 24px of padding each side is a lot of
+          screen when the row has to fit a name, an input and a unit. */}
+      <CardContent className="px-3 sm:px-6">
         <div className="space-y-6">
           {/* Mode Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-3 md:p-4 bg-muted rounded-lg">
@@ -202,12 +192,6 @@ export default function MilkProductionForm({
                   density={formData.density}
                   onToggleSelection={onToggleAnimalSelection}
                   onUpdateQuantity={onUpdateAnimalQuantity}
-                  currentPage={animalsPage}
-                  pageSize={animalsPageSize}
-                  totalItems={animalsTotal}
-                  onPageChange={onAnimalsPageChange}
-                  searchQuery={animalsSearch}
-                  onSearchChange={onAnimalsSearchChange}
                 />
               </div>
             )}

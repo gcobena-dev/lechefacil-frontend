@@ -63,12 +63,15 @@ export function AppLayout() {
           {/* Connection + unsent-records status, above every screen */}
           <OfflineBanner />
           {/* Add bottom padding so content isn't hidden behind BottomNav (h-16) on mobile */}
-          <main className="flex-1 p-4 md:p-6 overflow-auto pb-24 md:pb-6 min-w-0">
+          <main className="flex-1 px-2 py-3 sm:p-4 md:p-6 overflow-auto pb-24 md:pb-6 min-w-0">
             <Outlet />
           </main>
         </div>
-        {/* Floating Action Button for Mobile (hidden on pages with their own FAB) */}
-        {!(location.pathname.startsWith('/animals')) && (
+        {/* Floating Action Button for Mobile (hidden on pages with their own FAB,
+            and on the milk collection page itself: there it links to where you
+            already are and sits on top of the quantity fields) */}
+        {!location.pathname.startsWith('/animals') &&
+          !location.pathname.startsWith('/milk/collect') && (
           <FloatingActionButton to="/milk/collect">
             <Milk className="h-6 w-6" />
           </FloatingActionButton>

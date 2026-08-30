@@ -24,33 +24,24 @@ export function useMilkCollectionData(formData: {
   date: string;
   buyerId: string;
 }) {
-  // Server-side pagination + search for lactating animals
-  const [animalsPage, setAnimalsPage] = useState(1);
-  const [animalsSearch, setAnimalsSearch] = useState("");
-  const animalsPageSize = 10;
+  /**
+   * Every lactating animal in one request.
+   *
+   * The bulk form needs all of them at once anyway — it used to page through
+   * them 10 at a time in the background just to collect ids, which meant N
+   * round trips, N cache entries, and a list the user had to paginate through
+   * by hand. The endpoint caps `limit` at 500, comfortably above any herd this
+   * screen targets. Searching is done client-side over this list, so it also
+   * works with no connection.
+   */
+  const ANIMALS_QUERY_LIMIT = 500;
   const { data: animalsData } = useQuery({
-    queryKey: [
-      "animals",
-      {
-        status_codes: "LACTATING",
-        page: animalsPage,
-        q: animalsSearch,
-        limit: animalsPageSize,
-      },
-    ],
+    queryKey: ["animals", { status_codes: "LACTATING", limit: ANIMALS_QUERY_LIMIT }],
     queryFn: () =>
-      listAnimals({
-        status_codes: "LACTATING",
-        page: animalsPage,
-        limit: animalsPageSize,
-        q: animalsSearch,
-      }),
+      listAnimals({ status_codes: "LACTATING", limit: ANIMALS_QUERY_LIMIT }),
   });
   const animals = animalsData?.items ?? [];
   const animalsTotal = animalsData?.total ?? null;
-  const animalsTotalPages = animalsTotal
-    ? Math.max(1, Math.ceil(animalsTotal / animalsPageSize))
-    : 1;
   const activeAnimals = animals; // Already filtered to lactating
 
   const { data: buyers = [] } = useQuery({
@@ -295,15 +286,8 @@ export function useMilkCollectionData(formData: {
 
   return {
     animals: animalsEnriched,
-    animalsPagination: {
-      page: animalsPage,
-      setPage: setAnimalsPage,
-      pageSize: animalsPageSize,
-      total: animalsTotal,
-      totalPages: animalsTotalPages,
-      search: animalsSearch,
-      setSearch: setAnimalsSearch,
-    },
+    /** Total lactating animals reported by the server (for the header count). */
+    animalsTotal,
     activeAnimals,
     buyers,
     billing,

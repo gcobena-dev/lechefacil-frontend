@@ -1,8 +1,7 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Search, X } from "lucide-react";
 import { convertToLiters } from "@/lib/mock-data";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -20,15 +19,16 @@ interface BulkAnimalSelectionProps {
   density: string;
   onToggleSelection: (animalId: string) => void;
   onUpdateQuantity: (animalId: string, quantity: string) => void;
-  // Optional server-side pagination props
-  currentPage?: number;
-  pageSize?: number;
-  totalItems?: number | null;
-  onPageChange?: (page: number) => void;
-  searchQuery?: string;
-  onSearchChange?: (q: string) => void;
 }
 
+/**
+ * One row per animal, in a single continuous list.
+ *
+ * The previous version nested a 384px scroll box inside the page and paged 10
+ * at a time, so on a phone you scrolled the page, hit a second scroll area, saw
+ * three animals at once and had to tap through pages to reach the rest. Rows
+ * are now ~52px instead of ~120px and the page owns the only scrollbar.
+ */
 export default function BulkAnimalSelection({
   animals,
   selectedAnimals,
@@ -37,177 +37,168 @@ export default function BulkAnimalSelection({
   density,
   onToggleSelection,
   onUpdateQuantity,
-  currentPage,
-  pageSize,
-  totalItems,
-  onPageChange,
-  searchQuery,
-  onSearchChange,
 }: BulkAnimalSelectionProps) {
   const { t } = useTranslation();
-  const [localSearch, setLocalSearch] = useState("");
-  const [localPage, setLocalPage] = useState(1);
-  const itemsPerPage = pageSize ?? 10;
-  const isServerPaginated = typeof onPageChange === 'function';
+  const [search, setSearch] = useState("");
 
-  // Filter animals based on search query
-  const effectiveSearch = isServerPaginated ? (searchQuery ?? "") : localSearch;
-  const filteredAnimals = useMemo(() => {
-    if (isServerPaginated) return animals; // server already filtered
-    if (!effectiveSearch.trim()) return animals;
-    const query = effectiveSearch.toLowerCase();
-    return animals.filter(animal =>
-      animal.name.toLowerCase().includes(query) ||
-      animal.tag.toLowerCase().includes(query)
+  // Client-side: the whole lactating list is already in memory, so filtering
+  // costs nothing and keeps working with no connection.
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return animals;
+    return animals.filter(
+      (a) =>
+        a.name?.toLowerCase().includes(q) || a.tag?.toLowerCase().includes(q)
     );
-  }, [animals, effectiveSearch, isServerPaginated]);
+  }, [animals, search]);
 
-  // Calculate pagination
-  const totalItemsCount = isServerPaginated ? (totalItems ?? filteredAnimals.length) : filteredAnimals.length;
-  const totalPages = Math.max(1, Math.ceil(totalItemsCount / itemsPerPage));
-  const currentPg = isServerPaginated ? (currentPage ?? 1) : localPage;
-  const startIndex = (currentPg - 1) * itemsPerPage;
-  const paginatedAnimals = isServerPaginated ? animals : filteredAnimals.slice(startIndex, startIndex + itemsPerPage);
+  const litersOf = (raw: string) =>
+    convertToLiters(parseFloat(raw), inputUnit as never, parseFloat(density));
 
-  // Reset page when search changes
-  useMemo(() => {
-    if (isServerPaginated) {
-      onPageChange?.(1);
-    } else {
-      setLocalPage(1);
+  const { withValue, totalLiters } = useMemo(() => {
+    let count = 0;
+    let liters = 0;
+    for (const id of selectedAnimals) {
+      const raw = animalQuantities[id];
+      if (raw !== undefined && raw !== "" && !isNaN(parseFloat(raw))) {
+        count += 1;
+        liters += litersOf(raw);
+      }
     }
-  }, [effectiveSearch]);
+    return { withValue: count, totalLiters: liters };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAnimals, animalQuantities, inputUnit, density]);
+
+  const unitLabel = inputUnit?.toUpperCase() === "L" ? "L" : inputUnit;
+  const showsConversion = inputUnit?.toUpperCase() !== "L";
 
   return (
-    <div className="space-y-4">
-      <Label>{t("milk.selectAnimalsAndQuantities")}</Label>
+    <div className="space-y-3">
+      {/* Progress: what is entered so far, without scrolling to the summary */}
+      <div className="flex items-baseline justify-between gap-2 flex-wrap">
+        <span className="font-medium">
+          {t("milk.selectAnimalsAndQuantities")}
+        </span>
+        <span className="text-sm text-muted-foreground tabular-nums">
+          {t("milk.withValueOfTotal", {
+            withValue,
+            total: selectedAnimals.length,
+          })}{" "}
+          · {totalLiters.toFixed(1)} L
+        </span>
+      </div>
 
-      {/* Search input */}
       <div className="relative">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder={t("common.searchByNameOrTag")}
-          value={isServerPaginated ? (searchQuery ?? "") : localSearch}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (isServerPaginated) {
-              onSearchChange?.(v);
-            } else {
-              setLocalSearch(v);
-            }
-          }}
-          className="pl-8"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8 pr-8"
         />
+        {search && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0 h-9 w-9"
+            onClick={() => setSearch("")}
+            aria-label={t("common.clear")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      <div className="space-y-3 max-h-96 overflow-y-auto p-4 border rounded">
-        {paginatedAnimals.map((animal) => (
-          <div
-            key={animal.id}
-            className={`p-3 border rounded ${
-              selectedAnimals.includes(animal.id)
-                ? 'bg-primary/10 border-primary'
-                : 'hover:bg-muted'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div
-                className="flex items-center gap-2 cursor-pointer flex-1"
+      {/* No inner scroll container: the page provides the only scrollbar. */}
+      <div className="rounded-md border divide-y divide-border">
+        {filtered.map((animal) => {
+          const isSelected = selectedAnimals.includes(animal.id);
+          const raw = animalQuantities[animal.id] ?? "";
+          const hasValue = raw !== "" && !isNaN(parseFloat(raw));
+          return (
+            <div
+              key={animal.id}
+              className={`flex items-center gap-1.5 px-1.5 py-1.5 ${
+                isSelected ? "" : "opacity-55"
+              }`}
+            >
+              <button
+                type="button"
                 onClick={() => onToggleSelection(animal.id)}
+                aria-pressed={isSelected}
+                aria-label={`${animal.tag} ${animal.name}`}
+                className={`h-6 w-6 shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
+                  isSelected
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "border-muted-foreground/50"
+                }`}
               >
-                <div className={`w-4 h-4 border-2 rounded ${
-                  selectedAnimals.includes(animal.id)
-                    ? 'bg-primary border-primary'
-                    : 'border-muted-foreground'
-                }`}>
-                  {selectedAnimals.includes(animal.id) && (
-                    <CheckCircle className="w-4 h-4 text-primary-foreground -m-0.5" />
-                  )}
-                </div>
-                <span className="font-medium">{animal.tag} - {animal.name}</span>
-              </div>
-            </div>
+                {isSelected && <Check className="h-4 w-4" strokeWidth={3} />}
+              </button>
 
-            {selectedAnimals.includes(animal.id) && (
-              <div className="flex items-center gap-2 mt-2">
-                <Input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  placeholder={t("common.quantity")}
-                  value={animalQuantities[animal.id] || ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "") return onUpdateQuantity(animal.id, v);
-                    const n = parseFloat(v);
-                    onUpdateQuantity(animal.id, (isNaN(n) || n < 0) ? "0" : v);
-                  }}
-                  className="flex-1"
-                />
-                <span className="text-sm text-muted-foreground min-w-[60px]">
-                  {animalQuantities[animal.id] ? (
-                    <>
-                      {convertToLiters(
-                        parseFloat(animalQuantities[animal.id]),
-                        inputUnit as any,
-                        parseFloat(density)
-                      ).toFixed(2)}L
-                    </>
-                  ) : (
-                    '0L'
-                  )}
+              {/* `min-w-0` + a flex child is what actually makes `truncate`
+                  work: without it a long name refuses to shrink and shoves the
+                  quantity input off the edge of the phone. */}
+              <button
+                type="button"
+                onClick={() => onToggleSelection(animal.id)}
+                className="min-w-0 flex-1 flex items-baseline gap-1.5 text-left"
+                title={`${animal.tag} ${animal.name}`}
+              >
+                <span className="font-mono text-xs text-muted-foreground shrink-0">
+                  {animal.tag}
                 </span>
-              </div>
-            )}
-          </div>
-        ))}
+                <span className="text-sm truncate">{animal.name}</span>
+              </button>
 
-        {paginatedAnimals.length === 0 && (
-          <div className="text-center py-4 text-muted-foreground">
-            {effectiveSearch ? t("common.noResults") : t("common.noAnimalsAvailable")}
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min={0}
+                disabled={!isSelected}
+                placeholder="0"
+                value={raw}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "") return onUpdateQuantity(animal.id, v);
+                  const n = parseFloat(v);
+                  onUpdateQuantity(animal.id, isNaN(n) || n < 0 ? "0" : v);
+                }}
+                className={`w-16 h-9 px-2 text-right shrink-0 tabular-nums ${
+                  hasValue ? "border-primary/60" : ""
+                }`}
+              />
+              <span className="w-5 shrink-0 text-xs text-muted-foreground">
+                {unitLabel}
+              </span>
+            </div>
+          );
+        })}
+
+        {filtered.length === 0 && (
+          <div className="text-center py-6 text-muted-foreground text-sm">
+            {search ? t("common.noResults") : t("common.noAnimalsAvailable")}
           </div>
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            {t("common.showingResults", {
-              start: startIndex + 1,
-              end: Math.min(startIndex + itemsPerPage, totalItemsCount),
-              total: totalItemsCount
-            })}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => isServerPaginated ? onPageChange?.(Math.max(1, currentPg - 1)) : setLocalPage(p => Math.max(1, p - 1))}
-              disabled={currentPg === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {currentPg} / {totalPages}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => isServerPaginated ? onPageChange?.(Math.min(totalPages, currentPg + 1)) : setLocalPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPg === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {/* Only meaningful when the entered unit is not litres */}
+      {showsConversion && totalLiters > 0 && (
+        <p className="text-xs text-muted-foreground text-right">
+          ≈ {totalLiters.toFixed(1)} L
+        </p>
       )}
 
-      <p className="text-sm text-muted-foreground">
-        {selectedAnimals.length} {t("milk.animalsSelected")}
-      </p>
+      {search && (
+        <p className="text-xs text-muted-foreground">
+          {t("common.showingFiltered", {
+            shown: filtered.length,
+            total: animals.length,
+          })}
+        </p>
+      )}
     </div>
   );
 }
