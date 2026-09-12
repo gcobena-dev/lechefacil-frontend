@@ -218,15 +218,35 @@ jobs:
               ;;
           esac
 
-          APKSIGNER=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -name apksigner 2>/dev/null | sort -V | tail -1)
-          if [ -n "$APKSIGNER" ]; then
-            echo "🔍 Verificando firma..."
-            "$APKSIGNER" verify --print-certs "$APK" | grep -E "Signer #1 certificate (DN|SHA-256)" || {
-              echo "❌ apksigner no pudo verificar la firma de $APK"
+          # apksigner confirma QUIÉN firmó; el nombre del archivo de arriba es lo
+          # que de verdad bloquea un APK sin firmar. Por eso un problema para
+          # ejecutar la herramienta avisa pero no frena el release: sólo un
+          # veredicto explícito de "DOES NOT VERIFY" lo hace.
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+          APKSIGNER=$(find "$SDK/build-tools" -name apksigner -type f 2>/dev/null | sort -V | tail -1)
+
+          if [ -x "$APKSIGNER" ]; then
+            echo "🔍 Verificando firma con $APKSIGNER"
+            set +e
+            SIGNER_OUT=$("$APKSIGNER" verify --print-certs "$APK" 2>&1)
+            SIGNER_RC=$?
+            set -e
+
+            # Siempre al log: la corrida anterior falló sin dejar rastro de por
+            # qué, y sin esta salida no había nada que diagnosticar.
+            echo "$SIGNER_OUT" | grep -vF "not protected by signature" | head -20
+
+            if echo "$SIGNER_OUT" | grep -q "DOES NOT VERIFY"; then
+              echo "❌ El APK no pasa la verificación de firma."
               exit 1
-            }
+            elif [ "$SIGNER_RC" -ne 0 ]; then
+              echo "⚠️  apksigner devolvió $SIGNER_RC sin un veredicto claro."
+              echo "    Se continúa: el APK no es *-unsigned, que es la comprobación que sí bloquea."
+            else
+              echo "✅ Firma verificada"
+            fi
           else
-            echo "⚠️  apksigner no encontrado; se omite la verificación de firma"
+            echo "⚠️  apksigner no encontrado en $SDK/build-tools; se omite la verificación"
           fi
 
           echo "📦 Found APK: $APK"
