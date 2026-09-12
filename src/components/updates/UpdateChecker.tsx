@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   updateService,
@@ -16,6 +16,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+/** Espera mínima entre chequeos al volver a primer plano. */
+const RECHECK_THROTTLE_MS = 30 * 60 * 1000;
+
 export const UpdateChecker = () => {
   const { t } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -26,6 +29,8 @@ export const UpdateChecker = () => {
   // APK, no descargar nada. No se puede descartar con un "después" porque la
   // app se queda con funciones muertas hasta que se instale.
   const [nativeUpdate, setNativeUpdate] = useState<NativeUpdateRequired | null>(null);
+  // Cuándo se consultó por última vez, para no repetir en cada resume.
+  const lastCheckRef = useRef(Date.now());
 
   useEffect(() => {
     // Only run on native platforms (not web)
@@ -132,7 +137,32 @@ export const UpdateChecker = () => {
       checkForUpdates();
     }, 2000);
 
-    return () => clearTimeout(timer);
+    // Y otra vez al volver del segundo plano. En Android el WebView sobrevive,
+    // así que este componente no se vuelve a montar: quien no cierra la app del
+    // todo —lo normal en el campo— podía pasar días sin enterarse de que había
+    // una actualización. El throttle evita consultar en cada vistazo al
+    // teléfono.
+    const cleanups: Array<() => void> = [() => clearTimeout(timer)];
+
+    if (Capacitor.isNativePlatform()) {
+      void import('@capacitor/app')
+        .then(({ App }) =>
+          App.addListener('appStateChange', ({ isActive }) => {
+            if (!isActive) return;
+            const now = Date.now();
+            if (now - lastCheckRef.current < RECHECK_THROTTLE_MS) return;
+            lastCheckRef.current = now;
+            void checkForUpdates();
+          })
+        )
+        .then((handle) => cleanups.push(() => void handle.remove()))
+        .catch(() => {
+          // Sin el plugin nativo no hay evento de resume; el chequeo al
+          // arrancar sigue cubriendo el caso.
+        });
+    }
+
+    return () => cleanups.forEach((fn) => fn());
   }, [t]);
 
   // Render overlay when updating and success dialog
