@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useStickyState } from "@/hooks/useStickyState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, AlertTriangle, BarChart3, Users } from "lucide-react";
@@ -10,7 +10,8 @@ import AnimalsReport from "@/components/reports/AnimalsReport";
 
 export default function Reports() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("production");
+  // La pestaña elegida se conserva al entrar a un detalle y volver.
+  const [activeTab, setActiveTab] = useStickyState("prefs:reports:tab", "production");
 
   const { data: definitions, isLoading, error } = useReportDefinitions();
 

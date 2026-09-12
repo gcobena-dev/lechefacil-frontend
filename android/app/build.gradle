@@ -1,5 +1,25 @@
 apply plugin: 'com.android.application'
 
+import groovy.json.JsonSlurper
+
+// package.json es la única fuente de la versión: el pipeline sólo bumpea ahí y
+// el APK se deriva, así que versionName/versionCode no pueden quedar rezagados
+// como pasó hasta v0982 (todos los APK publicados salieron con versionCode 1).
+def lfPackageJson = new JsonSlurper().parse(file("../../package.json"))
+def lfVersionName = lfPackageJson.version
+
+// versionCode tiene que crecer siempre o Android rechaza la instalación, así que
+// no vale concatenar los dígitos: 0.1.0 daría 10, menor que el 983 de 0.0.983.
+// major*1000000 + minor*1000 + patch sí es monótono (0.0.983 -> 983,
+// 0.1.0 -> 1000, 1.0.0 -> 1000000).
+def lfVersionParts = lfVersionName.tokenize('.').collect { part ->
+    def digits = part.replaceAll(/[^0-9]/, '')
+    digits ? digits.toInteger() : 0
+}
+while (lfVersionParts.size() < 3) { lfVersionParts << 0 }
+def lfVersionCode = lfVersionParts[0] * 1000000 + lfVersionParts[1] * 1000 + lfVersionParts[2]
+
+
 android {
     namespace "com.lechefacil.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +27,11 @@ android {
         applicationId "com.lechefacil.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Derivados de package.json (ver arriba). El servidor compara este
+        // versionCode contra `minNativeBuild` de version.json para decidir si
+        // este APK puede correr el bundle OTA publicado.
+        versionCode lfVersionCode
+        versionName lfVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

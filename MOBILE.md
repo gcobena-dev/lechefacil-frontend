@@ -114,3 +114,83 @@ Los permisos se configuran en el archivo `Info.plist` al abrir Xcode.
 
 - La app usa el esquema `https://` para Android (más seguro)
 - Configura tu API backend en las variables de entorno correspondientes
+
+## Publicar una versión: OTA o build nativo
+
+Un bundle OTA (`@capgo/capacitor-updater`) sólo reemplaza la capa web: JS, HTML,
+CSS y assets. **Nada nativo viaja por OTA** — ni un plugin de Capacitor nuevo,
+ni un cambio de `AndroidManifest.xml`, ni un bump de SDK. Eso es un límite de
+todos los sistemas OTA, no de Capgo.
+
+Lo peligroso es que el bundle igual se instala sin error: la app arranca, no
+falla nada visible, y la función que dependía del código nativo queda muerta en
+silencio. Fue exactamente lo que pasó en v096: se publicó el arreglo del botón
+atrás como JS, pero el plugin `@capacitor/app` del que depende nunca llegó a los
+APK instalados, así que el botón siguió cerrando la app.
+
+### Qué decide cuál corresponde
+
+| Cambio | Cómo se publica |
+|---|---|
+| JS, HTML, CSS, assets, traducciones | OTA |
+| Plugin de Capacitor nuevo o eliminado | **Build nativo** |
+| `AndroidManifest.xml`, permisos, `build.gradle` | **Build nativo** |
+| `targetSdk` / `compileSdk` / dependencias nativas | **Build nativo** |
+
+### Cómo se versiona
+
+`package.json` es la única fuente. `android/app/build.gradle` deriva el
+`versionName` y el `versionCode` de ahí, y el pipeline calcula el mismo número
+para el `version.json`, así que no hay nada que sincronizar a mano.
+
+```
+versionName = version de package.json           ("0.0.983")
+versionCode = major*1000000 + minor*1000 + patch (983)
+```
+
+La fórmula no es "los dígitos sin puntos": eso rompe el primer día que la
+versión pase a `0.1.0`, porque daría `10` — menor que el `983` de `0.0.983` — y
+Android rechaza instalar un APK con `versionCode` más bajo que el instalado.
+
+### Checklist de un release
+
+1. Bumpear `version` en `package.json`. Eso solo ya publica bundle y APK.
+2. **Sólo si el release trae código nativo** (plugin nuevo, cambio de manifest,
+   bump de SDK): subir también `minNativeBuild` en `package.json` al
+   `versionCode` de este release.
+
+El paso 2 es un **piso que trinca, no una bandera por release**: una vez que
+vale 983, se queda en 983 en todos los releases siguientes hasta que entre
+código nativo nuevo. Bajarlo o borrarlo deja que un shell viejo vuelva a recibir
+un bundle que no puede correr.
+
+Si el pipeline no encuentra `minNativeBuild` en `package.json`, falla a
+propósito en vez de publicar sin gate.
+
+### `version.json`
+
+```json
+{
+  "version": "0.0.983",
+  "versionCode": 983,
+  "minNativeBuild": 983,
+  "apkUrl": "https://.../lechefacil-0.0.983.apk",
+  "latestApkUrl": "https://.../lechefacil-latest.apk",
+  "updateBundleUrl": "https://.../bundle-0.0.983.zip",
+  "releaseDate": "2026-09-12",
+  "minVersion": "0.0.900",
+  "changelog": "..."
+}
+```
+
+`minNativeBuild` es el `versionCode` de APK mínimo que ese bundle necesita.
+`GET /api/v1/mobile/check-update` lo compara contra el `versionCode` que reporta
+el dispositivo y, si se queda corto, **no entrega el bundle**: devuelve
+`requiresNativeUpdate` y la app muestra un diálogo que manda a instalar el APK.
+
+Un dispositivo que no puede reportar su `versionCode` cuenta como demasiado
+viejo — los únicos APK que no saben responder son los anteriores a v096, que son
+justamente los que hay que reemplazar.
+
+`versionCode` y `minNativeBuild` salen los dos de `package.json` vía el
+pipeline; no se escriben a mano.

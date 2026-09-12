@@ -17,6 +17,9 @@ export interface Lactation {
   days_in_milk?: number;
   average_daily_l?: number;
   production_count?: number;
+  /** What this lactation's milk was worth, at the price of each recording day. */
+  total_amount?: number;
+  currency?: string | null;
 }
 
 export interface LactationMetrics {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useStickyState } from "@/hooks/useStickyState";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsAdmin } from "@/hooks/useAuth";
@@ -48,14 +49,24 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | 
 export default function InseminationsList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sireFilter, setSireFilter] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState<string>("");
-  const [dateTo, setDateTo] = useState<string>("");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
-  const [sortBy, setSortBy] = useState("service_date");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  // Se conserva al salir a una ficha y volver; ver useStickyState.
+  const [statusFilter, setStatusFilter] = useStickyState<string>(
+    "prefs:inseminations:status",
+    "all"
+  );
+  const [sireFilter, setSireFilter] = useStickyState<string>(
+    "prefs:inseminations:sire",
+    "all"
+  );
+  const [dateFrom, setDateFrom] = useStickyState<string>("prefs:inseminations:from", "");
+  const [dateTo, setDateTo] = useStickyState<string>("prefs:inseminations:to", "");
+  const [page, setPage] = useStickyState("prefs:inseminations:page", 0);
+  const [pageSize, setPageSize] = useStickyState("prefs:inseminations:pageSize", 20);
+  const [sortBy, setSortBy] = useStickyState("prefs:inseminations:sortBy", "service_date");
+  const [sortDir, setSortDir] = useStickyState<"asc" | "desc">(
+    "prefs:inseminations:sortDir",
+    "desc"
+  );
   const [checkDialogId, setCheckDialogId] = useState<string | null>(null);
   const [editingInsemination, setEditingInsemination] = useState<InseminationResponse | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);

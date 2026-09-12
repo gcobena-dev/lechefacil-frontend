@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useStickyState } from "@/hooks/useStickyState";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -59,15 +60,30 @@ export default function ReproductionDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [period, setPeriod] = useState<PeriodKey>("12m");
+  // Cómo quedó la tabla se conserva al ir al detalle de una vaca y volver:
+  // revisar el hato es entrar y salir de fichas decenas de veces, y volver a
+  // poner los mismos filtros cada vez era el trabajo más pesado de la pantalla.
+  const [period, setPeriod] = useStickyState<PeriodKey>("prefs:repro:period", "12m");
   const [dateFrom, dateTo] = useMemo(() => rangeForPeriod(period), [period]);
-  const [bucket, setBucket] = useState<ReproductiveBucket>("alertas");
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<ReproFilterState>(EMPTY_REPRO_FILTERS);
-  const [sort, setSort] = useState<ReproductiveSort>("postpartum");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [bucket, setBucket] = useStickyState<ReproductiveBucket>(
+    "prefs:repro:bucket",
+    "alertas"
+  );
+  const [search, setSearch] = useStickyState("prefs:repro:search", "");
+  const [filters, setFilters] = useStickyState<ReproFilterState>(
+    "prefs:repro:filters",
+    EMPTY_REPRO_FILTERS
+  );
+  const [sort, setSort] = useStickyState<ReproductiveSort>(
+    "prefs:repro:sort",
+    "postpartum"
+  );
+  const [sortDir, setSortDir] = useStickyState<"asc" | "desc">(
+    "prefs:repro:sortDir",
+    "desc"
+  );
+  const [page, setPage] = useStickyState("prefs:repro:page", 0);
+  const [pageSize, setPageSize] = useStickyState("prefs:repro:pageSize", 10);
   const [siresIncludeInactive, setSiresIncludeInactive] = useState(false);
 
   const changeBucket = (b: ReproductiveBucket) => {

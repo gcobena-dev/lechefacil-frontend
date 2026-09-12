@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { updateService } from '@/services/updateService';
+import {
+  updateService,
+  type NativeUpdateRequired,
+} from '@/services/updateService';
 import { Capacitor } from '@capacitor/core';
 import { UpdateLoadingOverlay } from './UpdateLoadingOverlay';
 import {
@@ -19,6 +22,10 @@ export const UpdateChecker = () => {
   const [updateMessage, setUpdateMessage] = useState('');
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [installedVersion, setInstalledVersion] = useState('');
+  // El shell instalado no puede correr el bundle publicado: hay que instalar un
+  // APK, no descargar nada. No se puede descartar con un "después" porque la
+  // app se queda con funciones muertas hasta que se instale.
+  const [nativeUpdate, setNativeUpdate] = useState<NativeUpdateRequired | null>(null);
 
   useEffect(() => {
     // Only run on native platforms (not web)
@@ -32,8 +39,13 @@ export const UpdateChecker = () => {
         const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
         const current = await CapacitorUpdater.current();
 
-        // If we're running a bundle (not built-in), show success message
-        if (current.bundle?.id && !current.native) {
+        // `current.native` es la versión del APK, siempre presente, así que la
+        // condición anterior (`!current.native`) nunca se cumplía y el aviso de
+        // "actualización completada" no salía nunca. Lo que distingue a un
+        // bundle OTA del que viene de fábrica es su id.
+        const isOtaBundle =
+          !!current.bundle?.id && current.bundle.id !== 'builtin';
+        if (isOtaBundle) {
           const version = current.bundle.version || updateService.getCurrentVersion();
           console.log('📱 Running updated version:', version);
 
@@ -54,7 +66,16 @@ export const UpdateChecker = () => {
     const checkForUpdates = async () => {
       try {
         console.log('🔍 Checking for updates...');
-        const update = await updateService.checkForUpdates();
+        const { update, nativeUpdate: native } = await updateService.checkForUpdates();
+
+        if (native) {
+          console.warn(
+            `📵 APK ${native.installedBuild ?? 'desconocido'} es anterior al mínimo ` +
+              `${native.minNativeBuild}: se requiere instalar desde la tienda.`
+          );
+          setNativeUpdate(native);
+          return;
+        }
 
         if (update) {
           console.log('📦 Update available:', update.version);
@@ -118,6 +139,37 @@ export const UpdateChecker = () => {
   return (
     <>
       {isUpdating && <UpdateLoadingOverlay message={updateMessage} />}
+
+      {/* Sin botón de cierre ni onOpenChange: mientras el APK sea viejo el
+          bundle no se puede instalar, así que ofrecer "más tarde" sólo deja al
+          usuario con una app a medias sin saberlo. */}
+      <AlertDialog open={!!nativeUpdate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('updates.nativeUpdateTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('updates.nativeUpdateMessage', {
+                version: nativeUpdate?.version ?? '',
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {nativeUpdate?.apkUrl && (
+              <AlertDialogAction
+                onClick={() => {
+                  // Abre en el navegador del sistema: la descarga de un APK
+                  // dentro del WebView no dispara el instalador.
+                  window.open(nativeUpdate.apkUrl as string, '_blank');
+                }}
+              >
+                {t('updates.nativeUpdateAction')}
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <AlertDialogContent>

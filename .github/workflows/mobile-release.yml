@@ -24,6 +24,32 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📦 Current version: $VERSION"
 
+          # versionCode real del APK. Mismo cálculo que android/app/build.gradle,
+          # que también lo deriva de package.json: si los dos no coinciden, el
+          # gate de version.json compara contra un número que nadie tiene.
+          VERSION_CODE=$(node -p "const [a=0,b=0,c=0]=require('./package.json').version.split('.').map(p=>parseInt(p,10)||0); a*1000000+b*1000+c")
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "🔢 versionCode: $VERSION_CODE"
+
+          # Piso nativo: el versionCode de APK mínimo que este bundle necesita.
+          # Sin esto en version.json el servidor no puede frenar la entrega de un
+          # bundle a un shell que no lo puede correr, que es como el arreglo del
+          # botón atrás de v096 quedó muerto en los equipos durante meses.
+          MIN_NATIVE_BUILD=$(node -p "require('./package.json').minNativeBuild ?? ''")
+          if [ -z "$MIN_NATIVE_BUILD" ]; then
+            echo "❌ Falta 'minNativeBuild' en package.json."
+            echo "   Es el versionCode de APK mínimo que este bundle necesita."
+            echo "   Ver la sección de releases en MOBILE.md."
+            exit 1
+          fi
+          if [ "$MIN_NATIVE_BUILD" -gt "$VERSION_CODE" ]; then
+            echo "❌ minNativeBuild ($MIN_NATIVE_BUILD) es mayor que el versionCode"
+            echo "   de este build ($VERSION_CODE): ningún APK podría correr el bundle."
+            exit 1
+          fi
+          echo "min_native_build=$MIN_NATIVE_BUILD" >> "$GITHUB_OUTPUT"
+          echo "🔒 minNativeBuild: $MIN_NATIVE_BUILD"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -147,6 +173,8 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          MIN_NATIVE_BUILD: ${{ steps.version.outputs.min_native_build }}
           S3_MOBILE_BUCKET: ${{ secrets.S3_MOBILE_BUCKET }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
@@ -190,7 +218,8 @@ jobs:
           cat > version.json <<EOF
           {
             "version": "${VERSION}",
-            "versionCode": ${{ github.run_number }},
+            "versionCode": ${VERSION_CODE},
+            "minNativeBuild": ${MIN_NATIVE_BUILD},
             "apkUrl": "https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/lechefacil-${VERSION}.apk",
             "latestApkUrl": "https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/lechefacil-latest.apk",
             "updateBundleUrl": "https://${S3_MOBILE_BUCKET}.s3.${AWS_REGION}.amazonaws.com/updates/${VERSION}.zip",

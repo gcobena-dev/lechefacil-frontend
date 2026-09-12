@@ -1,4 +1,6 @@
 import { apiFetch, ApiError } from "./client";
+import { uploadPhotoToS3 } from "./animals";
+import type { AnimalPhotoUploadResponse } from "./types";
 
 export interface AnimalCertificate {
   id: string;
@@ -124,4 +126,109 @@ export const deleteCertificate = async (animalId: string): Promise<void> => {
     withAuth: true,
     withTenant: true,
   });
+};
+
+// --- Certificate files ------------------------------------------------------
+// Scans of the paper certificate: images or PDFs. Same three steps as the
+// animal photos — ask for a presigned URL, POST the file to the bucket, then
+// tell the API about it — reusing `uploadPhotoToS3` rather than a second copy
+// of the multipart dance.
+
+/** What the API accepts; anything else is rejected with a 415. */
+export const CERTIFICATE_ACCEPT =
+  "image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf";
+
+export interface CertificateFile {
+  id: string;
+  url: string;
+  title?: string | null;
+  description?: string | null;
+  is_primary: boolean;
+  position: number;
+  mime_type: string;
+  size_bytes?: number | null;
+  created_at: string;
+}
+
+export const listCertificateFiles = async (
+  animalId: string
+): Promise<CertificateFile[]> => {
+  return apiFetch<CertificateFile[]>(
+    `/api/v1/animals/${animalId}/certificate/files`,
+    { withAuth: true, withTenant: true }
+  );
+};
+
+export const deleteCertificateFile = async (
+  animalId: string,
+  fileId: string
+): Promise<void> => {
+  await apiFetch<void>(
+    `/api/v1/animals/${animalId}/certificate/files/${fileId}`,
+    { method: "DELETE", withAuth: true, withTenant: true }
+  );
+};
+
+/**
+ * Upload one file and register it.
+ *
+ * `position` orders the files; pass the next free one so two uploads do not
+ * collide on the attachments' unique (owner, position) index.
+ */
+export const uploadCertificateFile = async (
+  animalId: string,
+  file: File,
+  position = 0
+): Promise<CertificateFile> => {
+  const presigned = await apiFetch<AnimalPhotoUploadResponse>(
+    `/api/v1/animals/${animalId}/certificate/files/uploads`,
+    {
+      method: "POST",
+      withAuth: true,
+      withTenant: true,
+      body: { content_type: file.type },
+    }
+  );
+
+  await uploadPhotoToS3(presigned.upload_url, presigned.fields, file);
+
+  return apiFetch<CertificateFile>(
+    `/api/v1/animals/${animalId}/certificate/files`,
+    {
+      method: "POST",
+      withAuth: true,
+      withTenant: true,
+      body: {
+        storage_key: presigned.storage_key,
+        mime_type: file.type,
+        size_bytes: file.size,
+        title: file.name,
+        is_primary: false,
+        position,
+      },
+    }
+  );
+};
+
+/** Upload several files, continuing the existing numbering. */
+export const uploadCertificateFiles = async (
+  animalId: string,
+  files: File[]
+): Promise<CertificateFile[]> => {
+  let existing: CertificateFile[] = [];
+  try {
+    existing = await listCertificateFiles(animalId);
+  } catch {
+    existing = [];
+  }
+  const nextPosition =
+    existing.length > 0 ? Math.max(...existing.map((f) => f.position)) + 1 : 0;
+
+  const uploaded: CertificateFile[] = [];
+  for (let i = 0; i < files.length; i++) {
+    uploaded.push(
+      await uploadCertificateFile(animalId, files[i], nextPosition + i)
+    );
+  }
+  return uploaded;
 };

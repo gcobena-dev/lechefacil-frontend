@@ -67,6 +67,7 @@ import { useAnimalEvents } from "@/hooks/useAnimalEvents";
 import { useAnimalLactations } from "@/hooks/useAnimalLactations";
 import EventTimelineCard from "@/components/animals/EventTimelineCard";
 import LactationCard from "@/components/animals/LactationCard";
+import CertificateFiles from "@/components/animals/CertificateFiles";
 import ProductionLineChart from "@/components/charts/ProductionLineChart";
 import { getAnimalCertificate } from "@/services/animalCertificates";
 import RegisterEventDialog from "@/components/animals/RegisterEventDialog";
@@ -1021,6 +1022,13 @@ export default function AnimalDetail() {
                 <p className="text-sm text-muted-foreground mt-4">
                   {t('animals.editCertificateHint')}
                 </p>
+
+                {/* The scan of the paper itself. Shown whether or not the
+                    fields above have been filled in: photographing the
+                    certificate is usually the first thing that happens. */}
+                <div className="mt-6 pt-6 border-t">
+                  <CertificateFiles animalId={id!} />
+                </div>
               </div>
             </TabsContent>
           </CardContent>

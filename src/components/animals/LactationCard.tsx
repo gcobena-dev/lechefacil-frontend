@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Droplets, TrendingUp, Clock } from "lucide-react";
+import { Calendar, Droplets, TrendingUp, Clock, Wallet } from "lucide-react";
 import { formatDate } from "@/utils/format";
 import {
   type Lactation,
@@ -23,7 +23,19 @@ export default function LactationCard({ lactation }: LactationCardProps) {
     }).format(num);
   };
 
+  // The currency comes with the lactation (the one its productions were sold
+  // in, or the farm's default); no second lookup is needed to label the total.
+  const formatMoney = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null) return '-';
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: lactation.currency || 'USD',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   const isOpen = lactation.status === 'open';
+  const hasProductions = (lactation.production_count ?? 0) > 0;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -55,7 +67,7 @@ export default function LactationCard({ lactation }: LactationCardProps) {
         )}
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-3 gap-3 pt-2 border-t">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
           {/* Days in Milk */}
           <div className="space-y-1">
             <div className="flex items-center gap-1">
@@ -87,6 +99,24 @@ export default function LactationCard({ lactation }: LactationCardProps) {
             <p className="text-lg font-semibold">
               {formatNumber(lactation.average_daily_l)} {t('animals.litersPerDay')}
             </p>
+          </div>
+
+          {/* Revenue */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <Wallet className="h-3 w-3 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{t('animals.lactationRevenue')}</p>
+            </div>
+            <p className="text-lg font-semibold">
+              {formatMoney(lactation.total_amount)}
+            </p>
+            {/* A lactation whose milk was recorded before prices were set has
+                litres but no value; saying so beats showing a bare 0. */}
+            {hasProductions && !lactation.total_amount && (
+              <p className="text-xs text-muted-foreground">
+                {t('animals.lactationRevenueNoPrice')}
+              </p>
+            )}
           </div>
         </div>
 

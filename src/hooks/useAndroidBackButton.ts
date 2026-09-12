@@ -86,13 +86,32 @@ export function useAndroidBackButton() {
       toast(t("common.pressBackAgainToExit"), { duration: DOUBLE_TAP_EXIT_MS });
     };
 
-    App.addListener("backButton", handle).then((listener) => {
-      if (cancelled) {
-        listener.remove();
-        return;
-      }
-      remove = () => listener.remove();
-    });
+    // Capacitor core no toca el botón atrás: todo el manejo vive en el plugin
+    // @capacitor/app. Si el APK instalado se construyó antes de que el plugin
+    // se añadiera al proyecto Android, este registro falla, nadie intercepta el
+    // botón y Android cierra la activity — la app "sale" en vez de volver.
+    // Un bundle OTA no puede arreglarlo: hace falta un build nativo nuevo.
+    if (!Capacitor.isPluginAvailable("App")) {
+      console.error(
+        "[backButton] El plugin nativo App no está en este APK: el botón atrás " +
+          "cerrará la app. Hay que publicar un build nativo, no solo un bundle OTA."
+      );
+      return;
+    }
+
+    App.addListener("backButton", handle)
+      .then((listener) => {
+        if (cancelled) {
+          listener.remove();
+          return;
+        }
+        remove = () => listener.remove();
+      })
+      .catch((error) => {
+        // Sin catch, un plugin ausente dejaba una promesa rechazada en silencio
+        // y el síntoma quedaba sin explicación en el dispositivo.
+        console.error("[backButton] No se pudo registrar el listener", error);
+      });
 
     return () => {
       cancelled = true;
