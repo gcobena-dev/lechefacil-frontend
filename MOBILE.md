@@ -115,6 +115,44 @@ Los permisos se configuran en el archivo `Info.plist` al abrir Xcode.
 - La app usa el esquema `https://` para Android (más seguro)
 - Configura tu API backend en las variables de entorno correspondientes
 
+## Firma del APK
+
+El APK se firma con una keystore **fija**, restaurada en CI desde el secret
+`RELEASE_KEYSTORE_BASE64`. No se genera en el pipeline.
+
+Android identifica una app por su certificado de firma: si cambia, se niega a
+actualizar (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) y hay que desinstalar. Hasta
+v0983 el workflow corría `keytool -genkey` en **cada** corrida, así que cada
+release salía con una llave distinta. Eso obligaba a desinstalar en cada
+actualización —y desinstalar borra la cola offline, el único lugar donde viven
+los registros cargados sin señal— además de impedir publicar en Play Store, que
+exige una llave estable de por vida.
+
+### Crear la keystore (una sola vez)
+
+```bash
+keytool -genkey -v -keystore lechefacil-release.keystore \
+  -alias lechefacil -keyalg RSA -keysize 2048 -validity 10000
+
+base64 -i lechefacil-release.keystore | pbcopy
+gh secret set RELEASE_KEYSTORE_BASE64 --repo gcobena-dev/lechefacil-frontend
+```
+
+Secrets que usa el pipeline:
+
+| Secret | Para qué |
+|---|---|
+| `RELEASE_KEYSTORE_BASE64` | la keystore en base64 |
+| `KEYSTORE_PASSWORD` | contraseña del almacén |
+| `KEY_PASSWORD` | contraseña de la clave (si difiere del almacén) |
+
+> **Guardá el archivo `.keystore` y sus contraseñas fuera del repo, con copia.**
+> Si se pierden, no hay forma de publicar una actualización para las apps ya
+> instaladas: hay que cambiar de `applicationId` y que todos reinstalen.
+
+El pipeline falla si falta el secret, si la contraseña no abre el almacén, o si
+el APK sale sin firmar — antes subía el `app-release-unsigned.apk` sin avisar.
+
 ## Publicar una versión: OTA o build nativo
 
 Un bundle OTA (`@capgo/capacitor-updater`) sólo reemplaza la capa web: JS, HTML,

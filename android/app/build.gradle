@@ -42,13 +42,17 @@ android {
 
     signingConfigs {
         release {
-            // Use environment variables for CI/CD or local keystore file
-            def keystoreFile = System.getenv("RELEASE_KEYSTORE_FILE") ?: file("release.keystore").exists() ? file("release.keystore") : null
-            if (keystoreFile != null) {
-                storeFile file(keystoreFile)
+            // Variables de entorno en CI, archivo local si no las hay.
+            def keystorePath = System.getenv("RELEASE_KEYSTORE_FILE") ?: "release.keystore"
+            def resolvedKeystore = file(keystorePath)
+            if (resolvedKeystore.exists()) {
+                storeFile resolvedKeystore
                 storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "android"
                 keyAlias System.getenv("RELEASE_KEY_ALIAS") ?: "lechefacil"
-                keyPassword System.getenv("RELEASE_KEY_PASSWORD") ?: "android"
+                // La contraseña de la clave puede diferir de la del almacén; hasta
+                // ahora el secret KEY_PASSWORD existía pero nadie lo leía.
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+                    ?: System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "android"
             }
         }
     }

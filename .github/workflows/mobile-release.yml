@@ -112,54 +112,75 @@ jobs:
         if: steps.check.outputs.changed == 'true'
         run: npx cap sync android
 
-      - name: Setup release signing
+      # La keystore se restaura desde un secret, NUNCA se genera acá.
+      #
+      # Antes este paso corría `keytool -genkey` en cada corrida, así que cada
+      # APK publicado salía firmado con una llave distinta. Android rechaza
+      # actualizar una app cuando cambia el certificado de firma
+      # (INSTALL_FAILED_UPDATE_INCOMPATIBLE), de modo que cada release obligaba
+      # a desinstalar —perdiendo la cola offline, que es el único lugar donde
+      # viven los registros que el ganadero cargó sin señal— y además hacía
+      # imposible publicar en Play Store, que exige una llave estable.
+      - name: Restore release keystore
         if: steps.check.outputs.changed == 'true'
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          # Use secrets or default password
-          KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
-          if [ -z "$KEYSTORE_PASSWORD" ]; then
-            KEYSTORE_PASSWORD="android"
-            echo "⚠️  Using default password 'android' (set KEYSTORE_PASSWORD secret for production)"
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "❌ Falta el secret RELEASE_KEYSTORE_BASE64."
+            echo ""
+            echo "   Generá la keystore UNA sola vez y guardala fuera del repo:"
+            echo ""
+            echo "     keytool -genkey -v -keystore lechefacil-release.keystore \\"
+            echo "       -alias lechefacil -keyalg RSA -keysize 2048 -validity 10000"
+            echo ""
+            echo "     base64 -i lechefacil-release.keystore | pbcopy"
+            echo "     gh secret set RELEASE_KEYSTORE_BASE64 --repo <owner>/<repo>"
+            echo ""
+            echo "   Si se pierde ese archivo no se puede volver a publicar una"
+            echo "   actualización de la app instalada: guardá una copia."
+            echo "   Ver MOBILE.md, sección de firma."
+            exit 1
           fi
 
-          # Generate keystore
-          echo "🔐 Generating release keystore..."
-          keytool -genkey -v \
-            -keystore android/app/release.keystore \
-            -alias lechefacil \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "${KEYSTORE_PASSWORD}" \
-            -keypass "${KEYSTORE_PASSWORD}" \
-            -dname "CN=LecheFacil, OU=Mobile, O=LecheFacil, L=City, S=State, C=US"
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
 
-          echo "✅ Keystore generated"
+          if [ ! -s android/app/release.keystore ]; then
+            echo "❌ RELEASE_KEYSTORE_BASE64 no decodifica a un archivo válido."
+            exit 1
+          fi
 
-          # Export for next step
-          echo "KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD}" >> $GITHUB_ENV
+          # Falla temprano si la contraseña no abre el almacén, en vez de dejar
+          # que gradle produzca un APK sin firmar más adelante.
+          if ! keytool -list -keystore android/app/release.keystore \
+               -storepass "${KEYSTORE_PASSWORD:-android}" >/dev/null 2>&1; then
+            echo "❌ KEYSTORE_PASSWORD no abre la keystore."
+            exit 1
+          fi
+
+          echo "🔐 Keystore restaurada y verificada"
+          keytool -list -v -keystore android/app/release.keystore \
+            -storepass "${KEYSTORE_PASSWORD:-android}" 2>/dev/null \
+            | grep -E "Alias name|Valid from" | head -4
 
       - name: Build signed APK
         if: steps.check.outputs.changed == 'true'
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          # Use same password as keystore generation
-          KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
-          if [ -z "$KEYSTORE_PASSWORD" ]; then
-            KEYSTORE_PASSWORD="android"
-          fi
-
           cd android
           chmod +x ./gradlew
 
           echo "🔨 Building APK with signing..."
-          echo "Keystore: app/release.keystore"
-          echo "Alias: lechefacil"
 
-          # Export environment variables for Gradle
           export RELEASE_KEYSTORE_FILE="release.keystore"
-          export RELEASE_KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD}"
+          export RELEASE_KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-android}"
           export RELEASE_KEY_ALIAS="lechefacil"
-          export RELEASE_KEY_PASSWORD="${KEYSTORE_PASSWORD}"
+          # KEY_PASSWORD puede diferir de la del almacén; hasta ahora el secret
+          # existía pero el workflow usaba KEYSTORE_PASSWORD para las dos.
+          export RELEASE_KEY_PASSWORD="${KEY_PASSWORD:-${KEYSTORE_PASSWORD:-android}}"
 
           ./gradlew assembleRelease --stacktrace
 
@@ -184,6 +205,28 @@ jobs:
           if [ -z "$APK" ]; then
             echo "❌ No APK found in android/app/build/outputs/apk/release/"
             exit 1
+          fi
+
+          # Gradle nombra el artefacto app-release-unsigned.apk cuando no pudo
+          # firmar, y hasta ahora ese archivo se subía igual: se instala en un
+          # teléfono sólo con ajustes especiales y no sirve para actualizar.
+          case "$APK" in
+            *unsigned*)
+              echo "❌ El APK salió SIN FIRMAR: $APK"
+              echo "   Revisá la keystore y las contraseñas."
+              exit 1
+              ;;
+          esac
+
+          APKSIGNER=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -name apksigner 2>/dev/null | sort -V | tail -1)
+          if [ -n "$APKSIGNER" ]; then
+            echo "🔍 Verificando firma..."
+            "$APKSIGNER" verify --print-certs "$APK" | grep -E "Signer #1 certificate (DN|SHA-256)" || {
+              echo "❌ apksigner no pudo verificar la firma de $APK"
+              exit 1
+            }
+          else
+            echo "⚠️  apksigner no encontrado; se omite la verificación de firma"
           fi
 
           echo "📦 Found APK: $APK"
