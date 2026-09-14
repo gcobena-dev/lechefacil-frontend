@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -44,6 +45,7 @@ export default function CertificateFiles({
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { data: files = [], isLoading } = useQuery({
     queryKey: ["animal-certificate-files", animalId],
@@ -122,29 +124,42 @@ export default function CertificateFiles({
     uploadMutation.mutate(selected);
   };
 
+  // Scans that can be previewed in place; PDFs still open in a new tab, where
+  // the browser's own viewer handles them better than we could.
+  const imageFiles = files.filter((file) => isImage(file.mime_type));
+
   const renderFile = (file: CertificateFile) => (
     <Card key={file.id} className="relative group overflow-hidden">
-      <a
-        href={file.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block"
-        title={file.title ?? undefined}
-      >
-        {isImage(file.mime_type) ? (
+      {isImage(file.mime_type) ? (
+        <button
+          type="button"
+          onClick={() =>
+            setLightboxIndex(imageFiles.findIndex((f) => f.id === file.id))
+          }
+          className="block w-full"
+          title={file.title ?? undefined}
+        >
           <img
             src={file.url}
             alt={file.title ?? t("animals.certificate")}
-            className="w-full aspect-[3/4] object-cover bg-muted"
+            className="w-full aspect-[3/4] object-cover bg-muted cursor-zoom-in"
             loading="lazy"
           />
-        ) : (
+        </button>
+      ) : (
+        <a
+          href={file.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          title={file.title ?? undefined}
+        >
           <div className="w-full aspect-[3/4] flex flex-col items-center justify-center gap-2 bg-muted">
             <FileText className="h-10 w-10 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">PDF</span>
           </div>
-        )}
-      </a>
+        </a>
+      )}
 
       {canEdit && (
         <button
@@ -257,6 +272,15 @@ export default function CertificateFiles({
           {t("animals.certificateNoFiles")}
         </p>
       )}
+
+      <ImageLightbox
+        images={imageFiles.map((file) => file.url)}
+        index={lightboxIndex ?? 0}
+        onIndexChange={setLightboxIndex}
+        open={lightboxIndex !== null}
+        onOpenChange={(open) => !open && setLightboxIndex(null)}
+        alt={t("animals.certificate")}
+      />
     </div>
   );
 }

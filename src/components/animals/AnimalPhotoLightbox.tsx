@@ -1,9 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import type { ReactZoomPanPinchRef } from "react-zoom-pan-pinch";
+import { useEffect, useMemo, useState } from "react";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { listAnimalPhotos } from "@/services/animals";
 import { getAnimalImageUrl } from "@/utils/animals";
 import clsx from "clsx";
@@ -59,18 +55,6 @@ export function AnimalPhotoLightbox({
     }
   }, [animalId, open, photos.length, loading, initialUrl, fallbackUrl]);
 
-  const current = photos[index] || initialUrl;
-  const zoomRef = useRef<ReactZoomPanPinchRef>(null);
-
-  const next = () => {
-    zoomRef.current?.resetTransform(0);
-    setIndex((prev) => (prev + 1) % photos.length);
-  };
-  const prev = () => {
-    zoomRef.current?.resetTransform(0);
-    setIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
-
   return (
     <>
       <div
@@ -103,115 +87,16 @@ export function AnimalPhotoLightbox({
         />
       </div>
 
-      <Dialog
+      <ImageLightbox
+        images={photos.length > 0 ? photos : [initialUrl || fallbackUrl]}
+        index={index}
+        onIndexChange={setIndex}
         open={open}
-        onOpenChange={(next) => {
-          // Prevent the dialog from bubbling close events to parents (links)
-          if (!next) {
-            setOpen(false);
-          } else {
-            setOpen(true);
-          }
-        }}
-      >
-        <DialogContent
-          className="sm:max-w-3xl p-0 overflow-hidden"
-          onInteractOutside={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(false);
-          }}
-          onPointerDownOutside={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(false);
-          }}
-          onEscapeKeyDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(false);
-          }}
-        >
-          {/* Superficie siempre oscura: los tokens de dentro resuelven en dark */}
-          <div className="dark relative bg-black">
-            <button
-              type="button"
-              className="absolute right-3 top-3 z-10 rounded-full bg-white/80 p-1 text-black"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setOpen(false);
-              }}
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <div className="flex items-center justify-center min-h-[320px] bg-black">
-              {loading ? (
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-              ) : (
-                <TransformWrapper
-                  ref={zoomRef}
-                  initialScale={1}
-                  minScale={1}
-                  maxScale={5}
-                  doubleClick={{ mode: "toggle", step: 2 }}
-                  pinch={{ step: 5 }}
-                  key={current}
-                >
-                  <TransformComponent
-                    wrapperStyle={{ width: "100%", height: "100%" }}
-                    contentStyle={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}
-                  >
-                    <img
-                      src={current || fallbackUrl}
-                      alt={alt}
-                      className="max-h-[80vh] max-w-full object-contain"
-                    />
-                  </TransformComponent>
-                </TransformWrapper>
-              )}
-            </div>
-
-            {error && (
-              <div className="px-4 pb-3 text-center text-xs text-destructive">{error}</div>
-            )}
-
-            {photos.length > 1 && (
-              <div className="absolute inset-y-0 left-0 flex items-center">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={prev}>
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
-              </div>
-            )}
-            {photos.length > 1 && (
-              <div className="absolute inset-y-0 right-0 flex items-center">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={next}>
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {photos.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto px-4 py-3">
-              {photos.map((p, i) => (
-                <button
-                  key={p + i}
-                  type="button"
-                  className={clsx(
-                    "h-12 w-12 rounded-md border border-border overflow-hidden",
-                    i === index ? "ring-2 ring-primary" : ""
-                  )}
-                  onClick={() => setIndex(i)}
-                >
-                  <img src={p} alt={`${alt} ${i + 1}`} className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setOpen}
+        alt={alt}
+        loading={loading}
+        error={error}
+      />
     </>
   );
 }

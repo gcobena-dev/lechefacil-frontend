@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "0.0.984",
+  "version": "0.0.985",
   "//minNativeBuild": "versionCode de APK mínimo que el bundle OTA necesita. Es un piso que sólo sube cuando entra código nativo nuevo (plugin, manifest, SDK); el resto de releases lo dejan igual. Ver MOBILE.md.",
   "minNativeBuild": 983,
   "type": "module",
