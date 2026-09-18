@@ -19,6 +19,9 @@ import {
 /** Espera mínima entre chequeos al volver a primer plano. */
 const RECHECK_THROTTLE_MS = 30 * 60 * 1000;
 
+/** Último bundle OTA por el que ya se mostró "actualización completada". */
+const LAST_ANNOUNCED_BUNDLE_KEY = 'lechefacil:lastAnnouncedBundle';
+
 export const UpdateChecker = () => {
   const { t } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -53,6 +56,20 @@ export const UpdateChecker = () => {
         if (isOtaBundle) {
           const version = current.bundle.version || updateService.getCurrentVersion();
           console.log('📱 Running updated version:', version);
+
+          // Correr un bundle OTA no significa que se acabe de instalar: el
+          // bundle sigue activo en cada arranque hasta que llega otro APK, y
+          // sin esto el aviso salía cada vez que se abría la app. Sólo se
+          // anuncia la primera vez que se ve cada bundle.
+          const seenKey = `${current.bundle.id}@${version}`;
+          try {
+            if (localStorage.getItem(LAST_ANNOUNCED_BUNDLE_KEY) === seenKey) return;
+            localStorage.setItem(LAST_ANNOUNCED_BUNDLE_KEY, seenKey);
+          } catch {
+            // Sin storage no hay forma de saber si ya se avisó; mejor callar
+            // que repetir el aviso en cada arranque.
+            return;
+          }
 
           // Show success dialog after a short delay
           setTimeout(() => {
