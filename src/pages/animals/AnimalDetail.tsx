@@ -48,10 +48,11 @@ import {
   Baby,
   Activity,
   Stethoscope,
-  ArrowLeftRight,
   GitBranch
 } from "lucide-react";
-import { formatDate } from "@/utils/format";
+import { formatDateOnly } from "@/utils/format";
+import ReproductiveStatusCard from "@/components/animals/ReproductiveStatusCard";
+import SireInfoCard from "@/components/animals/SireInfoCard";
 import { useAnimalDetail } from "@/hooks/useAnimalDetail";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
@@ -100,9 +101,6 @@ export default function AnimalDetail() {
   // Events pagination
   const [eventsPageSize, setEventsPageSize] = useState<number>(10);
   const [eventsPage, setEventsPage] = useState<number>(1);
-
-  // Get initial tab from URL
-  const initialTab = searchParams.get("tab") || "production";
 
   // Fetch events and lactations
   const { data: eventsResp } = useAnimalEvents(id, eventsPage, eventsPageSize);
@@ -157,6 +155,30 @@ export default function AnimalDetail() {
   const start = total === 0 ? 0 : (page * pageSize) + 1;
   const end = Math.min((page + 1) * pageSize, total);
 
+  // What makes sense for this animal: milk and lactations only for cows that
+  // have calved, reproduction for breeding females, catalog for bulls.
+  const statusCode = animal.status_code ?? "";
+  const isFemale = animal.sex === "FEMALE";
+  const isCalf = statusCode === "CALF";
+  // Sold/dead/culled: by the disposition event, or by a status set by hand
+  const isDisposed = !!animal.disposition_at || ["SOLD", "DEAD", "CULLED"].includes(statusCode);
+  const hasMilkRecords = productionSummary.recordsCount > 0 || total > 0;
+  const showProduction = isFemale && !isCalf && (statusCode === "LACTATING" || hasMilkRecords);
+  const showLactations =
+    isFemale && !isCalf && (lactations.length > 0 || ["LACTATING", "DRY", "PREGNANT_DRY"].includes(statusCode));
+  const showReproduction = isFemale && !isCalf && !isDisposed;
+  const showSireInfo = animal.sex === "MALE" && !isCalf && !isDisposed;
+  const visibleTabs = [
+    showProduction && "production",
+    showLactations && "lactations",
+    "events",
+    "health",
+    "genealogy",
+    "certificate",
+  ].filter(Boolean) as string[];
+  const requestedTab = searchParams.get("tab");
+  const initialTab = requestedTab && visibleTabs.includes(requestedTab) ? requestedTab : visibleTabs[0];
+
   const sortedPhotos = photos
     .sort((a, b) => {
       if (a.is_primary) return -1;
@@ -201,7 +223,10 @@ export default function AnimalDetail() {
     } else {
       const years = Math.floor(ageInMonths / 12);
       const remainingMonths = ageInMonths % 12;
-      return `${years} ${t('animals.years')} ${remainingMonths} ${t('animals.months')}`;
+      const yearsLabel = years === 1 ? t('animals.year') : t('animals.years');
+      return remainingMonths > 0
+        ? `${years} ${yearsLabel} ${remainingMonths} ${t('animals.months')}`
+        : `${years} ${yearsLabel}`;
     }
   };
 
@@ -255,6 +280,16 @@ export default function AnimalDetail() {
           </Button>
         </div>
       </div>
+
+      {isDisposed && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>
+            {(animal as any).status ?? '-'}{animal.disposition_at ? ` · ${formatDateOnly(animal.disposition_at)}` : ''}
+          </AlertTitle>
+          {animal.disposition_reason && <AlertDescription>{animal.disposition_reason}</AlertDescription>}
+        </Alert>
+      )}
 
       {/* Photo Carousel */}
       {photos.length > 0 && (
@@ -362,10 +397,14 @@ export default function AnimalDetail() {
           <CardTitle>{t('animals.generalInformation')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 grid-cols-2 lg:grid-cols-5">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">{t('animals.status')}</p>
               {getStatusBadge((animal as any).status)}
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">{t('animals.gender')}</p>
+              <span>{isFemale ? t('animals.female') : animal.sex === 'MALE' ? t('animals.male') : '-'}</span>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">{t('animals.age')}</p>
@@ -383,14 +422,14 @@ export default function AnimalDetail() {
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">{t('animals.birthDateDetail')}</p>
-              <span>{(animal as any).birth_date ? formatDate((animal as any).birth_date) : '-'}</span>
+              <span>{formatDateOnly(animal.birth_date)}</span>
             </div>
           </div>
 
           {/* Labels Section */}
           {animal.labels && animal.labels.length > 0 && (
             <div className="mt-6 pt-6 border-t">
-              <p className="text-sm font-medium text-muted-foreground mb-3">Labels</p>
+              <p className="text-sm font-medium text-muted-foreground mb-3">{t('animals.labels')}</p>
               <div className="flex flex-wrap gap-2">
                 {animal.labels.map((label, index) => (
                   <Badge key={index} variant="secondary" className="px-3 py-1">
@@ -403,6 +442,13 @@ export default function AnimalDetail() {
         </CardContent>
       </Card>
 
+      {showReproduction && (
+        <ReproductiveStatusCard animalId={id as string} statusCode={animal.status_code} lactations={lactations} />
+      )}
+      {showSireInfo && <SireInfoCard animalId={id as string} />}
+
+      {showProduction && (
+      <>
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -471,22 +517,11 @@ export default function AnimalDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-2 sm:px-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">{t('animals.total90Days')}</p>
-              <p className="text-3xl font-bold">{productionSummary.totalLiters.toFixed(1)}L</p>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  {t('animals.dailyAverage')}: {productionSummary.avgDaily.toFixed(1)}L
-                </p>
-                <p className="text-sm font-medium text-success">
-                  {t('animals.earnings')}: {formatCurrency(productionSummary.totalEarnings)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t('animals.daysWithRecords').replace('{days}', String(productionSummary.daysWithRecords))}
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              {t('animals.daysWithRecords').replace('{days}', String(productionSummary.daysWithRecords))}
+            </p>
+            {hasMilkRecords && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium text-muted-foreground">{t('animals.productionTrend')}</p>
@@ -546,6 +581,7 @@ export default function AnimalDetail() {
                 })()}
               </div>
             </div>
+            )}
           </div>
 
           {/* Production Chart */}
@@ -578,20 +614,26 @@ export default function AnimalDetail() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
 
       {/* Tabs */}
       <Card>
         <Tabs defaultValue={initialTab} className="w-full">
           <CardHeader>
             <TabsList className="w-full overflow-x-auto whitespace-nowrap">
-              <TabsTrigger value="production" className="flex items-center gap-1.5">
-                <Milk className="h-4 w-4" />
-                <span>{t('animals.production')}</span>
-              </TabsTrigger>
-              <TabsTrigger value="lactations" className="flex items-center gap-1.5">
-                <Baby className="h-4 w-4" />
-                <span>{t('animals.lactations')}</span>
-              </TabsTrigger>
+              {showProduction && (
+                <TabsTrigger value="production" className="flex items-center gap-1.5">
+                  <Milk className="h-4 w-4" />
+                  <span>{t('animals.production')}</span>
+                </TabsTrigger>
+              )}
+              {showLactations && (
+                <TabsTrigger value="lactations" className="flex items-center gap-1.5">
+                  <Baby className="h-4 w-4" />
+                  <span>{t('animals.lactations')}</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="events" className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
                 <span>{t('animals.events')}</span>
@@ -599,10 +641,6 @@ export default function AnimalDetail() {
               <TabsTrigger value="health" className="flex items-center gap-1.5">
                 <Stethoscope className="h-4 w-4" />
                 <span>{t('animals.health')}</span>
-              </TabsTrigger>
-              <TabsTrigger value="movements" className="flex items-center gap-1.5">
-                <ArrowLeftRight className="h-4 w-4" />
-                <span>{t('animals.movements')}</span>
               </TabsTrigger>
               <TabsTrigger value="genealogy" className="flex items-center gap-1.5">
                 <GitBranch className="h-4 w-4" />
@@ -673,7 +711,7 @@ export default function AnimalDetail() {
 
                                 return (
                                   <TableRow key={record.id}>
-                                    <TableCell>{formatDate(record.date_time)}</TableCell>
+                                    <TableCell>{formatDateOnly(record.date_time)}</TableCell>
                                     <TableCell>
                                       <Badge variant={shift === 'AM' ? 'default' : 'secondary'}>
                                         {shift}
@@ -716,7 +754,7 @@ export default function AnimalDetail() {
                             <div key={record.id} className="border border-border rounded-lg p-4 bg-card">
                               <div className="flex justify-between items-start mb-3">
                                 <div>
-                                  <div className="font-medium">{formatDate(record.date_time)}</div>
+                                  <div className="font-medium">{formatDateOnly(record.date_time)}</div>
                                   <Badge variant={shift === 'AM' ? 'default' : 'secondary'} className="mt-1">
                                     {shift}
                                   </Badge>
@@ -807,7 +845,7 @@ export default function AnimalDetail() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Animal dado de baja</AlertTitle>
                     <AlertDescription>
-                      Fecha: {formatDate(animal.disposition_at)}
+                      Fecha: {formatDateOnly(animal.disposition_at)}
                       {animal.disposition_reason && (
                         <><br />Razón: {animal.disposition_reason}</>
                       )}
@@ -895,36 +933,6 @@ export default function AnimalDetail() {
               </div>
             </TabsContent>
             
-            <TabsContent value="movements" className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">{t('animals.movementsHistory')}</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <div className="flex-1">
-                      <p className="font-medium">{t('animals.farmEntry')}</p>
-                      <p className="text-sm text-muted-foreground">{animal.created_at ? formatDate((animal as any).created_at) : '-'}</p>
-                    </div>
-                  </div>
-                  
-                  {animal.status !== 'active' && (
-                    <div className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          {animal.status === 'sold' ? t('animals.sold') :
-                           animal.status === 'culled' ? t('animals.culled') : t('animals.dead')}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {t('animals.dateToBeSet')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-
             <TabsContent value="genealogy" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold mb-4">{t('animals.genealogyInfo')}</h3>
@@ -1005,7 +1013,7 @@ export default function AnimalDetail() {
                     </div>
                     <div className="p-3 border rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('animals.issueDate')}</p>
-                      <p className="font-medium">{certificate.issue_date ? formatDate(certificate.issue_date) : '-'}</p>
+                      <p className="font-medium">{certificate.issue_date ? formatDateOnly(certificate.issue_date) : '-'}</p>
                     </div>
                     <div className="p-3 border rounded-lg">
                       <p className="text-sm text-muted-foreground">{t('animals.breeder')}</p>
@@ -1070,6 +1078,7 @@ export default function AnimalDetail() {
         isOpen={registerEventOpen}
         onClose={() => setRegisterEventOpen(false)}
         animalSex={animal.sex}
+        animalStatusCode={animal.status_code}
         animalBreed={animal.breed}
         animalBreedId={(animal as any).breed_id}
         animalBreedVariant={(animal as any).breed_variant}

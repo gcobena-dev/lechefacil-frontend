@@ -55,6 +55,7 @@ interface RegisterEventDialogProps {
   animalBreedId?: string;
   animalBreedVariant?: string;
   animalLotId?: string | null;
+  animalStatusCode?: string | null;
 }
 
 const EVENT_TYPES: { value: EventType; labelKey: string; descriptionKey: string }[] = [
@@ -76,6 +77,7 @@ export default function RegisterEventDialog({
   animalBreedId,
   animalBreedVariant,
   animalLotId,
+  animalStatusCode,
 }: RegisterEventDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -518,13 +520,11 @@ export default function RegisterEventDialog({
     }
   };
 
-  // Filter events based on animal sex
-  const availableEvents = EVENT_TYPES.filter((event) => {
-    if (animalSex === "MALE" && (event.value === "CALVING" || event.value === "DRY_OFF")) {
-      return false;
-    }
-    return true;
-  });
+  // Calving, drying off and abortion only apply to females past calfhood
+  const canBreed = animalSex !== "MALE" && animalStatusCode !== "CALF";
+  const availableEvents = EVENT_TYPES.filter(
+    (event) => canBreed || !["CALVING", "DRY_OFF", "ABORTION"].includes(event.value)
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

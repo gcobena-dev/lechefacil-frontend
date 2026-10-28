@@ -7,6 +7,8 @@ import {
   deleteSire,
   getSirePerformance,
   getSirePerformanceSummary,
+  listHerdBullCandidates,
+  importSiresFromHerd,
   type CreateSirePayload,
   type UpdateSirePayload,
 } from "@/services/sireCatalog";
@@ -79,6 +81,24 @@ export function useCreateSire() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateSirePayload) => createSire(payload),
+    onSuccess: () => {
+      void invalidateReproductionQueries(qc);
+    },
+  });
+}
+
+export function useHerdBullCandidates(enabled = true) {
+  return useQuery({
+    queryKey: ["sires", "herd-candidates"],
+    queryFn: listHerdBullCandidates,
+    enabled,
+  });
+}
+
+export function useImportSiresFromHerd() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (animalIds: string[]) => importSiresFromHerd(animalIds),
     onSuccess: () => {
       void invalidateReproductionQueries(qc);
     },

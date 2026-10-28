@@ -88,6 +88,32 @@ export async function listSires(params?: {
   });
 }
 
+/** A male of the herd that is not in the sire catalog yet */
+export interface HerdBullCandidate {
+  id: string;
+  tag: string;
+  name: string | null;
+  breed: string | null;
+  birth_date: string | null;
+}
+
+export async function listHerdBullCandidates() {
+  return apiFetch<HerdBullCandidate[]>("/api/v1/reproduction/sires/herd-candidates", {
+    withAuth: true,
+    withTenant: true,
+  });
+}
+
+/** Add herd bulls to the catalog, named after the animal and linked to it */
+export async function importSiresFromHerd(animalIds: string[]) {
+  return apiFetch<SireCatalogResponse[]>("/api/v1/reproduction/sires/import-from-herd", {
+    method: "POST",
+    withAuth: true,
+    withTenant: true,
+    body: { animal_ids: animalIds },
+  });
+}
+
 export async function getSire(id: string) {
   return apiFetch<SireCatalogResponse>(`/api/v1/reproduction/sires/${id}`, {
     withAuth: true,

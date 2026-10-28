@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useSire, useCreateSire, useUpdateSire } from "@/hooks/useReproduction";
+import { useSire, useCreateSire, useUpdateSire, useHerdBullCandidates } from "@/hooks/useReproduction";
+import { useQuery } from "@tanstack/react-query";
+import { getAnimal } from "@/services/animals";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +31,30 @@ export default function SireForm() {
   const [registryName, setRegistryName] = useState("");
   const [geneticNotes, setGeneticNotes] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [animalId, setAnimalId] = useState("");
+
+  // Herd males not in the catalog yet, plus the one this sire already points at
+  const { data: candidates = [] } = useHerdBullCandidates();
+  const { data: linkedAnimal } = useQuery({
+    queryKey: ["animal", existingSire?.animal_id],
+    queryFn: () => getAnimal(existingSire!.animal_id as string),
+    enabled: !!existingSire?.animal_id,
+  });
+  const herdOptions = [
+    ...(linkedAnimal ? [{ id: linkedAnimal.id, tag: linkedAnimal.tag, name: linkedAnimal.name }] : []),
+    ...candidates,
+  ];
+
+  const handleAnimalChange = (value: string) => {
+    const id = value === "none" ? "" : value;
+    setAnimalId(id);
+    // A new sire picked from the herd takes the animal's name and tag
+    const animal = herdOptions.find((a) => a.id === id);
+    if (animal && !isEditing) {
+      if (!name.trim()) setName(animal.name || animal.tag);
+      if (!shortCode.trim()) setShortCode(animal.tag);
+    }
+  };
 
   useEffect(() => {
     if (existingSire) {
@@ -37,6 +64,7 @@ export default function SireForm() {
       setRegistryName(existingSire.registry_name || "");
       setGeneticNotes(existingSire.genetic_notes || "");
       setIsActive(existingSire.is_active);
+      setAnimalId(existingSire.animal_id || "");
     }
   }, [existingSire]);
 
@@ -53,6 +81,7 @@ export default function SireForm() {
             registry_name: registryName.trim() || null,
             genetic_notes: geneticNotes.trim() || null,
             is_active: isActive,
+            animal_id: animalId || null,
           },
         });
         toast({ title: t("reproduction.sireUpdated") });
@@ -63,12 +92,17 @@ export default function SireForm() {
           registry_code: registryCode.trim() || null,
           registry_name: registryName.trim() || null,
           genetic_notes: geneticNotes.trim() || null,
+          animal_id: animalId || null,
         });
         toast({ title: t("reproduction.sireCreated") });
       }
       navigate("/reproduction/sires");
-    } catch {
-      toast({ title: "Error", variant: "destructive" });
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: e instanceof Error ? e.message : undefined,
+        variant: "destructive",
+      });
     }
   };
 
@@ -92,6 +126,24 @@ export default function SireForm() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t("reproduction.herdAnimal")}</Label>
+            <Select value={animalId || "none"} onValueChange={handleAnimalChange}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("reproduction.noHerdAnimal")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t("reproduction.noHerdAnimal")}</SelectItem>
+                {herdOptions.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    #{a.tag}{a.name ? ` · ${a.name}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t("reproduction.herdAnimalHint")}</p>
+          </div>
+
           <div className="space-y-2">
             <Label>{t("reproduction.sireName")} *</Label>
             <Input

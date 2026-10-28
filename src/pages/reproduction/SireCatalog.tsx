@@ -15,7 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, ChevronLeft, ChevronRight, Plus, Search, Heart } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Plus, Search, Heart, Download } from "lucide-react";
+import ImportHerdSiresDialog from "@/components/reproduction/ImportHerdSiresDialog";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ export default function SireCatalog() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data, isLoading } = useSires({
     active_only: false,
@@ -63,11 +65,19 @@ export default function SireCatalog() {
           </Button>
           <h1 className="text-xl font-bold">{t("reproduction.sireCatalog")}</h1>
         </div>
-        <Button onClick={() => navigate("/reproduction/sires/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("reproduction.newSire")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t("reproduction.importFromHerd")}</span>
+          </Button>
+          <Button onClick={() => navigate("/reproduction/sires/new")}>
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t("reproduction.newSire")}</span>
+          </Button>
+        </div>
       </div>
+
+      <ImportHerdSiresDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {/* Search */}
       <div className="relative">
@@ -143,7 +153,18 @@ export default function SireCatalog() {
                     className="cursor-pointer"
                     onClick={() => navigate(`/reproduction/sires/${sire.id}`)}
                   >
-                    <TableCell className="font-medium">{sire.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {sire.name}
+                      {sire.animal_id && (
+                        <Badge
+                          variant="outline"
+                          className="ml-2 cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/animals/${sire.animal_id}`); }}
+                        >
+                          {t("reproduction.fromHerd")}
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{sire.short_code || "-"}</TableCell>
                     <TableCell>{sire.registry_code || "-"}</TableCell>
                     <TableCell>{sire.registry_name || "-"}</TableCell>
@@ -223,7 +244,18 @@ export default function SireCatalog() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <p className="font-semibold">{sire.name}</p>
+                      <p className="font-semibold">
+                        {sire.name}
+                        {sire.animal_id && (
+                        <Badge
+                          variant="outline"
+                          className="ml-2 cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/animals/${sire.animal_id}`); }}
+                        >
+                          {t("reproduction.fromHerd")}
+                        </Badge>
+                      )}
+                      </p>
                       {sire.short_code && (
                         <p className="text-sm text-muted-foreground">{sire.short_code}</p>
                       )}
