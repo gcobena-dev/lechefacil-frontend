@@ -74,6 +74,7 @@ import RegisterEventDialog from "@/components/animals/RegisterEventDialog";
 import HealthSummaryCards from "@/components/health/HealthSummaryCards";
 import WithdrawalAlert from "@/components/health/WithdrawalAlert";
 import HealthEventsList from "@/components/health/HealthEventsList";
+import { getLocalDateString } from "@/utils/dateUtils";
 
 // "#012 · Vaca Bety", falling back to whichever of the two is known.
 // Returns null when the parent's identity could not be resolved.
@@ -123,7 +124,7 @@ export default function AnimalDetail() {
   // Compute last 90 days range like hook (use -89 for inclusive 90-day range)
   const today = useMemo(() => new Date(), []);
   const ninetyDaysAgo = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 89); return d; }, []);
-  const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
+  const formatDateISO = getLocalDateString;
 
   // Paginated productions for the table
   const { data: pagedProductions } = useQuery<MilkProductionListResponse>({
@@ -946,15 +947,33 @@ export default function AnimalDetail() {
                   </div>
                   <div className="p-3 border rounded-lg">
                     <p className="text-sm text-muted-foreground">{t('animals.sire')}</p>
-                    <p className="font-medium">
-                      {animal.sire_id ? (
+                    {/* A sire can be a herd bull, a catalog bull, or both */}
+                    <div className="font-medium flex flex-col gap-0.5">
+                      {animal.sire_id && (
                         <Link to={`/animals/${animal.sire_id}`} className="text-primary hover:underline">
                           {parentLabel(animal.sire_tag, animal.sire_name) ?? t('animals.viewSire')}
                         </Link>
-                      ) : animal.external_sire_code ? (
-                        <span>{animal.external_sire_code} {animal.external_sire_registry ? `(${animal.external_sire_registry})` : ''}</span>
-                      ) : '-'}
-                    </p>
+                      )}
+                      {animal.sire_catalog_id && (
+                        animal.sire_id ? (
+                          <Link
+                            to={`/reproduction/sires/${animal.sire_catalog_id}`}
+                            className="text-sm font-normal text-primary hover:underline"
+                          >
+                            {t('animals.viewSireInReproduction')}
+                          </Link>
+                        ) : (
+                          <Link to={`/reproduction/sires/${animal.sire_catalog_id}`} className="text-primary hover:underline">
+                            {animal.sire_catalog_name ?? animal.external_sire_code ?? t('animals.viewSire')}
+                          </Link>
+                        )
+                      )}
+                      {!animal.sire_id && !animal.sire_catalog_id && (
+                        animal.external_sire_code ? (
+                          <span>{animal.external_sire_code} {animal.external_sire_registry ? `(${animal.external_sire_registry})` : ''}</span>
+                        ) : '-'
+                      )}
+                    </div>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
@@ -1054,6 +1073,7 @@ export default function AnimalDetail() {
         animalBreed={animal.breed}
         animalBreedId={(animal as any).breed_id}
         animalBreedVariant={(animal as any).breed_variant}
+        animalLotId={animal.lot_id}
       />
     </div>
   );

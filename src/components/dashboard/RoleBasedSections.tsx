@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Link } from "react-router-dom";
 import { useWorkerProgress, useVetAlerts, useAdminOverview } from "@/hooks/useDashboard";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getTodayLocalDateString } from "@/utils/dateUtils";
 
 interface RoleBasedSectionsProps {
   userRole: 'ADMIN' | 'WORKER' | 'VET';
@@ -25,7 +26,7 @@ interface RoleBasedSectionsProps {
 
 export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) {
   const { t } = useTranslation();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayLocalDateString();
 
   // Fetch role-specific data - ALWAYS call hooks, but conditionally enable them
   const workerProgress = useWorkerProgress(userId || '', today, userRole === 'WORKER');

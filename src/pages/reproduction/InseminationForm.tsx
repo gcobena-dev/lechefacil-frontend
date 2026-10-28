@@ -20,6 +20,7 @@ import { ArrowLeft } from "lucide-react";
 import { SireSelector } from "@/components/reproduction/SireSelector";
 import { TechnicianAutocomplete } from "@/components/reproduction/TechnicianAutocomplete";
 import SearchableAnimalSelect from "@/components/milk/SearchableAnimalSelect";
+import { getLocalDateTimeInputValue } from "@/utils/dateUtils";
 
 const METHODS = [
   { value: "AI", labelKey: "reproduction.methodAI" },
@@ -38,7 +39,7 @@ export default function InseminationForm() {
   const [animalId, setAnimalId] = useState(() => searchParams.get("animal_id") ?? "");
   const [sireId, setSireId] = useState("");
   const [serviceDate, setServiceDate] = useState(
-    new Date().toISOString().slice(0, 16)
+    getLocalDateTimeInputValue()
   );
   const [method, setMethod] = useState("AI");
   const [semenInventoryId, setSemenInventoryId] = useState("");

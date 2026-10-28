@@ -146,7 +146,7 @@ export default function MilkCollect() {
   }, [animals, formData.animalId]);
 
   const handleProductionSubmit = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayLocalDateString();
     if (formData.date > todayStr) {
       toast({ title: t("common.error"), description: t("common.futureDateNotAllowed"), variant: "destructive" });
       return;

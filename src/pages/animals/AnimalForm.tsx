@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import { createAnimal, getAnimal, updateAnimal, getAnimalStatuses, uploadMultipl
 import { getAnimalCertificate, createCertificate, updateCertificate } from "@/services/animalCertificates";
 import { getBreeds } from "@/services/breeds";
 import { getLots } from "@/services/lots";
+import { listSires } from "@/services/sireCatalog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AnimalPhotoUpload, PhotoFile } from "@/components/animals/AnimalPhotoUpload";
 import { TagInput } from "@/components/ui/tag-input";
@@ -36,8 +37,10 @@ interface AnimalFormData {
   // Genealogy
   sex: string;
   damId: string;
-  sireType: "internal" | "external";
+  // internal: herd bull · catalog: reproduction catalog · external: free text
+  sireType: "internal" | "catalog" | "external";
   sireId: string;
+  sireCatalogId: string;
   externalSireCode: string;
   externalSireRegistry: string;
   // Certificate
@@ -79,6 +82,7 @@ export default function AnimalForm() {
     damId: "",
     sireType: "external",
     sireId: "",
+    sireCatalogId: "",
     externalSireCode: "",
     externalSireRegistry: "",
     // Certificate
@@ -140,6 +144,11 @@ export default function AnimalForm() {
     enabled: isEditing,
   });
 
+  const { data: siresData } = useQuery({
+    queryKey: ["sires", { active_only: true }],
+    queryFn: () => listSires({ active_only: true, limit: 500 }),
+  });
+
   const femaleAnimals = animalsListData?.items?.filter((a: any) => a.sex === 'FEMALE') || [];
   const maleAnimals = animalsListData?.items?.filter((a: any) => a.sex === 'MALE') || [];
 
@@ -160,8 +169,9 @@ export default function AnimalForm() {
         // Genealogy
         sex: (existing as any).sex ?? "",
         damId: (existing as any).dam_id ?? "",
-        sireType: (existing as any).sire_id ? "internal" : "external",
-        sireId: (existing as any).sire_id ?? "",
+        sireType: existing.sire_catalog_id ? "catalog" : existing.sire_id ? "internal" : "external",
+        sireId: existing.sire_id ?? "",
+        sireCatalogId: existing.sire_catalog_id ?? "",
         externalSireCode: (existing as any).external_sire_code ?? "",
         externalSireRegistry: (existing as any).external_sire_registry ?? "",
         // Certificate - will be loaded separately
@@ -253,6 +263,7 @@ export default function AnimalForm() {
           sex: formData.sex || null,
           dam_id: formData.damId || null,
           sire_id: formData.sireType === "internal" ? (formData.sireId || null) : null,
+          sire_catalog_id: formData.sireType === "catalog" ? (formData.sireCatalogId || null) : null,
           external_sire_code: formData.sireType === "external" ? (formData.externalSireCode || null) : null,
           external_sire_registry: formData.sireType === "external" ? (formData.externalSireRegistry || null) : null,
         };
@@ -274,6 +285,7 @@ export default function AnimalForm() {
           sex: formData.sex || null,
           dam_id: formData.damId || null,
           sire_id: formData.sireType === "internal" ? (formData.sireId || null) : null,
+          sire_catalog_id: formData.sireType === "catalog" ? (formData.sireCatalogId || null) : null,
           external_sire_code: formData.sireType === "external" ? (formData.externalSireCode || null) : null,
           external_sire_registry: formData.sireType === "external" ? (formData.externalSireRegistry || null) : null,
         };
@@ -794,6 +806,10 @@ export default function AnimalForm() {
                         <Label htmlFor="sire-internal" className="font-normal cursor-pointer">{t('animals.sireInternal')}</Label>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="catalog" id="sire-catalog" />
+                        <Label htmlFor="sire-catalog" className="font-normal cursor-pointer">{t('animals.sireCatalog')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="external" id="sire-external" />
                         <Label htmlFor="sire-external" className="font-normal cursor-pointer">{t('animals.sireExternal')}</Label>
                       </div>
@@ -829,6 +845,26 @@ export default function AnimalForm() {
                               </span>
                               <SelectPrimitive.ItemText>{animal.tag} - {animal.name || t('animals.noName')}</SelectPrimitive.ItemText>
                         </SelectPrimitive.Item>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : formData.sireType === "catalog" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="sireCatalog">{t('animals.selectSireFromCatalog')}</Label>
+                      <Select
+                        value={formData.sireCatalogId || "none"}
+                        onValueChange={(value) => handleInputChange("sireCatalogId", value === "none" ? "" : value)}
+                      >
+                        <SelectTrigger id="sireCatalog">
+                          <SelectValue placeholder={t('animals.selectSireFromCatalog')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">{t('common.none')}</SelectItem>
+                          {(siresData?.items ?? []).map((sire) => (
+                            <SelectItem key={sire.id} value={sire.id}>
+                              {sire.short_code ? `${sire.short_code} · ${sire.name}` : sire.name}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

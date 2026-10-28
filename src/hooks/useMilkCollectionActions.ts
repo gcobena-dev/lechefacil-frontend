@@ -27,6 +27,7 @@ import type {
 import {
   formatLocalDateShort,
   formatLocalTime,
+  getTodayLocalDateString,
   toLocalOffsetISO,
 } from "@/utils/dateUtils";
 import { invalidateMilkQueries } from "@/lib/queryInvalidation";
@@ -113,7 +114,7 @@ export function useMilkCollectionActions(
 
   const handleSingleSubmit = async () => {
     // Disallow future dates
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = getTodayLocalDateString();
     if (formData.date > todayStr) {
       toast({
         title: t("common.error"),
@@ -218,7 +219,7 @@ export function useMilkCollectionActions(
 
   const handleBulkSubmit = async () => {
     // Disallow future dates
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = getTodayLocalDateString();
     if (formData.date > todayStr) {
       toast({
         title: t("common.error"),

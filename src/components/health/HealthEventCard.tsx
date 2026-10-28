@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, Edit } from "lucide-react";
 import type { HealthRecordResponse } from "@/services/healthRecords";
 import { useTranslation } from "@/hooks/useTranslation";
+import { toDate } from "@/utils/dateUtils";
 
 interface HealthEventCardProps {
   event: HealthRecordResponse;
@@ -42,7 +43,7 @@ export default function HealthEventCard({
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = toDate(dateString);
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",

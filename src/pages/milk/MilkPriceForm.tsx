@@ -12,6 +12,7 @@ import { listBuyers } from "@/services/buyers";
 import { createMilkPrice } from "@/services/milkPrices";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getTodayLocalDateString } from "@/utils/dateUtils";
 
 interface MilkPriceFormData {
   buyerId: string;
@@ -28,7 +29,7 @@ export default function MilkPriceForm() {
   const [formData, setFormData] = useState<MilkPriceFormData>({
     buyerId: "",
     pricePerL: "",
-    date: new Date().toISOString().slice(0,10),
+    date: getTodayLocalDateString(),
   });
 
   const { data: buyers = [] } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyers() });

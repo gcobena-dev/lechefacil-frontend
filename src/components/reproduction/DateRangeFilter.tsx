@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
+import { getLocalDateString } from "@/utils/dateUtils";
 
 interface Props {
   dateFrom: string;
@@ -8,7 +9,7 @@ interface Props {
 }
 
 function formatDate(d: Date): string {
-  return d.toISOString().split("T")[0];
+  return getLocalDateString(d);
 }
 
 export default function DateRangeFilter({ dateFrom, dateTo, onChange }: Props) {

@@ -13,6 +13,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { invalidateHealthQueries } from "@/lib/queryInvalidation";
+import { getLocalDateTimeInputValue, toLocalOffsetISO } from "@/utils/dateUtils";
 
 export default function EditHealthEvent() {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ export default function EditHealthEvent() {
   useEffect(() => {
     if (healthRecord) {
       setFormData({
-        occurred_at: healthRecord.occurred_at ? new Date(healthRecord.occurred_at).toISOString().slice(0, 16) : "",
+        occurred_at: healthRecord.occurred_at ? getLocalDateTimeInputValue(new Date(healthRecord.occurred_at)) : "",
         veterinarian: healthRecord.veterinarian || "",
         notes: healthRecord.notes || "",
         cost: healthRecord.cost?.toString() || "",
@@ -79,7 +80,7 @@ export default function EditHealthEvent() {
     e.preventDefault();
 
     const payload: any = {
-      occurred_at: formData.occurred_at,
+      occurred_at: toLocalOffsetISO(new Date(formData.occurred_at)),
       veterinarian: formData.veterinarian || undefined,
       notes: formData.notes || undefined,
       cost: formData.cost ? parseFloat(formData.cost) : undefined,

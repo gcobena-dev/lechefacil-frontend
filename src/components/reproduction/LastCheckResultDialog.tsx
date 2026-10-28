@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PregnancyCheckDialog } from "@/components/reproduction/PregnancyCheckDialog";
+import { toDate } from "@/utils/dateUtils";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
@@ -23,7 +24,7 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | 
 
 function formatDate(d: string | null | undefined): string {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString();
+  return toDate(d).toLocaleDateString();
 }
 
 interface Props {

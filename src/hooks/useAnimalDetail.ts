@@ -3,6 +3,7 @@ import { getAnimal } from "@/services/animals";
 import { listMilkProductions } from "@/services/milkProductions";
 import { generateProductionReport } from "@/services/reports";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
+import { getLocalDateString } from "@/utils/dateUtils";
 
 interface AnimalDetailData {
   animal: any;
@@ -25,7 +26,7 @@ export function useAnimalDetail(animalId: string) {
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(today.getDate() - 89);
 
-  const formatDate = (date: Date) => date.toISOString().split("T")[0];
+  const formatDate = getLocalDateString;
 
   // Fetch animal details
   const animalQuery = useQuery({

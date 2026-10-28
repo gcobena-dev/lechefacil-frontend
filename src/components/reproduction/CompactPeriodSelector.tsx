@@ -1,4 +1,5 @@
 import { useTranslation } from "@/hooks/useTranslation";
+import { getLocalDateString } from "@/utils/dateUtils";
 
 interface Props {
   value: "3m" | "6m" | "12m" | "year";
@@ -46,6 +47,5 @@ export function rangeForPeriod(value: Props["value"]): [string, string] {
     from.setMonth(0);
     from.setDate(1);
   }
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
-  return [fmt(from), fmt(today)];
+  return [getLocalDateString(from), getLocalDateString(today)];
 }

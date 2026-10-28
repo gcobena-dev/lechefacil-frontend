@@ -33,9 +33,15 @@ export function getLocalDateTimeInputValue(date: Date = new Date()): string {
 export const DEFAULT_LOCALE = "es-EC";
 export const DEFAULT_TIMEZONE = "America/Guayaquil";
 
-/** Coerce string | Date to Date */
+/**
+ * Coerce string | Date to Date.
+ * A date-only string ("2026-10-22") is read as local midnight: `new Date()`
+ * reads it as UTC midnight, which in Ecuador is the previous day.
+ */
 export function toDate(value: string | Date): Date {
-  return value instanceof Date ? value : new Date(value);
+  if (value instanceof Date) return value;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(value);
 }
 
 /**

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getLocalDateTimeInputValue } from "@/utils/dateUtils";
 import {
   Select,
   SelectContent,
@@ -36,7 +37,7 @@ export function PregnancyCheckDialog({
   const mutation = useRecordPregnancyCheck();
   const [result, setResult] = useState<string>("");
   const [checkDate, setCheckDate] = useState(
-    new Date().toISOString().slice(0, 16)
+    getLocalDateTimeInputValue()
   );
   const [checkedBy, setCheckedBy] = useState("");
 

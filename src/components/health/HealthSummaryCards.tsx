@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
+import { toDate } from "@/utils/dateUtils";
 
 interface HealthSummaryCardsProps {
   inWithdrawal: boolean;
@@ -31,7 +32,7 @@ export default function HealthSummaryCards({
   const status = getHealthStatus();
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = toDate(dateString);
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",

@@ -392,6 +392,16 @@ export default {
   calfTagRequired: "Arete de la cría es requerido",
   calfTag: "Arete de la Cría",
   calfName: "Nombre de la Cría",
+  viewSireInReproduction: "Ver en Reproducción",
+  sireCatalog: "Catálogo de reproducción",
+  selectSireFromCatalog: "Seleccionar toro del catálogo",
+  motherLotAfterCalving: "Lote de la madre después del parto",
+  keepCurrentLot: "Mantener lote actual",
+  currentLot: "actual",
+  registerCalf: "Registrar la cría",
+  registerCalfDesc: "Desactívalo si la cría murió o se registrará después",
+  calfLot: "Lote de la cría",
+  calfSireFromService: "El padre se toma del servicio con el que quedó preñada.",
   birthWeightKg: "Peso al Nacer (kg)",
   birthWeightExample: "Ej: 38.5",
   selectGender: "Seleccionar sexo",
@@ -408,8 +418,8 @@ export default {
 
   // Event type labels
   event: {
-    calving: "Parto",
-    calvingDesc: "Registrar un parto (abre nueva lactancia)",
+    calving: "Parto / Nacimiento",
+    calvingDesc: "Abre nueva lactancia, actualiza estado y lote, y registra la cría",
     dryOff: "Secar",
     dryOffDesc: "Secar al animal (cierra lactancia)",
     service: "Servicio",

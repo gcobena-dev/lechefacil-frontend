@@ -89,6 +89,8 @@ export interface AnimalResponse {
   sex?: string | null;
   dam_id?: UUID | null;
   sire_id?: UUID | null;
+  /** Bull of the reproduction catalog */
+  sire_catalog_id?: UUID | null;
   external_sire_code?: string | null;
   external_sire_registry?: string | null;
   // Resolved parent identity (detail endpoint only)
@@ -96,6 +98,7 @@ export interface AnimalResponse {
   dam_name?: string | null;
   sire_tag?: string | null;
   sire_name?: string | null;
+  sire_catalog_name?: string | null;
   // Disposition fields
   disposition_at?: string | null;
   disposition_reason?: string | null;

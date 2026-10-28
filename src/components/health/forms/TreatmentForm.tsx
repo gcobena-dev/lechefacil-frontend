@@ -13,6 +13,7 @@ import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { invalidateHealthQueries } from "@/lib/queryInvalidation";
+import { getLocalDateTimeInputValue, toLocalOffsetISO } from "@/utils/dateUtils";
 
 interface TreatmentFormProps {
   animalId: string;
@@ -25,7 +26,7 @@ export default function TreatmentForm({ animalId }: TreatmentFormProps) {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    occurred_at: new Date().toISOString().slice(0, 16),
+    occurred_at: getLocalDateTimeInputValue(),
     medication: "",
     duration_days: "",
     has_withdrawal: false,
@@ -90,7 +91,7 @@ export default function TreatmentForm({ animalId }: TreatmentFormProps) {
 
     createMutation.mutate({
       event_type: "TREATMENT",
-      occurred_at: formData.occurred_at,
+      occurred_at: toLocalOffsetISO(new Date(formData.occurred_at)),
       medication: formData.medication,
       duration_days: parseInt(formData.duration_days),
       withdrawal_days: formData.has_withdrawal

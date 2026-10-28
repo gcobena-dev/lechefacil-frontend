@@ -69,6 +69,19 @@ const EventDetails = ({ event }: { event: AnimalEvent }) => {
     </div>
   );
 
+  // A calving may carry the calf registered with it (CALVING.data.calf)
+  const renderCalvingData = () => {
+    const calf = event.data?.calf;
+    if (!calf) return null;
+    return (
+      <div className="text-sm space-y-1">
+        <p><strong>{t('animals.calf')}:</strong> {calf.tag}{calf.name ? ` · ${calf.name}` : ''}</p>
+        <p><strong>{t('animals.gender')}:</strong> {calf.sex === 'MALE' ? t('animals.male') : t('animals.female')}</p>
+        {calf.birth_weight && <p><strong>{t('animals.weight')}:</strong> {calf.birth_weight} kg</p>}
+      </div>
+    );
+  };
+
   const renderServiceData = () => (
     <div className="text-sm space-y-1">
       {sireLabel && (
@@ -108,6 +121,8 @@ const EventDetails = ({ event }: { event: AnimalEvent }) => {
   switch (event.type) {
     case 'BIRTH':
       return renderBirthData();
+    case 'CALVING':
+      return renderCalvingData();
     case 'SERVICE':
     case 'EMBRYO_TRANSFER':
       return renderServiceData();

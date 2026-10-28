@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { invalidateHealthQueries } from "@/lib/queryInvalidation";
+import { getLocalDateTimeInputValue, toLocalOffsetISO } from "@/utils/dateUtils";
 
 interface ObservationFormProps {
   animalId: string;
@@ -22,7 +23,7 @@ export default function ObservationForm({ animalId }: ObservationFormProps) {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
-    occurred_at: new Date().toISOString().slice(0, 16),
+    occurred_at: getLocalDateTimeInputValue(),
     veterinarian: "",
     notes: "",
     cost: "",
@@ -55,7 +56,7 @@ export default function ObservationForm({ animalId }: ObservationFormProps) {
 
     createMutation.mutate({
       event_type: "VET_OBSERVATION",
-      occurred_at: formData.occurred_at,
+      occurred_at: toLocalOffsetISO(new Date(formData.occurred_at)),
       veterinarian: formData.veterinarian || undefined,
       notes: formData.notes || undefined,
       cost: formData.cost ? parseFloat(formData.cost) : undefined,

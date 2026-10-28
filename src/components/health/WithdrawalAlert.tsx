@@ -1,6 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { toDate } from "@/utils/dateUtils";
 
 interface WithdrawalAlertProps {
   withdrawalUntil: string;
@@ -21,7 +22,7 @@ export default function WithdrawalAlert({
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = toDate(dateString);
     return date.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",

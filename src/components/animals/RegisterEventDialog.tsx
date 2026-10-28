@@ -36,11 +36,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useRegisterAnimalEvent } from "@/hooks/useAnimalEvents";
 import type { EventType } from "@/services/animalEvents";
-import { getLocalDateTimeInputValue } from "@/utils/dateUtils";
+import { getLocalDateTimeInputValue, toLocalOffsetISO } from "@/utils/dateUtils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getNextTag } from "@/services/animals";
 import { getBreeds } from "@/services/breeds";
+import { getLots } from "@/services/lots";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import * as SelectPrimitive from "@radix-ui/react-select";
 
@@ -52,12 +54,12 @@ interface RegisterEventDialogProps {
   animalBreed?: string;
   animalBreedId?: string;
   animalBreedVariant?: string;
+  animalLotId?: string | null;
 }
 
 const EVENT_TYPES: { value: EventType; labelKey: string; descriptionKey: string }[] = [
   { value: "CALVING", labelKey: "animals.event.calving", descriptionKey: "animals.event.calvingDesc" },
   { value: "DRY_OFF", labelKey: "animals.event.dryOff", descriptionKey: "animals.event.dryOffDesc" },
-  { value: "BIRTH", labelKey: "animals.event.birth", descriptionKey: "animals.event.birthDesc" },
   { value: "ABORTION", labelKey: "animals.event.abortion", descriptionKey: "animals.event.abortionDesc" },
   { value: "SALE", labelKey: "animals.event.sale", descriptionKey: "animals.event.saleDesc" },
   { value: "DEATH", labelKey: "animals.event.death", descriptionKey: "animals.event.deathDesc" },
@@ -73,6 +75,7 @@ export default function RegisterEventDialog({
   animalBreed,
   animalBreedId,
   animalBreedVariant,
+  animalLotId,
 }: RegisterEventDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -83,6 +86,11 @@ export default function RegisterEventDialog({
   const { data: breeds = [] } = useQuery({
     queryKey: ["breeds", { active: true }],
     queryFn: () => getBreeds({ active: true }),
+  });
+
+  const { data: lots = [] } = useQuery({
+    queryKey: ["lots", { active: true }],
+    queryFn: () => getLots({ active: true }),
   });
 
   // Autogenerate tag mutation
@@ -110,7 +118,11 @@ export default function RegisterEventDialog({
       occurred_at: getLocalDateTimeInputValue(),
       // Common fields
       notes: "",
-      // Birth fields
+      // Calving fields: the mother's lot after calving (farms move fresh cows
+      // to different lots, e.g. "Destete" first) and the optional calf.
+      mother_lot_id: animalLotId || "",
+      register_calf: true,
+      calf_lot_id: "",
       calf_tag: "",
       calf_sex: "",
       calf_name: "",
@@ -131,14 +143,20 @@ export default function RegisterEventDialog({
 
     // Build data object based on event type
     switch (selectedType) {
-      case "BIRTH":
-        data.calf_tag = values.calf_tag;
-        data.calf_sex = values.calf_sex;
-        if (values.calf_name) data.calf_name = values.calf_name;
-        if (values.birth_weight) data.birth_weight = parseFloat(values.birth_weight);
-        if (values.breed) data.breed = values.breed;
-        if (values.breed_id) data.breed_id = values.breed_id;
-        if (values.breed_variant) data.breed_variant = values.breed_variant;
+      case "CALVING":
+        if (values.mother_lot_id && values.mother_lot_id !== animalLotId) {
+          data.mother_lot_id = values.mother_lot_id;
+        }
+        if (values.register_calf) {
+          const calf: Record<string, any> = { tag: values.calf_tag, sex: values.calf_sex };
+          if (values.calf_name) calf.name = values.calf_name;
+          if (values.birth_weight) calf.birth_weight = parseFloat(values.birth_weight);
+          if (values.breed) calf.breed = values.breed;
+          if (values.breed_id) calf.breed_id = values.breed_id;
+          if (values.breed_variant) calf.breed_variant = values.breed_variant;
+          if (values.calf_lot_id) calf.lot_id = values.calf_lot_id;
+          data.calf = calf;
+        }
         break;
 
       case "SALE":
@@ -162,7 +180,8 @@ export default function RegisterEventDialog({
     registerEvent(
       {
         type: values.type as EventType,
-        occurred_at: values.occurred_at,
+        // With its offset: a bare "2026-10-22T00:30" is ambiguous
+        occurred_at: toLocalOffsetISO(new Date(values.occurred_at)),
         data: Object.keys(data).length > 0 ? data : undefined,
       },
       {
@@ -180,13 +199,8 @@ export default function RegisterEventDialog({
     form.setValue("type", value);
   };
 
-  const renderDynamicFields = () => {
-    if (!selectedType) return null;
-
-    switch (selectedType) {
-      case "BIRTH":
-        return (
-          <>
+  const renderCalfFields = () => (
+    <>
             <FormField
               control={form.control}
               name="calf_tag"
@@ -332,6 +346,84 @@ export default function RegisterEventDialog({
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="calf_lot_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('animals.calfLot')}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('animals.noLot')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {lots.map((lot) => (
+                        <SelectItem key={lot.id} value={lot.id}>{lot.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <p className="text-xs text-muted-foreground">{t('animals.calfSireFromService')}</p>
+    </>
+  );
+
+  const renderDynamicFields = () => {
+    if (!selectedType) return null;
+
+    switch (selectedType) {
+      case "CALVING":
+        return (
+          <>
+            <FormField
+              control={form.control}
+              name="mother_lot_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('animals.motherLotAfterCalving')}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('animals.keepCurrentLot')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {lots.map((lot) => (
+                        <SelectItem key={lot.id} value={lot.id}>
+                          {lot.name}
+                          {lot.id === animalLotId ? ` (${t('animals.currentLot')})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="register_calf"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-4 rounded-lg border p-3">
+                  <div>
+                    <FormLabel>{t('animals.registerCalf')}</FormLabel>
+                    <p className="text-xs text-muted-foreground">{t('animals.registerCalfDesc')}</p>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {form.watch("register_calf") && renderCalfFields()}
           </>
         );
 

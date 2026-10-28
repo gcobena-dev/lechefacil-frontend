@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Info, AlertTriangle, Syringe } from "lucide-react";
 import type { PostpartumAlert } from "@/services/reproductionDashboard";
+import { toDate } from "@/utils/dateUtils";
 
 export interface InseminationInfo {
   pregnancy_status: string;
@@ -38,7 +39,7 @@ const LEVEL_STYLES: Record<
 };
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString();
+  return toDate(dateStr).toLocaleDateString();
 }
 
 function getReproStatus(
