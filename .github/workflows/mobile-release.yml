@@ -84,12 +84,16 @@ jobs:
             echo "✅ First deployment, version $VERSION"
           fi
 
+      - name: Setup pnpm
+        if: steps.check.outputs.changed == 'true'
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         if: steps.check.outputs.changed == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Setup Java 21
         if: steps.check.outputs.changed == 'true'
@@ -100,17 +104,17 @@ jobs:
 
       - name: Install dependencies
         if: steps.check.outputs.changed == 'true'
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build production app
         if: steps.check.outputs.changed == 'true'
-        run: npm run build
+        run: pnpm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Sync Capacitor
         if: steps.check.outputs.changed == 'true'
-        run: npx cap sync android
+        run: pnpm exec cap sync android
 
       # La keystore se restaura desde un secret, NUNCA se genera acá.
       #

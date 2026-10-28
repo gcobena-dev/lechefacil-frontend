@@ -36,27 +36,27 @@ export default function Settings() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-1 h-auto p-1">
           <TabsTrigger value="users" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
-            <Users className="h-4 w-4 flex-shrink-0" />
+            <Users className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t("common.usersTitle")}</span>
             <span className="sm:hidden text-xs truncate">{t("animals.usersShort")}</span>
           </TabsTrigger>
           <TabsTrigger value="prices" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
-            <DollarSign className="h-4 w-4 flex-shrink-0" />
+            <DollarSign className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t("milk.milkPricesTitle")}</span>
             <span className="sm:hidden text-xs truncate">{t("milk.pricesTitle")}</span>
           </TabsTrigger>
           <TabsTrigger value="tenant" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
-            <Building2 className="h-4 w-4 flex-shrink-0" />
+            <Building2 className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t("common.tenantSettings")}</span>
             <span className="sm:hidden text-xs truncate">{t("animals.configShort")}</span>
           </TabsTrigger>
           <TabsTrigger value="catalogs" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
-            <Layers3 className="h-4 w-4 flex-shrink-0" />
+            <Layers3 className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t("animals.catalogs")}</span>
             <span className="sm:hidden text-xs truncate">{t("animals.catalogsShort")}</span>
           </TabsTrigger>
           <TabsTrigger value="dispositivos" className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-3">
-            <Smartphone className="h-4 w-4 flex-shrink-0" />
+            <Smartphone className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline">{t("devices.title")}</span>
             <span className="sm:hidden text-xs">{t("devices.title")}</span>
           </TabsTrigger>

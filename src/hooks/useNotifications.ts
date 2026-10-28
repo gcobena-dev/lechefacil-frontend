@@ -99,7 +99,7 @@ export function useNotifications({
 
   // Guard to skip cross-tab refetch when this instance dispatched the event
   const selfDispatchRef = useRef(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Cross-tab/component sync: refresh when notifications change elsewhere
   useEffect(() => {

@@ -523,7 +523,7 @@ export default function AnimalForm() {
                       <SelectPrimitive.ItemText>{t("animals.noBreed")}</SelectPrimitive.ItemText>
                     </SelectPrimitive.Item>
                     {breeds.map((b: any) => (
-                      <SelectPrimitive.Item key={b.id} value={b.id} className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground">
+                      <SelectPrimitive.Item key={b.id} value={b.id} className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden data-disabled:pointer-events-none data-disabled:opacity-50 focus:bg-accent focus:text-accent-foreground">
                         <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                           <SelectPrimitive.ItemIndicator>
                             <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
@@ -575,7 +575,7 @@ export default function AnimalForm() {
                       <SelectPrimitive.ItemText>{t("animals.noVariant")}</SelectPrimitive.ItemText>
                     </SelectPrimitive.Item>
                     {['F1', '3/4', '5/8'].map(v => (
-                      <SelectPrimitive.Item key={v} value={v} className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground">
+                      <SelectPrimitive.Item key={v} value={v} className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden data-disabled:pointer-events-none data-disabled:opacity-50 focus:bg-accent focus:text-accent-foreground">
                         <SelectPrimitive.ItemText>{v}</SelectPrimitive.ItemText>
                       </SelectPrimitive.Item>
                     ))}
@@ -599,7 +599,7 @@ export default function AnimalForm() {
                       <SelectPrimitive.ItemText>{t("animals.noLot")}</SelectPrimitive.ItemText>
                     </SelectPrimitive.Item>
                     {lots.map((l: any) => (
-                      <SelectPrimitive.Item key={l.id} value={l.id} className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground">
+                      <SelectPrimitive.Item key={l.id} value={l.id} className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden data-disabled:pointer-events-none data-disabled:opacity-50 focus:bg-accent focus:text-accent-foreground">
                         <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                           <SelectPrimitive.ItemIndicator>
                             <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L8.5 11.086l6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
@@ -623,7 +623,7 @@ export default function AnimalForm() {
                       <SelectPrimitive.Item
                         key={status.id}
                         value={status.id}
-                        className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                        className="relative flex w-full cursor-default select-none items-start gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden data-disabled:pointer-events-none data-disabled:opacity-50 focus:bg-accent focus:text-accent-foreground"
                       >
                         <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                           <SelectPrimitive.ItemIndicator>
@@ -757,7 +757,7 @@ export default function AnimalForm() {
                         <SelectValue placeholder={t('animals.selectDam')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                        <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground">
                           <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                             <SelectPrimitive.ItemIndicator>
                               <Check className="h-4 w-4" />
@@ -769,7 +769,7 @@ export default function AnimalForm() {
                           <SelectPrimitive.Item
                             key={animal.id}
                             value={animal.id}
-                            className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                            className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground"
                           >
                             <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                               <SelectPrimitive.ItemIndicator>
@@ -808,7 +808,7 @@ export default function AnimalForm() {
                           <SelectValue placeholder={t('animals.selectSire')} />
                         </SelectTrigger>
                         <SelectContent>
-                        <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                        <SelectPrimitive.Item value="none" className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground">
                           <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                             <SelectPrimitive.ItemIndicator>
                               <Check className="h-4 w-4" />
@@ -820,7 +820,7 @@ export default function AnimalForm() {
                             <SelectPrimitive.Item
                               key={animal.id}
                               value={animal.id}
-                              className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground"
+                              className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground"
                             >
                               <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                                 <SelectPrimitive.ItemIndicator>

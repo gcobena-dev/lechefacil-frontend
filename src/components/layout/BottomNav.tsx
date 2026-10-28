@@ -21,7 +21,7 @@ export function BottomNav() {
   if (location.pathname === "/login") return null;
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur-sm md:hidden pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur-xs md:hidden safe-bottom">
       <ul className="flex items-stretch justify-around h-16">
         {items.map(({ to, icon: Icon, labelKey }) => (
           <li key={to} className="flex-1">

@@ -226,8 +226,8 @@ export default function PostpartumAlertTable({ alerts, inseminationMap }: Props)
                       <Syringe className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
                     )}
                     <div className="min-w-0 overflow-hidden">
-                      <p className="text-xs font-medium break-words">{repro.label}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight break-words">
+                      <p className="text-xs font-medium wrap-break-word">{repro.label}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight wrap-break-word">
                         {repro.hint}
                       </p>
                     </div>

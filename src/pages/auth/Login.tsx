@@ -224,7 +224,7 @@ export default function Login() {
   // Magic link deshabilitado
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light via-background to-secondary p-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-light via-background to-secondary p-4 relative">
       {/* Version label in bottom left corner */}
       <div className="fixed bottom-4 left-4">
         <VersionLabel variant="small" />

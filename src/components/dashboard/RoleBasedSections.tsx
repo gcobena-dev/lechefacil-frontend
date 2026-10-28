@@ -35,7 +35,7 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
     return (
       <div className="space-y-6">
         {/* Quick Action Card for Workers */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+        <Card className="border-primary/20 bg-linear-to-br from-primary/5 to-primary/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Milk className="h-5 w-5 text-primary" />
@@ -107,7 +107,7 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
     return (
       <div className="space-y-6">
         {/* Health Alerts for Vets */}
-        <Card className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10">
+        <Card className="border-warning/20 bg-linear-to-br from-warning/5 to-warning/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Heart className="h-5 w-5 text-warning" />
@@ -177,7 +177,7 @@ export function RoleBasedSections({ userRole, userId }: RoleBasedSectionsProps) 
   return (
     <div className="space-y-6">
       {/* Quick Actions for Admin */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+      <Card className="border-primary/20 bg-linear-to-br from-primary/5 to-primary/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-primary" />

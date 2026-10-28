@@ -15,6 +15,11 @@ const config: CapacitorConfig = {
     },
     Camera: {
       presentationStyle: 'fullscreen'
+    },
+    // Los insets los aplica @capawesome/capacitor-android-edge-to-edge-support;
+    // si SystemBars (core desde Capacitor 8) también los aplica, se duplican.
+    SystemBars: {
+      insetsHandling: 'disable'
     }
   }
 };

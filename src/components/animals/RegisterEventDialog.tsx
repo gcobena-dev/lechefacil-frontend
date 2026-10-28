@@ -292,7 +292,7 @@ export default function RegisterEventDialog({
                     </FormControl>
                     <SelectContent>
                       {breeds.map((breed: any) => (
-                        <SelectPrimitive.Item key={breed.id} value={breed.id} className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                        <SelectPrimitive.Item key={breed.id} value={breed.id} className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50">
                           <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                             <SelectPrimitive.ItemIndicator>
                               <span className="h-2 w-2 rounded-full bg-primary" />
@@ -525,7 +525,7 @@ export default function RegisterEventDialog({
                           }
                         }}
                         disabled={(date) => date > new Date()}
-                        initialFocus
+                        autoFocus
                       />
                       <div className="p-3 border-t">
                         <FormLabel className="text-xs">{t('common.time')}</FormLabel>

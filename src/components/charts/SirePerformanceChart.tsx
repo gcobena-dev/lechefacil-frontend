@@ -193,7 +193,7 @@ export default function SirePerformanceChart({
               />
               <ChartTooltip
                 content={(props) => {
-                  const { active, payload } = props as {
+                  const { active, payload } = props as unknown as {
                     active?: boolean;
                     payload?: Array<{ payload: (typeof chartData)[number] }>;
                   };

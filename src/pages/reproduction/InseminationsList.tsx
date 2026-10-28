@@ -141,7 +141,7 @@ export default function InseminationsList() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-2 md:flex gap-2 [&>*]:min-w-0">
+      <div className="grid grid-cols-2 md:flex gap-2 *:min-w-0">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
           <SelectTrigger>
             <SelectValue />

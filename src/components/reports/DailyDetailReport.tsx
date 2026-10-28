@@ -181,7 +181,7 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                             <div className="min-w-0">
                               <div className="font-semibold truncate leading-tight">{animal.tag}</div>
                               {animal.name && (
-                                <div className="text-[10px] text-muted-foreground leading-tight line-clamp-2 break-words min-h-[20px]">{animal.name}</div>
+                                <div className="text-[10px] text-muted-foreground leading-tight line-clamp-2 wrap-break-word min-h-[20px]">{animal.name}</div>
                               )}
                             </div>
                           </div>
@@ -249,7 +249,7 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                                 <div className="min-w-0">
                                   <div className="font-semibold truncate max-w-[140px] leading-tight">{animal.tag}</div>
                                   {animal.name && (
-                                    <div className="text-[10px] text-muted-foreground leading-tight line-clamp-2 break-words max-w-[140px] min-h-[20px]">{animal.name}</div>
+                                    <div className="text-[10px] text-muted-foreground leading-tight line-clamp-2 wrap-break-word max-w-[140px] min-h-[20px]">{animal.name}</div>
                                   )}
                                 </div>
                               </div>
@@ -326,7 +326,7 @@ export default function DailyDetailReport({ reportData }: DailyDetailReportProps
                           />
                         </div>
                         <div className="font-semibold truncate w-full leading-tight">{animal.tag}</div>
-                        <div className="text-[9px] md:text-xs text-muted-foreground font-normal leading-tight line-clamp-2 break-words w-full min-h-[24px] text-center">
+                        <div className="text-[9px] md:text-xs text-muted-foreground font-normal leading-tight line-clamp-2 wrap-break-word w-full min-h-[24px] text-center">
                           {animal.name || "\u00A0"}
                         </div>
                       </Link>

@@ -306,7 +306,7 @@ export default function Dashboard() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-medium leading-snug line-clamp-2 break-words max-w-[180px]">{name}</p>
+                                <p className="font-medium leading-snug line-clamp-2 wrap-break-word max-w-[180px]">{name}</p>
                                 <p className="text-xs text-muted-foreground truncate max-w-[140px]">{tag}</p>
                               </div>
                             </div>

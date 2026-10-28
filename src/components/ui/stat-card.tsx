@@ -82,7 +82,7 @@ export function StatCard({
                 <button
                   type="button"
                   aria-label={infoAriaLabel ?? label}
-                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:text-foreground"
+                  className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:text-foreground"
                 >
                   <HelpCircle className="h-3.5 w-3.5" />
                 </button>

@@ -29,7 +29,7 @@ export default function RoleGuard({
   }
 
   // Check if user has permission
-  let hasPermission = false;
+  let hasPermission: boolean;
 
   if (adminOnly) {
     hasPermission = isAdmin;

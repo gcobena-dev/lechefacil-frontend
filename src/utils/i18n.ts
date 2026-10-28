@@ -25,7 +25,7 @@ i18n.use(initReactI18next).init({
   returnEmptyString: false,
 
   // Load translations synchronously
-  initImmediate: false,
+  initAsync: false,
 });
 
 export default i18n;

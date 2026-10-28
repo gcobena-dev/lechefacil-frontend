@@ -29,7 +29,7 @@ export function TagInput({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSearchValueRef = useRef<string>('');
 
   // Debounced search function - only calls after 300ms of no typing
@@ -155,7 +155,7 @@ export function TagInput({
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-background min-h-[2.5rem] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-background min-h-10 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         {value.map((tag, index) => (
           <span
             key={index}
@@ -181,7 +181,7 @@ export function TagInput({
           onFocus={() => inputValue && setShowSuggestions(true)}
           placeholder={value.length === 0 ? (placeholder || t('common.addLabels')) : ''}
           disabled={value.length >= maxTags}
-          className="flex-1 min-w-[120px] outline-none bg-transparent text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex-1 min-w-[120px] outline-hidden bg-transparent text-sm disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 

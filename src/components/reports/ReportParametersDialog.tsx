@@ -151,7 +151,7 @@ export default function ReportParametersDialog({
     const params: ReportRequest = {
       date_from: formData.date_from || '',
       date_to: formData.date_to || '',
-      period: formData.period || 'daily',
+      period: (formData.period || 'daily') as ReportRequest['period'],
       format: 'pdf', // Always PDF as requested
     };
 

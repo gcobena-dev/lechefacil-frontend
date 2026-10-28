@@ -454,7 +454,7 @@ export default function MilkCollectionSidebar({
               {recentDeliveries.map((delivery, index) => (
                 <div key={delivery.id ?? index} className="p-3 rounded-lg bg-accent/20 space-y-2">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="font-medium text-sm break-words flex-1 min-w-0">{delivery.buyer}</p>
+                    <p className="font-medium text-sm wrap-break-word flex-1 min-w-0">{delivery.buyer}</p>
                     <div className="flex items-center gap-1 shrink-0">
                       {isAdmin && (
                         <Button

@@ -7,14 +7,14 @@ Este proyecto está configurado para ser compilado como aplicación móvil nativ
 ## Requisitos previos
 
 ### Para Android:
-- **Java JDK 11 o superior** (actualmente tienes Java 8)
-- Android Studio (última versión)
-- Android SDK instalado
+- **Java JDK 21** (Capacitor 8)
+- Android Studio Otter (2025.2.1) o más nuevo
+- Android SDK 36 instalado
 
 Para actualizar Java en macOS:
 ```bash
-brew install openjdk@17
-sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+brew install openjdk@21
+sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
 ```
 
 ### Para iOS:
@@ -26,19 +26,19 @@ sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/Java
 
 ```bash
 # Compilar y sincronizar cambios a las plataformas móviles
-npm run mobile:sync
+pnpm run mobile:sync
 
 # Abrir Android Studio para compilar y ejecutar la app
-npm run mobile:android
+pnpm run mobile:android
 
 # Abrir Xcode para compilar y ejecutar la app
-npm run mobile:ios
+pnpm run mobile:ios
 
 # Ejecutar directamente en dispositivo/emulador Android
-npm run mobile:run:android
+pnpm run mobile:run:android
 
 # Ejecutar directamente en dispositivo/simulador iOS
-npm run mobile:run:ios
+pnpm run mobile:run:ios
 ```
 
 ## Plugins instalados
@@ -62,18 +62,18 @@ Los permisos se configuran en el archivo `Info.plist` al abrir Xcode.
 
 ### Android:
 
-1. **Actualiza Java a versión 11 o superior**
+1. **Usa Java 21**
 2. Compila el proyecto web:
    ```bash
-   npm run build
+   pnpm run build
    ```
 3. Sincroniza con Android:
    ```bash
-   npx cap sync android
+   pnpm exec cap sync android
    ```
 4. Abre Android Studio:
    ```bash
-   npx cap open android
+   pnpm exec cap open android
    ```
 5. Compila y ejecuta desde Android Studio
 
@@ -81,32 +81,32 @@ Los permisos se configuran en el archivo `Info.plist` al abrir Xcode.
 
 1. Compila el proyecto web:
    ```bash
-   npm run build
+   pnpm run build
    ```
 2. Instala dependencias de iOS:
    ```bash
-   npx cap sync ios
+   pnpm exec cap sync ios
    cd ios/App && pod install
    ```
 3. Abre Xcode:
    ```bash
-   npx cap open ios
+   pnpm exec cap open ios
    ```
 4. Configura tu equipo de desarrollo en Xcode
 5. Compila y ejecuta desde Xcode
 
 ## Flujo de desarrollo
 
-1. Desarrolla normalmente con `npm run dev`
+1. Desarrolla normalmente con `pnpm run dev`
 2. Cuando quieras probar en móvil:
-   - Ejecuta `npm run mobile:sync`
+   - Ejecuta `pnpm run mobile:sync`
    - Abre el IDE nativo (Android Studio o Xcode)
    - Compila y ejecuta en emulador/dispositivo
 
 ## Notas importantes
 
 - El build se genera en la carpeta `dist/`
-- Los cambios en el código web requieren sincronizar con `npx cap sync`
+- Los cambios en el código web requieren sincronizar con `pnpm exec cap sync`
 - Los cambios en configuración nativa requieren abrir el IDE correspondiente
 - La primera compilación puede tardar varios minutos
 

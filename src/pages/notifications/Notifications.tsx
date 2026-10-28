@@ -30,7 +30,7 @@ export default function NotificationsPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl font-semibold truncate">{t('notifications.title')}</h1>
-          <Badge variant={unreadCount > 0 ? 'destructive' : 'secondary'} className="flex-shrink-0">
+          <Badge variant={unreadCount > 0 ? 'destructive' : 'secondary'} className="shrink-0">
             {t('notifications.unreadCount', { count: unreadCount })}
           </Badge>
         </div>
@@ -62,10 +62,10 @@ export default function NotificationsPage() {
                 <SelectItem value="50">50</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
+            <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => setPage((p) => ((p + 1) * pageSize < total ? p + 1 : p))} disabled={(page + 1) * pageSize >= total}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -85,11 +85,11 @@ export default function NotificationsPage() {
                 >
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm line-clamp-2 break-words">{n.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-3 break-words">{n.message}</p>
+                      <p className="font-medium text-sm line-clamp-2 wrap-break-word">{n.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-3 wrap-break-word">{n.message}</p>
                       <p className="text-[11px] text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString('es-EC')}</p>
                     </div>
-                    {!n.read && <div className="w-2 h-2 bg-info rounded-full mt-1.5 flex-shrink-0" />}
+                    {!n.read && <div className="w-2 h-2 bg-info rounded-full mt-1.5 shrink-0" />}
                   </div>
                 </div>
               ))}

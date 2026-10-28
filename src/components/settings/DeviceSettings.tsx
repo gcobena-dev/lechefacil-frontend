@@ -320,7 +320,7 @@ export default function DeviceSettings() {
                     <div className="px-3 pt-3 pb-2">
                       <div className="flex items-center justify-between">
                         <p className="font-medium text-sm truncate">{device.name}</p>
-                        <Badge variant={device.is_active ? "default" : "secondary"} className="ml-2 flex-shrink-0">
+                        <Badge variant={device.is_active ? "default" : "secondary"} className="ml-2 shrink-0">
                           {device.is_active ? t("common.active") : t("common.inactive")}
                         </Badge>
                       </div>
@@ -455,7 +455,7 @@ export default function DeviceSettings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 p-0 flex-shrink-0"
+                      className="h-8 w-8 p-0 shrink-0"
                       onClick={() => setShowKey(!showKey)}
                     >
                       {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -463,7 +463,7 @@ export default function DeviceSettings() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 p-0 flex-shrink-0"
+                      className="h-8 w-8 p-0 shrink-0"
                       onClick={() => copyToClipboard(createdDevice.api_key!, createdDevice.id)}
                     >
                       {copiedId === createdDevice.id ? (
@@ -642,7 +642,7 @@ export default function DeviceSettings() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 w-8 p-0 flex-shrink-0"
+                          className="h-8 w-8 p-0 shrink-0"
                           onClick={() => setShowKey(!showKey)}
                         >
                           {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -650,7 +650,7 @@ export default function DeviceSettings() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 w-8 p-0 flex-shrink-0"
+                          className="h-8 w-8 p-0 shrink-0"
                           onClick={() => copyToClipboard(activePinData.apiKey!, "apikey")}
                         >
                           {copiedId === "apikey" ? (

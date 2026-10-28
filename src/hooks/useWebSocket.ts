@@ -19,9 +19,9 @@ export function useWebSocket({
 }: UseWebSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const shouldReconnectRef = useRef(true);
-  const pingIntervalRef = useRef<NodeJS.Timeout>();
+  const pingIntervalRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastTokenRef = useRef<string | null>(null);
 
   const connect = () => {

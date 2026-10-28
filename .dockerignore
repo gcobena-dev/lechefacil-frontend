@@ -5,5 +5,4 @@ dist
 .github
 .env
 .env.*
-bun.lockb
 

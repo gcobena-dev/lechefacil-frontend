@@ -142,7 +142,7 @@ export default function CertificateFiles({
           <img
             src={file.url}
             alt={file.title ?? t("animals.certificate")}
-            className="w-full aspect-[3/4] object-cover bg-muted cursor-zoom-in"
+            className="w-full aspect-3/4 object-cover bg-muted cursor-zoom-in"
             loading="lazy"
           />
         </button>
@@ -154,7 +154,7 @@ export default function CertificateFiles({
           className="block"
           title={file.title ?? undefined}
         >
-          <div className="w-full aspect-[3/4] flex flex-col items-center justify-center gap-2 bg-muted">
+          <div className="w-full aspect-3/4 flex flex-col items-center justify-center gap-2 bg-muted">
             <FileText className="h-10 w-10 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">PDF</span>
           </div>

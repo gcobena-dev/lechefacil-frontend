@@ -237,12 +237,12 @@ export default function AnimalDetail() {
           </Button>
           <div className="flex-1 min-w-0">
             <h1
-              className="text-2xl sm:text-3xl font-bold text-foreground whitespace-normal break-words"
+              className="text-2xl sm:text-3xl font-bold text-foreground whitespace-normal wrap-break-word"
               style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
             >
               {animal.name ?? '-'}
             </h1>
-            <p className="text-muted-foreground whitespace-normal break-words">Tag: {animal.tag} • {animal.breed ?? '-'}</p>
+            <p className="text-muted-foreground whitespace-normal wrap-break-word">Tag: {animal.tag} • {animal.breed ?? '-'}</p>
           </div>
         </div>
         <div className="sm:ml-auto">

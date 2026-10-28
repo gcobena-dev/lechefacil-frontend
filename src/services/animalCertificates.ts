@@ -215,7 +215,7 @@ export const uploadCertificateFiles = async (
   animalId: string,
   files: File[]
 ): Promise<CertificateFile[]> => {
-  let existing: CertificateFile[] = [];
+  let existing: CertificateFile[];
   try {
     existing = await listCertificateFiles(animalId);
   } catch {

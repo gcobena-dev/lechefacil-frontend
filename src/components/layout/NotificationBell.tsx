@@ -128,7 +128,7 @@ export function NotificationBell() {
       <>
         {BellButton}
         <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
-          <DrawerContent className="h-[100vh]">
+          <DrawerContent className="h-screen">
             <DrawerHeader className="border-b">
               <div className="flex items-center justify-between">
                 <DrawerTitle>{t('notifications.title')}</DrawerTitle>
@@ -183,7 +183,7 @@ export function NotificationBell() {
                           </p>
                         </div>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-info rounded-full ml-2 mt-1 flex-shrink-0" />
+                          <div className="w-2 h-2 bg-info rounded-full ml-2 mt-1 shrink-0" />
                         )}
                       </div>
                     </button>
@@ -265,7 +265,7 @@ export function NotificationBell() {
                       </p>
                     </div>
                     {!notification.read && (
-                      <div className="w-2 h-2 bg-info rounded-full ml-2 mt-1 flex-shrink-0" />
+                      <div className="w-2 h-2 bg-info rounded-full ml-2 mt-1 shrink-0" />
                     )}
                   </div>
                 </DropdownMenuItem>

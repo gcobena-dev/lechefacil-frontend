@@ -18,7 +18,7 @@ Changes made via Lovable will be committed automatically to this repo.
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Requirements: Node.js 22+ and pnpm (`corepack enable` activates the version pinned in `packageManager`).
 
 Follow these steps:
 
@@ -30,14 +30,14 @@ git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-npm i
+pnpm install
 
 # Step 4: Configure environment variables
 # Create a .env file from .env.example and set VITE_API_URL to your backend (e.g. http://localhost:8000)
 cp .env.example .env
 
 # Step 5: Start the development server with auto-reloading and an instant preview.
-npm run dev
+pnpm dev
 ```
 
 **Edit a file directly in GitHub**

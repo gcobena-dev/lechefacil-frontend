@@ -290,7 +290,7 @@ export async function uploadMultiplePhotos(animalId: string, files: File[]) {
   const results: AnimalPhotoResponse[] = [];
 
   // Get existing photos to determine starting position
-  let existingPhotos: AnimalPhotoResponse[] = [];
+  let existingPhotos: AnimalPhotoResponse[];
   try {
     existingPhotos = await listAnimalPhotos(animalId);
   } catch (error) {

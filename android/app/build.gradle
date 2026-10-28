@@ -21,8 +21,8 @@ def lfVersionCode = lfVersionParts[0] * 1000000 + lfVersionParts[1] * 1000 + lfV
 
 
 android {
-    namespace "com.lechefacil.app"
-    compileSdk rootProject.ext.compileSdkVersion
+    namespace = "com.lechefacil.app"
+    compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.lechefacil.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -36,7 +36,7 @@ android {
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
 

@@ -51,7 +51,7 @@ export default function ResetPassword() {
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-light via-background to-secondary p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-light via-background to-secondary p-4">
         <Card className="w-full max-w-md shadow-strong">
           <CardHeader className="text-center space-y-2">
             <CardTitle className="text-2xl">{t("auth.resetPasswordTitle")}</CardTitle>

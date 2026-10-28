@@ -291,7 +291,7 @@ export default function Animals() {
                   applyStatusFilter(card.codes);
                 }
               }}
-              className={`cursor-pointer transition-colors hover:border-primary/60 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`cursor-pointer transition-colors hover:border-primary/60 hover:bg-muted/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring ${
                 isActive ? 'border-primary bg-muted/30' : ''
               }`}
             >

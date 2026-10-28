@@ -1,13 +1,15 @@
 # Multi-stage build for Vite React app
 
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+# pnpm en la versión de "packageManager" de package.json
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 FROM nginx:stable-alpine AS runner
 RUN apk add --no-cache gettext
